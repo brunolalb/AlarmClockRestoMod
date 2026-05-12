@@ -27,7 +27,7 @@ std::string urlDecode(std::string_view value) {
     std::string decoded;
     decoded.reserve(value.size());
     for (std::size_t index = 0; index < value.size(); ++index) {
-        if (value[index] == '+' ) {
+        if (value[index] == '+') {
             decoded += ' ';
             continue;
         }
