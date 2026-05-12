@@ -11,6 +11,8 @@ namespace alarm_clock {
 namespace {
 
 constexpr std::array<std::string_view, 7> kDayNames { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+constexpr auto kSnoozeDuration = std::chrono::minutes(5);
+constexpr auto kBluetoothTimeout = std::chrono::minutes(1);
 
 std::tm localTm(TimePoint when) {
     const auto raw = Clock::to_time_t(when);
@@ -343,7 +345,7 @@ void AlarmClockController::pressSleepButton(int clicks, TimePoint now) {
     if (runtime_.alarmActive) {
         if (clicks <= 1) {
             runtime_.alarmActive = false;
-            runtime_.snoozeUntil = now + std::chrono::minutes(5);
+            runtime_.snoozeUntil = now + kSnoozeDuration;
         } else {
             runtime_.alarmActive = false;
             runtime_.snoozeUntil.reset();
@@ -359,7 +361,7 @@ void AlarmClockController::pressSleepButton(int clicks, TimePoint now) {
 }
 
 void AlarmClockController::pressBluetoothButton(int clicks, TimePoint now) {
-    runtime_.bluetoothDeadline = now + std::chrono::minutes(1);
+    runtime_.bluetoothDeadline = now + kBluetoothTimeout;
     if (clicks <= 1) {
         runtime_.bluetoothMode = BluetoothMode::SpeakerConnect;
         return;

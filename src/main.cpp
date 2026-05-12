@@ -23,6 +23,9 @@ using alarm_clock::Playlist;
 using alarm_clock::RadioContentMode;
 using alarm_clock::RadioStation;
 
+constexpr int kDefaultAlarmHour = 7;
+constexpr int kDefaultAlarmMinute = 0;
+
 std::string urlDecode(std::string_view value) {
     std::string decoded;
     decoded.reserve(value.size());
@@ -106,14 +109,14 @@ void redirectHome(int client) {
     sendResponse(client, "303 See Other", "text/plain", "Updated", "Location: /\r\n");
 }
 
-int parseIntFromFields(const std::map<std::string, std::string>& fields, const std::string& key, int fallback) {
+int parseIntFromFields(const std::map<std::string, std::string>& fields, const std::string& key, int defaultValue) {
     if (const auto it = fields.find(key); it != fields.end()) {
         try {
             return std::stoi(it->second);
         } catch (...) {
         }
     }
-    return fallback;
+    return defaultValue;
 }
 
 void applySystemConfig(AlarmClockController& controller, const std::map<std::string, std::string>& fields) {
@@ -166,8 +169,8 @@ void addAlarm(AlarmClockController& controller, const std::map<std::string, std:
         return;
     }
 
-    int hour = 7;
-    int minute = 0;
+    int hour = kDefaultAlarmHour;
+    int minute = kDefaultAlarmMinute;
     if (const auto it = fields.find("time"); it != fields.end()) {
         const auto split = it->second.find(':');
         if (split != std::string::npos) {
