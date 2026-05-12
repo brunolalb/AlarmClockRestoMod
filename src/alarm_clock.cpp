@@ -552,8 +552,9 @@ std::string AlarmClockController::displayValue(TimePoint now, std::string_view i
         return runtime_.sleepEndsAt.has_value() ? optionalTimeLabel(runtime_.sleepEndsAt) : "Sleep off";
     case DisplayMode::IpAddress:
         return std::string(ipAddress);
+    default:
+        return formatHm(tm.tm_hour, tm.tm_min);
     }
-    return {};
 }
 
 std::string radioContentModeName(RadioContentMode mode) {

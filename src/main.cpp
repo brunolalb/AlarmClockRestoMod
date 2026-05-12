@@ -106,7 +106,7 @@ void redirectHome(int client) {
     sendResponse(client, "303 See Other", "text/plain", "Updated", "Location: /\r\n");
 }
 
-int parseNumber(const std::map<std::string, std::string>& fields, const std::string& key, int fallback) {
+int parseIntFromFields(const std::map<std::string, std::string>& fields, const std::string& key, int fallback) {
     if (const auto it = fields.find(key); it != fields.end()) {
         try {
             return std::stoi(it->second);
@@ -133,9 +133,9 @@ void applySystemConfig(AlarmClockController& controller, const std::map<std::str
     if (const auto it = fields.find("speaker_name"); it != fields.end()) {
         config.bluetoothSpeakerName = it->second;
     }
-    config.autoDim = parseNumber(fields, "auto_dim", config.autoDim ? 1 : 0) != 0;
-    config.vacationMode = parseNumber(fields, "vacation", config.vacationMode ? 1 : 0) != 0;
-    config.defaultSleepMinutes = parseNumber(fields, "sleep_minutes", config.defaultSleepMinutes);
+    config.autoDim = parseIntFromFields(fields, "auto_dim", config.autoDim ? 1 : 0) != 0;
+    config.vacationMode = parseIntFromFields(fields, "vacation", config.vacationMode ? 1 : 0) != 0;
+    config.defaultSleepMinutes = parseIntFromFields(fields, "sleep_minutes", config.defaultSleepMinutes);
     if (const auto it = fields.find("content_mode"); it != fields.end()) {
         config.radioContentMode = it->second == "playlists" ? RadioContentMode::Playlists : RadioContentMode::InternetStations;
     }
@@ -148,7 +148,7 @@ void addStation(AlarmClockController& controller, const std::map<std::string, st
     if (name.empty() || url.empty()) {
         return;
     }
-    controller.stations().push_back(RadioStation { name, url, parseNumber(fields, "frequency", 0) });
+    controller.stations().push_back(RadioStation { name, url, parseIntFromFields(fields, "frequency", 0) });
 }
 
 void addPlaylist(AlarmClockController& controller, const std::map<std::string, std::string>& fields) {
@@ -183,8 +183,8 @@ void addAlarm(AlarmClockController& controller, const std::map<std::string, std:
     alarm.days = alarm_clock::parseDayList(fields.count("days") ? fields.at("days") : "");
     alarm.tone = fields.count("tone") && fields.at("tone") == "buzzer" ? AlarmTone::Buzzer : AlarmTone::Radio;
     alarm.sourceName = fields.count("source") ? fields.at("source") : "";
-    alarm.enabled = parseNumber(fields, "enabled", 1) != 0;
-    alarm.sleepMinutes = parseNumber(fields, "sleep_minutes", controller.systemConfig().defaultSleepMinutes);
+    alarm.enabled = parseIntFromFields(fields, "enabled", 1) != 0;
+    alarm.sleepMinutes = parseIntFromFields(fields, "sleep_minutes", controller.systemConfig().defaultSleepMinutes);
     controller.alarms().push_back(alarm);
 }
 
@@ -195,8 +195,8 @@ int main() {
     const auto storageDir = std::filesystem::current_path() / "storage";
     controller.load(storageDir);
 
-    const char* ipEnv = std::getenv("ALARM_CLOCK_IP");
-    const std::string ipAddress = ipEnv != nullptr ? ipEnv : "192.168.4.1";
+    const char* displayIpEnv = std::getenv("ALARM_CLOCK_IP");
+    const std::string displayIpAddress = displayIpEnv != nullptr ? displayIpEnv : "192.168.4.1";
     const int port = 8080;
 
     const int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -220,6 +220,7 @@ int main() {
     }
 
     std::cout << "Alarm clock control UI available at http://127.0.0.1:" << port << "/\n";
+    std::cout << "Displayed device IP: " << displayIpAddress << '\n';
     std::cout << "Configuration storage: " << storageDir << '\n';
 
     while (true) {
@@ -246,9 +247,9 @@ int main() {
         const std::string body = bodyPos == std::string::npos ? std::string() : request.substr(bodyPos + 4);
 
         if (method == "GET" && path == "/") {
-            sendResponse(client, "200 OK", "text/html; charset=utf-8", controller.renderHtml(now, ipAddress));
+            sendResponse(client, "200 OK", "text/html; charset=utf-8", controller.renderHtml(now, displayIpAddress));
         } else if (method == "GET" && path == "/api/status") {
-            sendResponse(client, "200 OK", "application/json; charset=utf-8", controller.statusJson(now, ipAddress));
+            sendResponse(client, "200 OK", "application/json; charset=utf-8", controller.statusJson(now, displayIpAddress));
         } else if (method == "POST" && path == "/config/system") {
             applySystemConfig(controller, parseForm(body));
             controller.save(storageDir);
