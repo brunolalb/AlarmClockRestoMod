@@ -22,20 +22,20 @@ The implementation is written as a portable reference so it can be built and tes
 ## Build
 
 ```bash
-cmake -S /home/runner/work/AlarmClockRestoMod/AlarmClockRestoMod -B /home/runner/work/AlarmClockRestoMod/AlarmClockRestoMod/build
-cmake --build /home/runner/work/AlarmClockRestoMod/AlarmClockRestoMod/build
+cmake -S . -B build
+cmake --build build
 ```
 
 ## Test
 
 ```bash
-ctest --test-dir /home/runner/work/AlarmClockRestoMod/AlarmClockRestoMod/build --output-on-failure
+ctest --test-dir build --output-on-failure
 ```
 
 ## Run the web interface
 
 ```bash
-/home/runner/work/AlarmClockRestoMod/AlarmClockRestoMod/build/alarm_clock
+./build/alarm_clock
 ```
 
 Then open `http://127.0.0.1:8080/`.
