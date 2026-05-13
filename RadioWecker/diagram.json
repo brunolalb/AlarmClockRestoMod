@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "author": "Bruno L. Albrecht",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-arduino-nano-esp32",
+      "id": "nano",
+      "top": -188.07,
+      "left": -27.74,
+      "attrs": { "psramSize": "8" }
+    },
+    {
+      "type": "wokwi-tm1637-7segment",
+      "id": "sevseg1",
+      "top": -134.90104166666666,
+      "left": -255.33333333333331,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "sevseg1:CLK", "nano:D13", "green", [ "h0" ] ],
+    [ "sevseg1:DIO", "nano:D11", "green", [ "h41.56", "v-105.14", "h38.4" ] ],
+    [ "sevseg1:GND", "nano:GND.2", "black", [ "h0" ] ],
+    [ "sevseg1:VCC", "nano:VBUS", "red", [ "h0" ] ]
+  ],
+  "dependencies": {}
+}
