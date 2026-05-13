@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SPI.h>
+#include <I2C_RTC.h>
 #include <TM1637.h>
 #include <OnboardLedController.h>
 
@@ -17,8 +18,19 @@ static constexpr uint8_t ONBOARD_LED_PIN = 13;
 #endif
 
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
+
+#define RTC_USE_DS3231 0
+#if RTC_USE_DS3231
+using RtcChip = DS3231;
+#else
+using RtcChip = DS1307;
+#endif
+
+RtcChip rtc;
+
 bool sdReady = false;
 bool sdTestPassed = false;
+bool rtcReady = false;
 
 bool runSdSelfTest() {
   const char *testPath = "/sdtest.txt";
@@ -52,7 +64,13 @@ void setup() {
   Serial.begin(115200);
   tm.init();
   tm.setBrightness(7);
+  tm.colonOff();
   onboardLed.begin();
+
+  rtcReady = rtc.begin() != 0;
+  if (rtcReady && !rtc.isRunning()) {
+    rtc.startClock();
+  }
 
   sdReady = SD.begin(SD_CS_PIN);
   if (sdReady) {
@@ -65,27 +83,26 @@ void setup() {
   delay(800);
 }
 
-unsigned int counter = 0;
-
 void loop() {
-  if (sdReady && sdTestPassed) {
-    tm.display(counter, false, true);
+  if (rtcReady) {
+    tm.colonOn();
+    struct tm now = rtc.getDateTime();
+    const int hhmm = now.tm_hour * 100 + now.tm_min;
+    tm.display(hhmm, false, true);
+  } else if (sdReady && sdTestPassed) {
+    tm.colonOff();
+    tm.display("RTCF");
   } else if (!sdReady) {
+    tm.colonOff();
     tm.display("SDFL");
   } else {
+    tm.colonOff();
     tm.display("TSTF");
   }
 
   onboardLed.update();
 
-  counter++;
-  if (counter == 10000) {
-    counter = 0;
-  }
-
-  if ((counter % 10) == 0) {
-    onboardLed.pulseActivity();
-  }
+  onboardLed.pulseActivity();
 
   delay(100);
 }
