@@ -2,6 +2,10 @@
 #include <SD.h>
 #include <SPI.h>
 #include <I2C_RTC.h>
+#include <AyresWiFiManager.h>
+#include <WiFi.h>
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 #include <TM1637.h>
 #include <OnboardLedController.h>
 
@@ -19,6 +23,7 @@ static constexpr uint8_t ONBOARD_LED_PIN = 13;
 #endif
 
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
+AyresWiFiManager wifiManager;
 
 #define RTC_USE_DS3231 0
 #if RTC_USE_DS3231
@@ -28,6 +33,11 @@ using RtcChip = DS1307;
 #endif
 
 RtcChip rtc;
+
+struct TimeLocationSettings {
+  String city;
+  String tz;
+};
 
 bool sdReady = false;
 bool sdTestPassed = false;
@@ -39,13 +49,22 @@ uint8_t rtcSecond = 0;
 int rtcDisplayedHHMM = 0;
 volatile bool rtcSecondTick = false;
 
+TimeLocationSettings timeLocation;
+bool ntpTimeSynced = false;
+bool wasWifiConnected = false;
+unsigned long lastNtpSyncMs = 0;
+
+static const char* NTP1 = "pool.ntp.org";
+static const char* NTP2 = "time.google.com";
+static const char* LOCATION_FILE = "/time_location.json";
+static const uint32_t NTP_SYNC_RETRY_MS = 60000;
+static const uint32_t NTP_RESYNC_INTERVAL_MS = 21600000;
+
 void IRAM_ATTR onRtcSecondTick() {
   rtcSecondTick = true;
 }
 
-bool initializeRtcTimeFromChip() {
-  struct tm now = rtc.getDateTime();
-
+bool initializeClockFromTm(const struct tm& now) {
   if (now.tm_hour < 0 || now.tm_hour > 23 || now.tm_min < 0 || now.tm_min > 59 ||
       now.tm_sec < 0 || now.tm_sec > 59) {
     return false;
@@ -55,6 +74,105 @@ bool initializeRtcTimeFromChip() {
   rtcMinute = static_cast<uint8_t>(now.tm_min);
   rtcSecond = static_cast<uint8_t>(now.tm_sec);
   rtcDisplayedHHMM = rtcHour * 100 + rtcMinute;
+  return true;
+}
+
+bool initializeRtcTimeFromChip() {
+  struct tm now = rtc.getDateTime();
+  return initializeClockFromTm(now);
+}
+
+bool ensureInternalFsMounted() {
+  static bool mounted = false;
+  if (mounted) {
+    return true;
+  }
+
+  mounted = LittleFS.begin(true);
+  return mounted;
+}
+
+bool saveTimeLocationSettings(const TimeLocationSettings& settings) {
+  if (!ensureInternalFsMounted()) {
+    return false;
+  }
+
+  StaticJsonDocument<192> doc;
+  doc["city"] = settings.city;
+  doc["tz"] = settings.tz;
+
+  File file = LittleFS.open(LOCATION_FILE, FILE_WRITE);
+  if (!file) {
+    return false;
+  }
+
+  const bool ok = serializeJson(doc, file) > 0;
+  file.close();
+  return ok;
+}
+
+bool loadTimeLocationSettings(TimeLocationSettings& settings) {
+  if (!ensureInternalFsMounted()) {
+    return false;
+  }
+
+  if (!LittleFS.exists(LOCATION_FILE)) {
+    settings.city = "Berlin";
+    settings.tz = "CET-1CEST,M3.5.0/2,M10.5.0/3";
+    return saveTimeLocationSettings(settings);
+  }
+
+  File file = LittleFS.open(LOCATION_FILE, FILE_READ);
+  if (!file) {
+    return false;
+  }
+
+  StaticJsonDocument<192> doc;
+  const DeserializationError err = deserializeJson(doc, file);
+  file.close();
+  if (err) {
+    return false;
+  }
+
+  const char* city = doc["city"] | "";
+  const char* tz = doc["tz"] | "";
+  if (strlen(city) == 0 || strlen(tz) == 0) {
+    return false;
+  }
+
+  settings.city = city;
+  settings.tz = tz;
+  return true;
+}
+
+bool syncClockFromNtp() {
+  if (!wifiManager.isConnected()) {
+    return false;
+  }
+
+  configTzTime(timeLocation.tz.c_str(), NTP1, NTP2);
+
+  struct tm now;
+  if (!getLocalTime(&now, 10000)) {
+    return false;
+  }
+
+  if (!initializeClockFromTm(now)) {
+    return false;
+  }
+
+  if (rtcReady) {
+    rtc.setTime(static_cast<uint8_t>(now.tm_hour),
+                static_cast<uint8_t>(now.tm_min),
+                static_cast<uint8_t>(now.tm_sec));
+    rtc.setDate(static_cast<uint8_t>(now.tm_mday),
+                static_cast<uint8_t>(now.tm_mon + 1),
+                static_cast<uint16_t>(now.tm_year + 1900));
+    rtc.updateWeek();
+  }
+
+  ntpTimeSynced = true;
+  lastNtpSyncMs = millis();
   return true;
 }
 
@@ -107,6 +225,20 @@ void setup() {
   tm.colonOff();
   onboardLed.begin();
 
+  wifiManager.setHostname("radiowecker");
+  wifiManager.setAPCredentials("RadioWecker-Setup", "");
+  wifiManager.setPortalTimeout(300);
+  wifiManager.setProtectedJsons({"wifi.json", "time_location.json"});
+  wifiManager.begin();
+  wifiManager.run();
+  wifiManager.setAutoReconnect(true);
+
+  if (!loadTimeLocationSettings(timeLocation)) {
+    timeLocation.city = "Berlin";
+    timeLocation.tz = "CET-1CEST,M3.5.0/2,M10.5.0/3";
+    saveTimeLocationSettings(timeLocation);
+  }
+
   rtcReady = rtc.begin() != 0;
   if (rtcReady && !rtc.isRunning()) {
     rtc.startClock();
@@ -141,6 +273,20 @@ void setup() {
 }
 
 void loop() {
+  wifiManager.update();
+
+  const bool wifiConnected = wifiManager.isConnected();
+  if (!wifiConnected) {
+    wifiManager.reintentarConexionSiNecesario();
+    ntpTimeSynced = false;
+  }
+
+  if (wifiConnected && (!wasWifiConnected || !ntpTimeSynced ||
+                        (millis() - lastNtpSyncMs) >= NTP_RESYNC_INTERVAL_MS)) {
+    rtcTimeValid = syncClockFromNtp() || rtcTimeValid;
+  }
+  wasWifiConnected = wifiConnected;
+
   if (rtcReady) {
     tm.colonOn();
 
@@ -152,6 +298,10 @@ void loop() {
       if (rtcTimeValid) {
         advanceSoftwareClockOneSecond();
       }
+    }
+
+    if (!rtcTimeValid && wifiConnected && (millis() - lastNtpSyncMs) >= NTP_SYNC_RETRY_MS) {
+      rtcTimeValid = syncClockFromNtp();
     }
 
     if (rtcTimeValid) {
