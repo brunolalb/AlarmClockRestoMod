@@ -16,13 +16,25 @@
       "top": -134.90104166666666,
       "left": -255.33333333333331,
       "attrs": { "color": "red" }
-    }
+    },
+    { "type": "wokwi-ds1307", "id": "rtc1", "top": -178.2, "left": 192.1, "attrs": {} },
+    { "type": "wokwi-microsd-card", "id": "sd1", "top": -297.37, "left": -153.53, "attrs": {} }
   ],
   "connections": [
-    [ "sevseg1:CLK", "nano:D13", "green", [ "h0" ] ],
-    [ "sevseg1:DIO", "nano:D11", "green", [ "h41.56", "v-105.14", "h38.4" ] ],
+    [ "sevseg1:CLK", "nano:D2", "green", [ "h0" ] ],
+    [ "sevseg1:DIO", "nano:D3", "green", [ "h41.56", "v-105.14", "h38.4" ] ],
     [ "sevseg1:GND", "nano:GND.2", "black", [ "h0" ] ],
-    [ "sevseg1:VCC", "nano:VBUS", "red", [ "h0" ] ]
+    [ "sevseg1:VCC", "nano:VBUS", "red", [ "h0" ] ],
+    [ "rtc1:SDA", "nano:A4", "green", [ "h-48", "v47.7", "h-96" ] ],
+    [ "rtc1:SCL", "nano:A5", "green", [ "h-28.8", "v28.6", "h-105.6" ] ],
+    [ "rtc1:5V", "nano:VBUS", "red", [ "h-57.6", "v66.8", "h-48" ] ],
+    [ "rtc1:GND", "nano:GND.2", "black", [ "h-38.4", "v86.4", "h-48" ] ],
+    [ "sd1:SCK", "nano:D13", "green", [ "h19.2", "v153.59", "h48" ] ],
+    [ "sd1:DO", "nano:D12", "green", [ "h0" ] ],
+    [ "sd1:DI", "nano:D11", "green", [ "h0" ] ],
+    [ "sd1:CS", "nano:D10", "green", [ "h0" ] ],
+    [ "sd1:VCC", "nano:3V3", "red", [ "h28.8", "v153.74", "h48" ] ],
+    [ "sd1:GND", "nano:GND.1", "black", [ "h0" ] ]
   ],
   "dependencies": {}
 }
