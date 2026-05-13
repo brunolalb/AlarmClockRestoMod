@@ -8,6 +8,7 @@
 const uint8_t CLK = D2;
 const uint8_t DIO = D3;
 const uint8_t SD_CS_PIN = D10;
+const uint8_t RTC_SQW_PIN = A6;
 
 TM1637 tm(CLK, DIO);
 
@@ -31,6 +32,45 @@ RtcChip rtc;
 bool sdReady = false;
 bool sdTestPassed = false;
 bool rtcReady = false;
+bool rtcTimeValid = false;
+uint8_t rtcHour = 0;
+uint8_t rtcMinute = 0;
+uint8_t rtcSecond = 0;
+int rtcDisplayedHHMM = 0;
+volatile bool rtcSecondTick = false;
+
+void IRAM_ATTR onRtcSecondTick() {
+  rtcSecondTick = true;
+}
+
+bool initializeRtcTimeFromChip() {
+  struct tm now = rtc.getDateTime();
+
+  if (now.tm_hour < 0 || now.tm_hour > 23 || now.tm_min < 0 || now.tm_min > 59 ||
+      now.tm_sec < 0 || now.tm_sec > 59) {
+    return false;
+  }
+
+  rtcHour = static_cast<uint8_t>(now.tm_hour);
+  rtcMinute = static_cast<uint8_t>(now.tm_min);
+  rtcSecond = static_cast<uint8_t>(now.tm_sec);
+  rtcDisplayedHHMM = rtcHour * 100 + rtcMinute;
+  return true;
+}
+
+void advanceSoftwareClockOneSecond() {
+  rtcSecond++;
+  if (rtcSecond >= 60) {
+    rtcSecond = 0;
+    rtcMinute++;
+    if (rtcMinute >= 60) {
+      rtcMinute = 0;
+      rtcHour = static_cast<uint8_t>((rtcHour + 1) % 24);
+    }
+  }
+
+  rtcDisplayedHHMM = rtcHour * 100 + rtcMinute;
+}
 
 bool runSdSelfTest() {
   const char *testPath = "/sdtest.txt";
@@ -72,6 +112,23 @@ void setup() {
     rtc.startClock();
   }
 
+  if (rtcReady) {
+    rtcTimeValid = initializeRtcTimeFromChip();
+
+#if RTC_USE_DS3231
+    rtc.enableSqwePin();
+    rtc.setOutPin(SQW001Hz);
+#else
+    rtc.setOutPin(SQW001Hz);
+#endif
+
+    pinMode(RTC_SQW_PIN, INPUT_PULLUP);
+    const int sqwInterrupt = digitalPinToInterrupt(RTC_SQW_PIN);
+    if (sqwInterrupt != NOT_AN_INTERRUPT) {
+      attachInterrupt(sqwInterrupt, onRtcSecondTick, FALLING);
+    }
+  }
+
   sdReady = SD.begin(SD_CS_PIN);
   if (sdReady) {
     sdTestPassed = runSdSelfTest();
@@ -86,9 +143,23 @@ void setup() {
 void loop() {
   if (rtcReady) {
     tm.colonOn();
-    struct tm now = rtc.getDateTime();
-    const int hhmm = now.tm_hour * 100 + now.tm_min;
-    tm.display(hhmm, false, true);
+
+    if (rtcSecondTick) {
+      noInterrupts();
+      rtcSecondTick = false;
+      interrupts();
+
+      if (rtcTimeValid) {
+        advanceSoftwareClockOneSecond();
+      }
+    }
+
+    if (rtcTimeValid) {
+      tm.display(rtcDisplayedHHMM, false, true);
+    } else {
+      tm.colonOff();
+      tm.display("RTCF");
+    }
   } else if (sdReady && sdTestPassed) {
     tm.colonOff();
     tm.display("RTCF");
