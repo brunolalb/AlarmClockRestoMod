@@ -15,7 +15,10 @@ namespace {
 RtcChip rtc;
 }
 
-bool ClockController::begin(uint8_t rtcSqwPin) {
+ClockController::ClockController(uint8_t rtcSqwPin)
+    : rtcSqwPin_(rtcSqwPin) {}
+
+bool ClockController::begin() {
   ready_ = rtc.begin() != 0;
   timeValid_ = false;
 
@@ -36,8 +39,8 @@ bool ClockController::begin(uint8_t rtcSqwPin) {
   rtc.setOutPin(SQW001Hz);
 #endif
 
-  pinMode(rtcSqwPin, INPUT_PULLUP);
-  const int sqwInterrupt = digitalPinToInterrupt(rtcSqwPin);
+  pinMode(rtcSqwPin_, INPUT_PULLUP);
+  const int sqwInterrupt = digitalPinToInterrupt(rtcSqwPin_);
   if (sqwInterrupt != NOT_AN_INTERRUPT) {
     activeInstance_ = this;
     attachInterrupt(sqwInterrupt, handleRtcSecondTickISR, FALLING);

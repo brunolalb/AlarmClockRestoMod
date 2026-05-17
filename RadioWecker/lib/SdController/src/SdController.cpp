@@ -2,6 +2,9 @@
 
 #include <SD.h>
 
+SdController::SdController(uint8_t csPin)
+    : csPin_(csPin) {}
+
 bool SdController::runSelfTest() {
   static const char* kTestPath = "/sdtest.txt";
   static const char* kMarker = "TM1637_SD_OK";
@@ -29,8 +32,8 @@ bool SdController::runSelfTest() {
   return line == kMarker;
 }
 
-SdController::InitResult SdController::initialize(uint8_t csPin) {
-  ready_ = SD.begin(csPin);
+SdController::InitResult SdController::initialize() {
+  ready_ = SD.begin(csPin_);
   selfTestPassed_ = false;
 
   if (!ready_) {

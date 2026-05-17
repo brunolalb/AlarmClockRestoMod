@@ -4,7 +4,8 @@
 
 class ClockController {
  public:
-  bool begin(uint8_t rtcSqwPin);
+  ClockController(uint8_t rtcSqwPin);
+  bool begin();
   void update();
 
   bool isReady() const;
@@ -20,6 +21,8 @@ class ClockController {
 
   static void IRAM_ATTR handleRtcSecondTickISR();
   static ClockController* activeInstance_;
+
+  uint8_t rtcSqwPin_;
 
   bool ready_ = false;
   bool timeValid_ = false;

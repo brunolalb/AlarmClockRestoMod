@@ -8,24 +8,14 @@
 #include <WebServer.h>
 #include <ClockController.h>
 #include <DisplayManager.h>
+#include <HardwareConfig.h>
 #include <OnboardLedController.h>
 #include <SdController.h>
 
-const uint8_t CLK = D2;
-const uint8_t DIO = D3;
-const uint8_t SD_CS_PIN = D10;
-const uint8_t RTC_SQW_PIN = A6;
-
-#if defined(LED_BUILTIN)
-static constexpr uint8_t ONBOARD_LED_PIN = LED_BUILTIN;
-#else
-static constexpr uint8_t ONBOARD_LED_PIN = 13;
-#endif
-
-DisplayManager displayManager(CLK, DIO);
+DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
-ClockController clockController;
-SdController sdController;
+ClockController clockController(RTC_SQW_PIN);
+SdController sdController(SD_CS_PIN);
 WiFiManager tzapuWifiManager;
 static const char* ALARM_FILE = "/alarm_config.json";
 
@@ -363,9 +353,9 @@ void setup() {
     Serial.println("WiFi setup timed out; continuing without WiFi");
   }
 
-  clockController.begin(RTC_SQW_PIN);
+  clockController.begin();
 
-  sdController.initialize(SD_CS_PIN);
+  sdController.initialize();
   if (sdController.isReady()) {
     displayManager.showSdSelfTestResult(sdController.selfTestPassed());
 
