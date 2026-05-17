@@ -6,8 +6,8 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <WebServer.h>
-#include <TM1637.h>
 #include <ClockController.h>
+#include <DisplayManager.h>
 #include <OnboardLedController.h>
 #include <SdController.h>
 
@@ -16,14 +16,13 @@ const uint8_t DIO = D3;
 const uint8_t SD_CS_PIN = D10;
 const uint8_t RTC_SQW_PIN = A6;
 
-TM1637 tm(CLK, DIO);
-
 #if defined(LED_BUILTIN)
 static constexpr uint8_t ONBOARD_LED_PIN = LED_BUILTIN;
 #else
 static constexpr uint8_t ONBOARD_LED_PIN = 13;
 #endif
 
+DisplayManager displayManager(CLK, DIO);
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
 ClockController clockController;
 SdController sdController;
@@ -350,9 +349,7 @@ bool ensureInternalFsMounted() {
 
 void setup() {
   Serial.begin(115200);
-  tm.init();
-  tm.setBrightness(7);
-  tm.colonOff();
+  displayManager.begin(7);
   onboardLed.begin();
 
   WiFi.mode(WIFI_STA);
@@ -370,7 +367,7 @@ void setup() {
 
   sdController.initialize(SD_CS_PIN);
   if (sdController.isReady()) {
-    tm.display(sdController.selfTestPassed() ? "TSTP" : "TSTF");
+    displayManager.showSdSelfTestResult(sdController.selfTestPassed());
 
     if (!loadAlarmSettings(alarmSettings, alarmCount)) {
       setDefaultAlarmSettings(alarmSettings[0]);
@@ -378,7 +375,7 @@ void setup() {
       saveCurrentAlarmSettings();
     }
   } else {
-    tm.display("SDFL");
+    displayManager.showSdFailure();
 
     setDefaultAlarmSettings(alarmSettings[0]);
     alarmCount = 1;
@@ -397,25 +394,19 @@ void loop() {
   }
 
   if (clockController.isReady()) {
-    tm.colonOn();
-
     clockController.update();
 
     if (clockController.isTimeValid()) {
-      tm.display(clockController.displayValueMMSS(), false, true);
+      displayManager.showTimeMMSS(clockController.displayValueMMSS());
     } else {
-      tm.colonOff();
-      tm.display("RTCF");
+      displayManager.showRtcFailure();
     }
   } else if (sdController.isReady() && sdController.selfTestPassed()) {
-    tm.colonOff();
-    tm.display("RTCF");
+    displayManager.showRtcFailure();
   } else if (!sdController.isReady()) {
-    tm.colonOff();
-    tm.display("SDFL");
+    displayManager.showSdFailure();
   } else {
-    tm.colonOff();
-    tm.display("TSTF");
+    displayManager.showSdSelfTestResult(false);
   }
 
   onboardLed.update();
