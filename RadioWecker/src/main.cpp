@@ -1,13 +1,13 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SPI.h>
-#include <I2C_RTC.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <WebServer.h>
 #include <TM1637.h>
+#include <ClockController.h>
 #include <OnboardLedController.h>
 #include <SdController.h>
 
@@ -25,28 +25,12 @@ static constexpr uint8_t ONBOARD_LED_PIN = 13;
 #endif
 
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
+ClockController clockController;
 SdController sdController;
 WiFiManager tzapuWifiManager;
-
-#define RTC_USE_DS3231 1
-#if RTC_USE_DS3231
-using RtcChip = DS3231;
-#else
-using RtcChip = DS1307;
-#endif
-
-RtcChip rtc;
-
-bool rtcReady = false;
-bool rtcTimeValid = false;
-uint8_t rtcHour = 0;
-uint8_t rtcMinute = 0;
-uint8_t rtcSecond = 0;
-int rtcDisplayedMMSS = 0;
-volatile bool rtcSecondTick = false;
 static const char* ALARM_FILE = "/alarm_config.json";
 
-WebServer webServer(81);
+WebServer webServer(80);
 bool webServerStarted = false;
 static constexpr uint8_t MAX_ALARMS = 10;
 
@@ -354,42 +338,6 @@ void setupWebServer() {
   Serial.println("Web server running on port 81");
 }
 
-void IRAM_ATTR onRtcSecondTick() {
-  rtcSecondTick = true;
-}
-
-bool initializeClockFromTm(const struct tm& now) {
-  if (now.tm_hour < 0 || now.tm_hour > 23 ||
-      now.tm_min < 0 || now.tm_min > 59 ||
-      now.tm_sec < 0 || now.tm_sec > 59) {
-    return false;
-  }
-
-  rtcHour = static_cast<uint8_t>(now.tm_hour);
-  rtcMinute = static_cast<uint8_t>(now.tm_min);
-  rtcSecond = static_cast<uint8_t>(now.tm_sec);
-  rtcDisplayedMMSS = rtcMinute * 100 + rtcSecond;
-  return true;
-}
-
-bool initializeClockFromTm(const String& timeStr) {
-  if (timeStr.length() < 8) {
-    return false;
-  }
-
-  struct tm now = {};
-  now.tm_hour = timeStr.substring(0, 2).toInt();
-  now.tm_min = timeStr.substring(3, 5).toInt();
-  now.tm_sec = timeStr.substring(6, 8).toInt();
-
-  return initializeClockFromTm(now);
-}
-
-bool initializeRtcTimeFromChip() {
-  String now = rtc.getTimeString();
-  return initializeClockFromTm(now);
-}
-
 bool ensureInternalFsMounted() {
   static bool mounted = false;
   if (mounted) {
@@ -398,20 +346,6 @@ bool ensureInternalFsMounted() {
 
   mounted = LittleFS.begin(true);
   return mounted;
-}
-
-void advanceSoftwareClockOneSecond() {
-  rtcSecond++;
-  if (rtcSecond >= 60) {
-    rtcSecond = 0;
-    rtcMinute++;
-    if (rtcMinute >= 60) {
-      rtcMinute = 0;
-      rtcHour = static_cast<uint8_t>((rtcHour + 1) % 24);
-    }
-  }
-
-  rtcDisplayedMMSS = rtcMinute * 100 + rtcSecond;
 }
 
 void setup() {
@@ -432,27 +366,7 @@ void setup() {
     Serial.println("WiFi setup timed out; continuing without WiFi");
   }
 
-  rtcReady = rtc.begin() != 0;
-  if (rtcReady && !rtc.isRunning()) {
-    rtc.startClock();
-  }
-
-  if (rtcReady) {
-    rtcTimeValid = initializeRtcTimeFromChip();
-
-#if RTC_USE_DS3231
-    rtc.enableSqwePin();
-    rtc.setOutPin(SQW001Hz);
-#else
-    rtc.setOutPin(SQW001Hz);
-#endif
-
-    pinMode(RTC_SQW_PIN, INPUT_PULLUP);
-    const int sqwInterrupt = digitalPinToInterrupt(RTC_SQW_PIN);
-    if (sqwInterrupt != NOT_AN_INTERRUPT) {
-      attachInterrupt(sqwInterrupt, onRtcSecondTick, FALLING);
-    }
-  }
+  clockController.begin(RTC_SQW_PIN);
 
   sdController.initialize(SD_CS_PIN);
   if (sdController.isReady()) {
@@ -482,21 +396,13 @@ void loop() {
     webServer.handleClient();
   }
 
-  if (rtcReady) {
+  if (clockController.isReady()) {
     tm.colonOn();
 
-    if (rtcSecondTick) {
-      noInterrupts();
-      rtcSecondTick = false;
-      interrupts();
+    clockController.update();
 
-      if (rtcTimeValid) {
-        advanceSoftwareClockOneSecond();
-      }
-    }
-
-    if (rtcTimeValid) {
-      tm.display(rtcDisplayedMMSS, false, true);
+    if (clockController.isTimeValid()) {
+      tm.display(clockController.displayValueMMSS(), false, true);
     } else {
       tm.colonOff();
       tm.display("RTCF");
