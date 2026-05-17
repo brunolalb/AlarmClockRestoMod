@@ -9,6 +9,7 @@
 #include <WebServer.h>
 #include <TM1637.h>
 #include <OnboardLedController.h>
+#include <SdController.h>
 
 const uint8_t CLK = D2;
 const uint8_t DIO = D3;
@@ -24,6 +25,7 @@ static constexpr uint8_t ONBOARD_LED_PIN = 13;
 #endif
 
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
+SdController sdController;
 WiFiManager tzapuWifiManager;
 
 #define RTC_USE_DS3231 1
@@ -35,8 +37,6 @@ using RtcChip = DS1307;
 
 RtcChip rtc;
 
-bool sdReady = false;
-bool sdTestPassed = false;
 bool rtcReady = false;
 bool rtcTimeValid = false;
 uint8_t rtcHour = 0;
@@ -144,7 +144,7 @@ void appendAlarmToJsonArray(const AlarmSettings& settings, JsonArray& alarms) {
 }
 
 bool saveAlarmSettings(const AlarmSettings* settings, uint8_t count) {
-  if (!sdReady) {
+  if (!sdController.isReady()) {
     return false;
   }
 
@@ -169,7 +169,7 @@ bool saveAlarmSettings(const AlarmSettings* settings, uint8_t count) {
 }
 
 bool loadAlarmSettings(AlarmSettings* settings, uint8_t& count) {
-  if (!sdReady) {
+  if (!sdController.isReady()) {
     return false;
   }
 
@@ -311,7 +311,7 @@ void handleListMusicFiles() {
   DynamicJsonDocument doc(1024);
   JsonArray files = doc.to<JsonArray>();
 
-  if (sdReady) {
+  if (sdController.isReady()) {
     File root = SD.open("/");
     if (root && root.isDirectory()) {
       File file = root.openNextFile();
@@ -414,34 +414,6 @@ void advanceSoftwareClockOneSecond() {
   rtcDisplayedMMSS = rtcMinute * 100 + rtcSecond;
 }
 
-bool runSdSelfTest() {
-  const char *testPath = "/sdtest.txt";
-  const char *marker = "TM1637_SD_OK";
-
-  if (SD.exists(testPath) && !SD.remove(testPath)) {
-    return false;
-  }
-
-  File out = SD.open(testPath, FILE_WRITE);
-  if (!out) {
-    return false;
-  }
-
-  out.println(marker);
-  out.close();
-
-  File in = SD.open(testPath, FILE_READ);
-  if (!in) {
-    return false;
-  }
-
-  String line = in.readStringUntil('\n');
-  in.close();
-  line.trim();
-
-  return line == marker;
-}
-
 void setup() {
   Serial.begin(115200);
   tm.init();
@@ -482,10 +454,9 @@ void setup() {
     }
   }
 
-  sdReady = SD.begin(SD_CS_PIN);
-  if (sdReady) {
-    sdTestPassed = runSdSelfTest();
-    tm.display(sdTestPassed ? "TSTP" : "TSTF");
+  sdController.initialize(SD_CS_PIN);
+  if (sdController.isReady()) {
+    tm.display(sdController.selfTestPassed() ? "TSTP" : "TSTF");
 
     if (!loadAlarmSettings(alarmSettings, alarmCount)) {
       setDefaultAlarmSettings(alarmSettings[0]);
@@ -530,10 +501,10 @@ void loop() {
       tm.colonOff();
       tm.display("RTCF");
     }
-  } else if (sdReady && sdTestPassed) {
+  } else if (sdController.isReady() && sdController.selfTestPassed()) {
     tm.colonOff();
     tm.display("RTCF");
-  } else if (!sdReady) {
+  } else if (!sdController.isReady()) {
     tm.colonOff();
     tm.display("SDFL");
   } else {
