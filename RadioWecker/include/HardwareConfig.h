@@ -8,6 +8,7 @@ static constexpr uint8_t ONBOARD_LED_PIN = LED_RED;//46;
 // Display
 static constexpr uint8_t DISPLAY_CLK_PIN = D2;
 static constexpr uint8_t DISPLAY_DIO_PIN = D3;
+static constexpr uint8_t DISPLAY_BRIGHTNESS_DEFAULT = 1;
 
 // SD Card
 static constexpr uint8_t SD_SPI_CS_PIN = D10;
@@ -26,4 +27,6 @@ static constexpr long RTC_NTP_GMT_OFFSET_SECONDS = 0;
 static constexpr int RTC_NTP_DAYLIGHT_OFFSET_SECONDS = 0;
 static constexpr uint32_t RTC_NTP_SYNC_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL;
 static constexpr uint32_t RTC_NTP_RETRY_INTERVAL_MS = 60UL * 1000UL;
+static constexpr const char* RTC_TIMEZONE_POSIX_DEFAULT = "UTC0";
+static constexpr int16_t RTC_TIME_OFFSET_MINUTES_DEFAULT = 0;
 

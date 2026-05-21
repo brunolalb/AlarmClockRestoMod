@@ -5,8 +5,17 @@ DisplayManager::DisplayManager(uint8_t clkPin, uint8_t dioPin)
 
 void DisplayManager::begin(uint8_t brightness) {
   display_.init();
-  display_.setBrightness(brightness);
+  setBrightness(brightness);
   display_.colonOff();
+}
+
+void DisplayManager::setBrightness(uint8_t brightness) {
+  brightness_ = brightness > 7 ? 7 : brightness;
+  display_.setBrightness(brightness_);
+}
+
+uint8_t DisplayManager::brightness() const {
+  return brightness_;
 }
 
 void DisplayManager::showTimeHHMM(int timeValue) {

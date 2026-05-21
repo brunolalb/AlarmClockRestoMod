@@ -35,7 +35,8 @@ ClockController::ClockController(uint8_t rtcSqwPin,
       gmtOffsetSeconds_(gmtOffsetSeconds),
       daylightOffsetSeconds_(daylightOffsetSeconds),
       ntpSyncIntervalMs_(ntpSyncIntervalMs),
-      ntpRetryIntervalMs_(ntpRetryIntervalMs) {}
+      ntpRetryIntervalMs_(ntpRetryIntervalMs),
+      timezonePosix_("UTC0") {}
 
 bool ClockController::begin() {
   Wire.begin(i2cSdaPin_, i2cSclPin_, i2cFrequencyHz_);
@@ -106,6 +107,24 @@ bool ClockController::isNtpSynchronized() const {
   return ntpSynchronized_;
 }
 
+void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes) {
+  timezonePosix_ = timezonePosix;
+  timeOffsetMinutes_ = timeOffsetMinutes;
+  updateDisplayedValue();
+
+  ntpConfigured_ = false;
+  ntpSynchronized_ = false;
+  nextNtpSyncAttemptMs_ = 0;
+}
+
+String ClockController::timezonePosix() const {
+  return timezonePosix_;
+}
+
+int16_t ClockController::timeOffsetMinutes() const {
+  return timeOffsetMinutes_;
+}
+
 bool ClockController::initializeClockFromTm(const struct tm& now) {
   if (now.tm_hour < 0 || now.tm_hour > 23 ||
       now.tm_min < 0 || now.tm_min > 59 ||
@@ -116,7 +135,7 @@ bool ClockController::initializeClockFromTm(const struct tm& now) {
   hour_ = static_cast<uint8_t>(now.tm_hour);
   minute_ = static_cast<uint8_t>(now.tm_min);
   second_ = static_cast<uint8_t>(now.tm_sec);
-  displayedHHMM_ = hour_ * 100 + minute_;
+  updateDisplayedValue();
   return true;
 }
 
@@ -136,6 +155,19 @@ bool ClockController::initializeRtcTimeFromChip() {
   return initializeClockFromTimeString(rtc.getTimeString());
 }
 
+void ClockController::updateDisplayedValue() {
+  int totalMinutes = static_cast<int>(hour_) * 60 + static_cast<int>(minute_) + static_cast<int>(timeOffsetMinutes_);
+  const int minutesPerDay = 24 * 60;
+  totalMinutes %= minutesPerDay;
+  if (totalMinutes < 0) {
+    totalMinutes += minutesPerDay;
+  }
+
+  const int displayHour = totalMinutes / 60;
+  const int displayMinute = totalMinutes % 60;
+  displayedHHMM_ = displayHour * 100 + displayMinute;
+}
+
 void ClockController::advanceSoftwareClockOneSecond() {
   second_++;
   if (second_ >= 60) {
@@ -147,7 +179,7 @@ void ClockController::advanceSoftwareClockOneSecond() {
     }
   }
 
-  displayedHHMM_ = hour_ * 100 + minute_;
+  updateDisplayedValue();
 }
 
 void ClockController::syncFromNtpIfNeeded() {
@@ -166,7 +198,11 @@ bool ClockController::syncFromNtp() {
   }
 
   if (!ntpConfigured_) {
-    configTime(gmtOffsetSeconds_, daylightOffsetSeconds_, ntpServer_);
+    if (timezonePosix_.length() > 0) {
+      configTzTime(timezonePosix_.c_str(), ntpServer_);
+    } else {
+      configTime(gmtOffsetSeconds_, daylightOffsetSeconds_, ntpServer_);
+    }
     ntpConfigured_ = true;
   }
 

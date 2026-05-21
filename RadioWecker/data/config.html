@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RadioWecker General Config</title>
+    <style>
+      :root {
+        --bg: #10131a;
+        --card: #161b24;
+        --line: #2a3140;
+        --text: #e9edf7;
+        --muted: #9aa4b8;
+        --accent: #7ecbff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 15% 15%, #1f2636 0, transparent 35%),
+          radial-gradient(circle at 85% 0%, #2a1e2f 0, transparent 32%),
+          linear-gradient(160deg, #10131a 0%, #0b0d12 100%);
+      }
+
+      .wrap {
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 20px 14px 28px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+      }
+
+      p {
+        color: var(--muted);
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      input,
+      select {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #0f141d;
+        color: var(--text);
+        padding: 10px 11px;
+        font: inherit;
+      }
+
+      .actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      button {
+        border: 0;
+        border-radius: 9px;
+        padding: 10px 14px;
+        background: var(--accent);
+        color: #001625;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .status.ok {
+        color: #4fd18b;
+      }
+
+      .status.err {
+        color: #ff7777;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <h1>General Configuration</h1>
+        <p>Configure timezone, time offset, and display brightness.</p>
+
+        <form id="configForm" autocomplete="off">
+          <div class="field">
+            <label for="timezone">Timezone (City/Country)</label>
+            <select id="timezone" name="timezone" required>
+              <optgroup label="Global">
+                <option value="UTC0">UTC</option>
+              </optgroup>
+
+              <optgroup label="Europe">
+                <option value="GMT0BST,M3.5.0/1,M10.5.0">United Kingdom (London)</option>
+                <option value="WET0WEST,M3.5.0/1,M10.5.0">Portugal (Lisbon)</option>
+                <option value="CET-1CEST,M3.5.0/2,M10.5.0/3">Germany/France (Berlin/Paris)</option>
+                <option value="CET-1CEST,M3.5.0/2,M10.5.0/3">Spain (Madrid)</option>
+                <option value="CET-1CEST,M3.5.0/2,M10.5.0/3">Italy (Rome)</option>
+                <option value="CET-1CEST,M3.5.0/2,M10.5.0/3">Netherlands (Amsterdam)</option>
+                <option value="CET-1CEST,M3.5.0/2,M10.5.0/3">Sweden (Stockholm)</option>
+                <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Finland/Romania (Helsinki/Bucharest)</option>
+                <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Greece (Athens)</option>
+                <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Ukraine (Kyiv)</option>
+                <option value="MSK-3">Russia (Moscow)</option>
+                <option value="TRT-3">Turkey (Istanbul)</option>
+              </optgroup>
+
+              <optgroup label="Africa">
+                <option value="EET-2">Egypt (Cairo)</option>
+                <option value="SAST-2">South Africa (Johannesburg)</option>
+                <option value="EAT-3">Kenya (Nairobi)</option>
+                <option value="WAT-1">Nigeria (Lagos)</option>
+              </optgroup>
+
+              <optgroup label="North America">
+                <option value="EST5EDT,M3.2.0/2,M11.1.0/2">USA Eastern (New York)</option>
+                <option value="EST5EDT,M3.2.0/2,M11.1.0/2">Canada Eastern (Toronto)</option>
+                <option value="CST6CDT,M3.2.0/2,M11.1.0/2">USA Central (Chicago)</option>
+                <option value="MST7MDT,M3.2.0/2,M11.1.0/2">USA Mountain (Denver)</option>
+                <option value="PST8PDT,M3.2.0/2,M11.1.0/2">USA Pacific (Los Angeles)</option>
+                <option value="AKST9AKDT,M3.2.0/2,M11.1.0/2">USA Alaska (Anchorage)</option>
+                <option value="HST10">USA Hawaii (Honolulu)</option>
+                <option value="MST7">Arizona (Phoenix, no DST)</option>
+                <option value="PST8PDT,M3.2.0/2,M11.1.0/2">Canada Pacific (Vancouver)</option>
+                <option value="CST6">Mexico (Mexico City)</option>
+              </optgroup>
+
+              <optgroup label="South America">
+                <option value="AST4">Argentina (Buenos Aires)</option>
+                <option value="PET5">Peru (Lima)</option>
+                <option value="COT5">Colombia (Bogota)</option>
+                <option value="VET4">Venezuela (Caracas)</option>
+                <option value="CLT4CLST,M9.1.6/24,M4.1.6/24">Chile (Santiago)</option>
+                <option value="BRT3">Brazil (Sao Paulo)</option>
+                <option value="AMT4">Brazil (Manaus)</option>
+              </optgroup>
+
+              <optgroup label="Middle East">
+                <option value="GST-4">UAE (Dubai)</option>
+                <option value="AST-3">Saudi Arabia (Riyadh)</option>
+                <option value="IRST-3:30IRDT,M3.4.4/24,M9.4.4/24">Iran (Tehran)</option>
+              </optgroup>
+
+              <optgroup label="South Asia">
+                <option value="PKT-5">Pakistan (Karachi)</option>
+                <option value="IST-5:30">India (Delhi)</option>
+                <option value="NPT-5:45">Nepal (Kathmandu)</option>
+                <option value="BST-6">Bangladesh (Dhaka)</option>
+              </optgroup>
+
+              <optgroup label="Southeast Asia">
+                <option value="MMT-6:30">Myanmar (Yangon)</option>
+                <option value="ICT-7">Thailand (Bangkok)</option>
+                <option value="WIB-7">Indonesia (Jakarta)</option>
+                <option value="WITA-8">Indonesia (Makassar)</option>
+                <option value="WIT-9">Indonesia (Jayapura)</option>
+                <option value="SGT-8">Singapore</option>
+                <option value="PST-8">Philippines (Manila)</option>
+              </optgroup>
+
+              <optgroup label="East Asia">
+                <option value="HKT-8">Hong Kong</option>
+                <option value="CST-8">China (Beijing)</option>
+                <option value="CST-8">Taiwan (Taipei)</option>
+                <option value="JST-9">Japan (Tokyo)</option>
+                <option value="KST-9">South Korea (Seoul)</option>
+                <option value="ULAT-8">Mongolia (Ulaanbaatar)</option>
+              </optgroup>
+
+              <optgroup label="Oceania">
+                <option value="AWST-8">Australia (Perth)</option>
+                <option value="AEST-10AEDT,M10.1.0,M4.1.0/3">Australia (Sydney)</option>
+                <option value="AEST-10">Australia (Brisbane)</option>
+                <option value="ACST-9:30ACDT,M10.1.0,M4.1.0/3">Australia (Adelaide)</option>
+                <option value="ACST-9:30">Australia (Darwin)</option>
+                <option value="NZST-12NZDT,M9.5.0,M4.1.0/3">New Zealand (Auckland)</option>
+                <option value="FJT-12FJST,M11.1.0,M1.2.3/3">Fiji (Suva)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="timeOffsetMinutes">Time Offset (minutes)</label>
+            <input id="timeOffsetMinutes" name="timeOffsetMinutes" type="number" min="-60" max="60" required />
+          </div>
+
+          <div class="field">
+            <label for="brightness">Display Brightness (0-7)</label>
+            <input id="brightness" name="brightness" type="number" min="0" max="7" required />
+          </div>
+
+          <div class="actions">
+            <button type="submit">Save Configuration</button>
+            <span id="status" class="status">Loading config...</span>
+          </div>
+        </form>
+
+        <p><a href="/">Back to Home</a></p>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("configForm");
+      const statusEl = document.getElementById("status");
+      const timezoneEl = document.getElementById("timezone");
+      const offsetEl = document.getElementById("timeOffsetMinutes");
+      const brightnessEl = document.getElementById("brightness");
+
+      function setStatus(text, type) {
+        statusEl.textContent = text;
+        statusEl.className = "status" + (type ? " " + type : "");
+      }
+
+      async function loadConfig() {
+        setStatus("Loading config...", "");
+        try {
+          const response = await fetch("/api/config");
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const data = await response.json();
+          const timezone = data.timezone || "UTC0";
+          const matchingOption = Array.from(timezoneEl.options).find((option) => option.value === timezone);
+          if (matchingOption) {
+            timezoneEl.value = timezone;
+          } else {
+            const customOption = document.createElement("option");
+            customOption.value = timezone;
+            customOption.textContent = "Custom POSIX: " + timezone;
+            timezoneEl.appendChild(customOption);
+            timezoneEl.value = timezone;
+          }
+          offsetEl.value = Number.isFinite(data.timeOffsetMinutes) ? data.timeOffsetMinutes : 0;
+          brightnessEl.value = Number.isFinite(data.brightness) ? data.brightness : 7;
+          setStatus("Config loaded", "ok");
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to load config", "err");
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const payload = {
+          timezone: timezoneEl.value,
+          timeOffsetMinutes: Number(offsetEl.value),
+          brightness: Number(brightnessEl.value),
+        };
+
+        if (!payload.timezone) {
+          setStatus("Timezone is required", "err");
+          return;
+        }
+
+        setStatus("Saving...", "");
+        try {
+          const response = await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          setStatus("Configuration saved", "ok");
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to save config", "err");
+        }
+      });
+
+      loadConfig();
+    </script>
+  </body>
+</html>

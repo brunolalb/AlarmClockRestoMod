@@ -8,11 +8,14 @@ class DisplayManager {
   DisplayManager(uint8_t clkPin, uint8_t dioPin);
 
   void begin(uint8_t brightness = 7);
-    void showTimeHHMM(int timeValue);
+  void setBrightness(uint8_t brightness);
+  uint8_t brightness() const;
+  void showTimeHHMM(int timeValue);
   void showRtcFailure();
   void showSdFailure();
   void showSdSelfTestResult(bool passed);
 
  private:
-    TM1637 display_;
+  TM1637 display_;
+  uint8_t brightness_ = 7;
 };

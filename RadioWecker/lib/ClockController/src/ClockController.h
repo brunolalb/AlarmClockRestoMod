@@ -20,11 +20,15 @@ class ClockController {
   bool isTimeValid() const;
   int displayValueHHMM() const;
   bool isNtpSynchronized() const;
+  void applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes);
+  String timezonePosix() const;
+  int16_t timeOffsetMinutes() const;
 
  private:
   bool initializeClockFromTm(const struct tm& now);
   bool initializeClockFromTimeString(const String& timeStr);
   bool initializeRtcTimeFromChip();
+  void updateDisplayedValue();
   void advanceSoftwareClockOneSecond();
   void syncFromNtpIfNeeded();
   bool syncFromNtp();
@@ -42,6 +46,8 @@ class ClockController {
   int daylightOffsetSeconds_;
   uint32_t ntpSyncIntervalMs_;
   uint32_t ntpRetryIntervalMs_;
+  String timezonePosix_;
+  int16_t timeOffsetMinutes_ = 0;
 
   bool ready_ = false;
   bool timeValid_ = false;
