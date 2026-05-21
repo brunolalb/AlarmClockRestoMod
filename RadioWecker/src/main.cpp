@@ -48,12 +48,29 @@ void handleAlarmPage() {
   page.close();
 }
 
+void handleIndexPage() {
+  if (!ensureInternalFsMounted()) {
+    webServer.send(500, "text/plain", "LittleFS mount failed");
+    return;
+  }
+
+  File page = LittleFS.open("/index.html", FILE_READ);
+  if (!page) {
+    webServer.send(404, "text/plain", "index.html not found");
+    return;
+  }
+
+  webServer.streamFile(page, "text/html");
+  page.close();
+}
+
 void setupWebServer() {
   if (webServerStarted) {
     return;
   }
 
-  webServer.on("/", HTTP_GET, handleAlarmPage);
+  webServer.on("/", HTTP_GET, handleIndexPage);
+  webServer.on("/alarm", HTTP_GET, handleAlarmPage);
   webServer.on("/api/alarm", HTTP_GET, []() { alarmController.handleGetAlarmConfig(webServer); });
   webServer.on("/api/alarm", HTTP_POST, []() { alarmController.handleSaveAlarmConfig(webServer); });
   webServer.on("/api/music", HTTP_GET, []() { alarmController.handleListMusicFiles(webServer); });
