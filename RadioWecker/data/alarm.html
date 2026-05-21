@@ -58,6 +58,21 @@
         color: var(--muted);
       }
 
+      .hero a.home-btn {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 14px;
+        border-radius: 9px;
+        background: #7ecbff;
+        color: #001625;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .hero a.home-btn:hover {
+        filter: brightness(0.95);
+      }
+
       .toolbar {
         display: flex;
         gap: 10px;
@@ -218,6 +233,7 @@
       <section class="hero">
         <h1>Alarm Config</h1>
         <p>Create and edit multiple alarms with time, weekdays, snooze, and sound source.</p>
+        <a class="home-btn" href="/">Back to Home</a>
       </section>
 
       <section class="card" style="margin-bottom: 14px">
