@@ -3,12 +3,7 @@
 #include <Arduino.h>
 
 // on board LED
-#if defined(LED_BUILTIN)
-static constexpr uint8_t ONBOARD_LED_PIN = LED_BUILTIN;
-#else
-static constexpr uint8_t ONBOARD_LED_PIN = 13;
-#endif
-
+static constexpr uint8_t ONBOARD_LED_PIN = LED_RED;//46;
 
 // Display
 static constexpr uint8_t DISPLAY_CLK_PIN = D2;

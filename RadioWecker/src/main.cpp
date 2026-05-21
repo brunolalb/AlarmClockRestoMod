@@ -84,7 +84,6 @@ void loop() {
   }
 
   onboardLed.update();
-  onboardLed.pulseActivity();
 
   delay(100);
 }
