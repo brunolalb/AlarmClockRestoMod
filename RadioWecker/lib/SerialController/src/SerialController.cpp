@@ -43,7 +43,8 @@ SerialController::SerialController(ClockController& clockController,
       webServerController_(webServerController) {}
 
 void SerialController::begin() {
-  Serial.println("Serial controller ready. Type 'help' for commands.");
+  const String output = "Serial controller ready. Type 'help' for commands.\n";
+  Serial.print(output);
 }
 
 void SerialController::update() {
@@ -91,84 +92,110 @@ void SerialController::handleCommand(const String& rawCommand) {
     return;
   }
 
-  Serial.print("Unknown command: ");
-  Serial.println(rawCommand);
-  Serial.println("Type 'help' for available commands.");
+  String output;
+  output.reserve(96);
+  output += "Unknown command: ";
+  output += rawCommand;
+  output += "\nType 'help' for available commands.\n";
+  Serial.print(output);
 }
 
 void SerialController::printHelp() const {
-  Serial.println("Commands:");
-  Serial.println("  help      - Show this help");
-  Serial.println("  ip        - Print local IP address");
-  Serial.println("  wifi      - Print WiFi connection details");
-  Serial.println("  status    - Print system/module state");
-  Serial.println("  modules   - Alias for status");
+  String output;
+  output.reserve(192);
+  output =
+      "Commands:\n"
+      "  help      - Show this help\n"
+      "  ip        - Print local IP address\n"
+      "  wifi      - Print WiFi connection details\n"
+      "  status    - Print system/module state\n"
+      "  modules   - Alias for status\n";
+  Serial.print(output);
 }
 
 void SerialController::printIp() const {
+  String output;
+  output.reserve(48);
+
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("IP: not connected");
-    return;
+    output = "IP: not connected\n";
+  } else {
+    output = "IP: ";
+    output += WiFi.localIP().toString();
+    output += '\n';
   }
 
-  Serial.print("IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.print(output);
 }
 
 void SerialController::printWifi() const {
+  String output;
+  output.reserve(128);
+
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi: disconnected");
+    output = "WiFi: disconnected\n";
+    Serial.print(output);
     return;
   }
 
-  Serial.print("WiFi SSID: ");
-  Serial.println(WiFi.SSID());
-  Serial.print("WiFi RSSI: ");
-  Serial.print(WiFi.RSSI());
-  Serial.println(" dBm");
-  printIp();
+  output += "WiFi SSID: ";
+  output += WiFi.SSID();
+  output += '\n';
+  output += "WiFi RSSI: ";
+  output += String(WiFi.RSSI());
+  output += " dBm\n";
+  output += "IP: ";
+  output += WiFi.localIP().toString();
+  output += '\n';
+
+  Serial.print(output);
 }
 
 void SerialController::printModuleStatus() const {
-  Serial.println("Module status:");
+  String output;
+  output.reserve(320);
 
-  Serial.print("  wifi: ");
-  Serial.println(WiFi.status() == WL_CONNECTED ? "connected" : "disconnected");
+  output += "Module status:\n";
 
-  Serial.print("  webserver: ");
-  Serial.println(webServerController_.isStarted() ? "running" : "stopped");
+  output += "  wifi: ";
+  output += (WiFi.status() == WL_CONNECTED ? "connected" : "disconnected");
+  output += '\n';
 
-  Serial.print("  clock: ");
+  output += "  webserver: ";
+  output += (webServerController_.isStarted() ? "running" : "stopped");
+  output += '\n';
+
+  output += "  clock: ";
   if (!clockController_.isReady()) {
-    Serial.print("not ready");
+    output += "not ready";
   } else if (!clockController_.isTimeValid()) {
-    Serial.print("ready, time invalid");
+    output += "ready, time invalid";
   } else {
-    Serial.print("ready, time valid");
+    output += "ready, time valid";
   }
-  Serial.print(", ntp ");
-  Serial.println(clockController_.isNtpSynchronized() ? "sync" : "not sync");
+  output += ", ntp ";
+  output += (clockController_.isNtpSynchronized() ? "sync" : "not sync");
+  output += '\n';
 
-  Serial.print("  sd: ");
+  output += "  sd: ";
   if (!sdController_.isReady()) {
-    Serial.println("not ready");
+    output += "not ready";
   } else {
-    Serial.print("ready");
+    output += "ready, free ";
+    output += formatBytes(sdController_.availableBytes());
+    output += "/";
+    output += formatBytes(sdController_.totalBytes());
   }
-  if (sdController_.isReady()) {
-    Serial.print(", free ");
-    Serial.print(formatBytes(sdController_.availableBytes()));
-    Serial.print("/");
-    Serial.println(formatBytes(sdController_.totalBytes()));
-  } else {
-    Serial.println();
-  }
+  output += '\n';
 
-  Serial.print("  alarm: ");
+  output += "  alarm: ";
   if (!alarmController_.isInitialized()) {
-    Serial.println("not initialized");
+    output += "not initialized";
   } else {
-    Serial.print("initialized, configured alarms=");
-    Serial.println(alarmController_.alarmCount());
+    output += "initialized, configured alarms=";
+    output += String(alarmController_.alarmCount());
   }
+  output += '\n';
+
+  Serial.print(output);
 }
