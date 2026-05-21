@@ -13,7 +13,15 @@
 
 DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
-ClockController clockController(RTC_SQW_PIN, RTC_I2C_SDA_PIN, RTC_I2C_SCL_PIN, RTC_I2C_FREQUENCY_HZ);
+ClockController clockController(RTC_SQW_PIN,
+                                RTC_I2C_SDA_PIN,
+                                RTC_I2C_SCL_PIN,
+                                RTC_I2C_FREQUENCY_HZ,
+                                RTC_NTP_SERVER,
+                                RTC_NTP_GMT_OFFSET_SECONDS,
+                                RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
+                                RTC_NTP_SYNC_INTERVAL_MS,
+                                RTC_NTP_RETRY_INTERVAL_MS);
 SdController sdController(SD_SPI_CS_PIN, SD_SPI_SCK_PIN, SD_SPI_MISO_PIN, SD_SPI_MOSI_PIN, SD_SPI_FREQUENCY_HZ);
 AlarmController alarmController(sdController);
 WebServerController webServerController(alarmController);
@@ -63,7 +71,7 @@ void loop() {
     clockController.update();
 
     if (clockController.isTimeValid()) {
-      displayManager.showTimeMMSS(clockController.displayValueMMSS());
+      displayManager.showTimeHHMM(clockController.displayValueHHMM());
     } else {
       displayManager.showRtcFailure();
     }

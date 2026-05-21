@@ -26,4 +26,9 @@ static constexpr uint8_t RTC_I2C_SDA_PIN = A4;
 static constexpr uint8_t RTC_I2C_SCL_PIN = A5;
 static constexpr uint8_t RTC_SQW_PIN = A6;
 static constexpr uint32_t RTC_I2C_FREQUENCY_HZ = 100000;
+static constexpr const char* RTC_NTP_SERVER = "pool.ntp.org";
+static constexpr long RTC_NTP_GMT_OFFSET_SECONDS = 0;
+static constexpr int RTC_NTP_DAYLIGHT_OFFSET_SECONDS = 0;
+static constexpr uint32_t RTC_NTP_SYNC_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL;
+static constexpr uint32_t RTC_NTP_RETRY_INTERVAL_MS = 60UL * 1000UL;
 

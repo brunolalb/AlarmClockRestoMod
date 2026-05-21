@@ -9,7 +9,7 @@ void DisplayManager::begin(uint8_t brightness) {
   display_.colonOff();
 }
 
-void DisplayManager::showTimeMMSS(int timeValue) {
+void DisplayManager::showTimeHHMM(int timeValue) {
   display_.colonOn();
   display_.display(timeValue, false, true);
 }

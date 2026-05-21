@@ -120,12 +120,14 @@ void SerialController::printModuleStatus() const {
 
   Serial.print("  clock: ");
   if (!clockController_.isReady()) {
-    Serial.println("not ready");
+    Serial.print("not ready");
   } else if (!clockController_.isTimeValid()) {
-    Serial.println("ready, time invalid");
+    Serial.print("ready, time invalid");
   } else {
-    Serial.println("ready, time valid");
+    Serial.print("ready, time valid");
   }
+  Serial.print(", ntp ");
+  Serial.println(clockController_.isNtpSynchronized() ? "sync" : "not sync");
 
   Serial.print("  sd: ");
   if (!sdController_.isReady()) {
