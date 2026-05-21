@@ -2,6 +2,7 @@
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <SD.h>
 #include <WiFi.h>
 
 namespace {
@@ -38,6 +39,27 @@ WebServerController::WebServerController(AlarmController& alarmController,
       webServer_(port),
       port_(port) {}
 
+void WebServerController::beginFtpServer() {
+  if (ftpStarted_) {
+    return;
+  }
+
+  if (!sdController_.isReady()) {
+    Serial.println("FTP server not started: SD is not ready");
+    return;
+  }
+
+  ftpServer_.begin(generalConfigController_.ftpUsername().c_str(), generalConfigController_.ftpPassword().c_str());
+  ftpStarted_ = true;
+  if (ftpStarted_) {
+    Serial.print("FTP server running on port 21 (user: ");
+    Serial.print(generalConfigController_.ftpUsername());
+    Serial.println(")");
+  } else {
+    Serial.println("FTP server failed to start");
+  }
+}
+
 void WebServerController::begin(bool enableWebServer) {
   if (!enableWebServer || started_) {
     return;
@@ -45,6 +67,7 @@ void WebServerController::begin(bool enableWebServer) {
 
   setupRoutes();
   webServer_.begin();
+  beginFtpServer();
   started_ = true;
 
   Serial.print("Web server running on port ");
@@ -54,6 +77,9 @@ void WebServerController::begin(bool enableWebServer) {
 void WebServerController::update() {
   if (started_) {
     webServer_.handleClient();
+    if (ftpStarted_) {
+      ftpServer_.handleFTP();
+    }
   }
 }
 
@@ -150,12 +176,24 @@ void WebServerController::handleGetStatus() {
   webServer_.send(200, "application/json", payload);
 }
 
+void WebServerController::handleReboot() {
+  if (webServer_.method() != HTTP_POST) {
+    webServer_.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
+    return;
+  }
+
+  webServer_.send(200, "application/json", "{\"ok\":true,\"message\":\"Rebooting\"}");
+  delay(200);
+  ESP.restart();
+}
+
 void WebServerController::setupRoutes() {
   webServer_.on("/", HTTP_GET, [this]() { handleIndexPage(); });
   webServer_.on("/alarm", HTTP_GET, [this]() { handleAlarmPage(); });
   webServer_.on("/config", HTTP_GET, [this]() { handleConfigPage(); });
   webServer_.on("/status", HTTP_GET, [this]() { handleStatusPage(); });
   webServer_.on("/api/status", HTTP_GET, [this]() { handleGetStatus(); });
+  webServer_.on("/api/reboot", HTTP_POST, [this]() { handleReboot(); });
   webServer_.on("/api/config", HTTP_GET, [this]() { generalConfigController_.handleGetConfig(webServer_); });
   webServer_.on("/api/config", HTTP_POST, [this]() { generalConfigController_.handleSaveConfig(webServer_); });
   webServer_.on("/api/alarm", HTTP_GET, [this]() { alarmController_.handleGetAlarmConfig(webServer_); });

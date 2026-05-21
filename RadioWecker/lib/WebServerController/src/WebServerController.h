@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ESP32FtpServer.h>
 #include <WebServer.h>
 
 #include <AlarmController.h>
@@ -29,14 +30,18 @@ class WebServerController {
   void handleConfigPage();
   void handleStatusPage();
   void handleGetStatus();
+  void handleReboot();
   void setupRoutes();
+  void beginFtpServer();
 
   AlarmController& alarmController_;
   ClockController& clockController_;
   SdController& sdController_;
   GeneralConfigController& generalConfigController_;
+  FtpServer ftpServer_;
   WebServer webServer_;
   uint16_t port_;
   bool started_ = false;
   bool internalFsMounted_ = false;
+  bool ftpStarted_ = false;
 };

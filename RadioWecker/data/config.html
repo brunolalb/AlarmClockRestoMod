@@ -100,13 +100,28 @@
       .status.err {
         color: #ff7777;
       }
+
+      .hint {
+        margin-top: 12px;
+        padding: 10px;
+        border-radius: 9px;
+        border: 1px solid #4f6f8a;
+        background: #112033;
+        color: #b7d8ff;
+        font-size: 14px;
+      }
+
+      .danger {
+        background: #ff9f59;
+        color: #2c1200;
+      }
     </style>
   </head>
   <body>
     <main class="wrap">
       <section class="card">
         <h1>General Configuration</h1>
-        <p>Configure timezone, time offset, and display brightness.</p>
+        <p>Configure timezone, time offset, display brightness, and FTP access.</p>
 
         <form id="configForm" autocomplete="off">
           <div class="field">
@@ -215,9 +230,26 @@
             <input id="brightness" name="brightness" type="number" min="0" max="7" required />
           </div>
 
+          <div class="field">
+            <label for="ftpUsername">FTP Username</label>
+            <input id="ftpUsername" name="ftpUsername" type="text" readonly />
+          </div>
+
+          <div class="field">
+            <label for="ftpPassword">FTP Password (4-32 chars)</label>
+            <input id="ftpPassword" name="ftpPassword" type="password" minlength="4" maxlength="32" required />
+          </div>
+
           <div class="actions">
             <button type="submit">Save Configuration</button>
             <span id="status" class="status">Loading config...</span>
+          </div>
+
+          <div class="hint">
+            FTP credential changes apply after reboot.
+            <div class="actions">
+              <button id="rebootBtn" class="danger" type="button">Reboot Device</button>
+            </div>
           </div>
         </form>
 
@@ -231,6 +263,9 @@
       const timezoneEl = document.getElementById("timezone");
       const offsetEl = document.getElementById("timeOffsetMinutes");
       const brightnessEl = document.getElementById("brightness");
+      const ftpUsernameEl = document.getElementById("ftpUsername");
+      const ftpPasswordEl = document.getElementById("ftpPassword");
+      const rebootBtnEl = document.getElementById("rebootBtn");
 
       function setStatus(text, type) {
         statusEl.textContent = text;
@@ -259,6 +294,8 @@
           }
           offsetEl.value = Number.isFinite(data.timeOffsetMinutes) ? data.timeOffsetMinutes : 0;
           brightnessEl.value = Number.isFinite(data.brightness) ? data.brightness : 7;
+          ftpUsernameEl.value = data.ftpUsername || "radiowecker";
+          ftpPasswordEl.value = data.ftpPassword || "radiowecker";
           setStatus("Config loaded", "ok");
         } catch (err) {
           console.error(err);
@@ -273,10 +310,17 @@
           timezone: timezoneEl.value,
           timeOffsetMinutes: Number(offsetEl.value),
           brightness: Number(brightnessEl.value),
+          ftpUsername: ftpUsernameEl.value,
+          ftpPassword: ftpPasswordEl.value,
         };
 
         if (!payload.timezone) {
           setStatus("Timezone is required", "err");
+          return;
+        }
+
+        if (!payload.ftpPassword || payload.ftpPassword.length < 4) {
+          setStatus("FTP password must be at least 4 characters", "err");
           return;
         }
 
@@ -296,6 +340,24 @@
         } catch (err) {
           console.error(err);
           setStatus("Failed to save config", "err");
+        }
+      });
+
+      rebootBtnEl.addEventListener("click", async () => {
+        setStatus("Sending reboot request...", "");
+        try {
+          const response = await fetch("/api/reboot", {
+            method: "POST",
+          });
+
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          setStatus("Device is rebooting...", "ok");
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to reboot device", "err");
         }
       });
 

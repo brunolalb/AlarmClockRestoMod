@@ -45,6 +45,14 @@
       <p><a href="/config">General Configuration</a></p>
       <p><a href="/alarm">Alarms</a></p>
       <p><a href="/status">Device Status</a></p>
+      <p><a id="ftpLink" href="#">FTP (open with device host)</a></p>
     </main>
+
+    <script>
+      const ftpLinkEl = document.getElementById("ftpLink");
+      if (ftpLinkEl) {
+        ftpLinkEl.href = "ftp://" + window.location.hostname;
+      }
+    </script>
   </body>
 </html>

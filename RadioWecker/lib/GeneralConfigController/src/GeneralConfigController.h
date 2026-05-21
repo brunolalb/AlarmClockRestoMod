@@ -24,22 +24,33 @@ class GeneralConfigController {
   void handleSaveConfig(WebServer& webServer);
 
   uint8_t brightness() const;
+  const String& ftpUsername() const;
+  const String& ftpPassword() const;
 
  private:
   struct ConfigData {
     String timezonePosix;
     int16_t timeOffsetMinutes;
     uint8_t brightness;
+    String ftpUsername;
+    String ftpPassword;
   };
 
   bool ensureInternalFsMounted();
   bool readFromLittleFs(ConfigData& outConfig);
   bool readFromSdCard(ConfigData& outConfig);
   bool readConfigFromJsonFile(const String& jsonPayload, ConfigData& outConfig) const;
+  String buildDevicePasswordKey() const;
+  String encryptPassword(const String& plainText) const;
+  String decryptPassword(const String& cipherHex) const;
   bool saveToAllStorages();
   bool saveToLittleFs();
   bool saveToSdCard();
-  bool isValidConfig(const String& timezone, int offsetMinutes, int brightness) const;
+  bool isValidConfig(const String& timezone,
+                     int offsetMinutes,
+                     int brightness,
+                     const String& ftpUsername,
+                     const String& ftpPassword) const;
 
   static constexpr const char* GENERAL_CONFIG_FILE = "/general_config.json";
 
@@ -50,10 +61,14 @@ class GeneralConfigController {
   String timezonePosix_;
   int16_t timeOffsetMinutes_;
   uint8_t brightness_;
+  String ftpUsername_;
+  String ftpPassword_;
 
   const char* defaultTimezonePosix_;
   int16_t defaultTimeOffsetMinutes_;
   uint8_t defaultBrightness_;
+  static constexpr const char* DEFAULT_FTP_USERNAME = "radiowecker";
+  static constexpr const char* DEFAULT_FTP_PASSWORD = "radiowecker";
 
   bool internalFsMounted_ = false;
 };
