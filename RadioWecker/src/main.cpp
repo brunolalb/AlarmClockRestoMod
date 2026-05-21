@@ -1,8 +1,6 @@
 #include <Arduino.h>
-#include <LittleFS.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
-#include <WebServer.h>
 
 #include <AlarmController.h>
 #include <ClockController.h>
@@ -11,77 +9,16 @@
 #include <OnboardLedController.h>
 #include <SerialController.h>
 #include <SdController.h>
+#include <WebServerController.h>
 
 DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
 ClockController clockController(RTC_SQW_PIN);
 SdController sdController(SD_CS_PIN);
 AlarmController alarmController(sdController);
+WebServerController webServerController(alarmController);
 WiFiManager tzapuWifiManager;
-WebServer webServer(80);
-bool webServerStarted = false;
-SerialController serialController(clockController, sdController, alarmController, webServerStarted);
-
-bool ensureInternalFsMounted() {
-  static bool mounted = false;
-  if (mounted) {
-    return true;
-  }
-
-  mounted = LittleFS.begin(true);
-  return mounted;
-}
-
-void handleAlarmPage() {
-  if (!ensureInternalFsMounted()) {
-    webServer.send(500, "text/plain", "LittleFS mount failed");
-    return;
-  }
-
-  File page = LittleFS.open("/alarm.html", FILE_READ);
-  if (!page) {
-    webServer.send(404, "text/plain", "alarm.html not found");
-    return;
-  }
-
-  webServer.streamFile(page, "text/html");
-  page.close();
-}
-
-void handleIndexPage() {
-  if (!ensureInternalFsMounted()) {
-    webServer.send(500, "text/plain", "LittleFS mount failed");
-    return;
-  }
-
-  File page = LittleFS.open("/index.html", FILE_READ);
-  if (!page) {
-    webServer.send(404, "text/plain", "index.html not found");
-    return;
-  }
-
-  webServer.streamFile(page, "text/html");
-  page.close();
-}
-
-void setupWebServer() {
-  if (webServerStarted) {
-    return;
-  }
-
-  webServer.on("/", HTTP_GET, handleIndexPage);
-  webServer.on("/alarm", HTTP_GET, handleAlarmPage);
-  webServer.on("/api/alarm", HTTP_GET, []() { alarmController.handleGetAlarmConfig(webServer); });
-  webServer.on("/api/alarm", HTTP_POST, []() { alarmController.handleSaveAlarmConfig(webServer); });
-  webServer.on("/api/music", HTTP_GET, []() { alarmController.handleListMusicFiles(webServer); });
-  webServer.onNotFound([]() {
-    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Not found\"}");
-  });
-
-  webServer.begin();
-  webServerStarted = true;
-  Serial.println("Web server running on port 80");
-}
+SerialController serialController(clockController, sdController, alarmController, webServerController);
 
 void setup() {
   Serial.begin(115200);
@@ -110,9 +47,7 @@ void setup() {
 
   alarmController.begin();
 
-  if (wifiConnected) {
-    setupWebServer();
-  }
+  webServerController.begin(wifiConnected);
 
   serialController.begin();
 
@@ -122,9 +57,7 @@ void setup() {
 void loop() {
   serialController.update();
 
-  if (webServerStarted) {
-    webServer.handleClient();
-  }
+  webServerController.update();
 
   if (clockController.isReady()) {
     clockController.update();

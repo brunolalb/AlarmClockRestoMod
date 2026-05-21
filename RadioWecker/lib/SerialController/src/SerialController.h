@@ -6,12 +6,14 @@
 #include <ClockController.h>
 #include <SdController.h>
 
+class WebServerController;
+
 class SerialController {
  public:
   SerialController(ClockController& clockController,
                    SdController& sdController,
                    AlarmController& alarmController,
-                   const bool& webServerStarted);
+                   WebServerController& webServerController);
 
   void begin();
   void update();
@@ -26,6 +28,6 @@ class SerialController {
   ClockController& clockController_;
   SdController& sdController_;
   AlarmController& alarmController_;
-  const bool& webServerStarted_;
+  WebServerController& webServerController_;
   String inputBuffer_;
 };

@@ -2,6 +2,8 @@
 
 #include <WiFi.h>
 
+#include <WebServerController.h>
+
 namespace {
 String toCommandKey(const String& source) {
   String key = source;
@@ -14,11 +16,11 @@ String toCommandKey(const String& source) {
 SerialController::SerialController(ClockController& clockController,
                                    SdController& sdController,
                                    AlarmController& alarmController,
-                                   const bool& webServerStarted)
+                                   WebServerController& webServerController)
     : clockController_(clockController),
       sdController_(sdController),
       alarmController_(alarmController),
-      webServerStarted_(webServerStarted) {}
+      webServerController_(webServerController) {}
 
 void SerialController::begin() {
   Serial.println("Serial controller ready. Type 'help' for commands.");
@@ -114,7 +116,7 @@ void SerialController::printModuleStatus() const {
   Serial.println(WiFi.status() == WL_CONNECTED ? "connected" : "disconnected");
 
   Serial.print("  webserver: ");
-  Serial.println(webServerStarted_ ? "running" : "stopped");
+  Serial.println(webServerController_.isStarted() ? "running" : "stopped");
 
   Serial.print("  clock: ");
   if (!clockController_.isReady()) {

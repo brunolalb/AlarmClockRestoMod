@@ -1,0 +1,29 @@
+#pragma once
+
+#include <Arduino.h>
+#include <WebServer.h>
+
+#include <AlarmController.h>
+
+class WebServerController {
+ public:
+  explicit WebServerController(AlarmController& alarmController, uint16_t port = 80);
+
+  void begin(bool enableWebServer);
+  void update();
+  bool isStarted() const;
+  WebServer& server();
+
+ private:
+  bool ensureInternalFsMounted();
+  void serveFile(const char* path, const char* notFoundMessage);
+  void handleIndexPage();
+  void handleAlarmPage();
+  void setupRoutes();
+
+  AlarmController& alarmController_;
+  WebServer webServer_;
+  uint16_t port_;
+  bool started_ = false;
+  bool internalFsMounted_ = false;
+};
