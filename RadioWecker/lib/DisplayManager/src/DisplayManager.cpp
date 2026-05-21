@@ -20,7 +20,13 @@ uint8_t DisplayManager::brightness() const {
 
 void DisplayManager::showTimeHHMM(int timeValue) {
   display_.colonOn();
-  display_.display(timeValue, false, true);
+  char hhmm[5];
+  snprintf(hhmm, sizeof(hhmm), "%04d", timeValue);
+  String text(hhmm);
+  if (text.length() == 4 && text.charAt(0) == '0') {
+    text.setCharAt(0, ' ');
+  }
+  display_.display(text, false, false);
 }
 
 void DisplayManager::showRtcFailure() {
