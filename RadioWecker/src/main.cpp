@@ -26,6 +26,7 @@ ClockController clockController(RTC_SQW_PIN,
 SdController sdController(SD_SPI_CS_PIN, SD_SPI_SCK_PIN, SD_SPI_MISO_PIN, SD_SPI_MOSI_PIN, SD_SPI_FREQUENCY_HZ);
 AlarmController alarmController(sdController);
 GeneralConfigController generalConfigController(clockController,
+                                                sdController,
                                                 displayManager,
                                                 RTC_TIMEZONE_POSIX_DEFAULT,
                                                 RTC_TIME_OFFSET_MINUTES_DEFAULT,
@@ -37,7 +38,8 @@ SerialController serialController(clockController, sdController, alarmController
 void setup() {
   Serial.begin(115200);
 
-  generalConfigController.loadFromLittleFs();
+  sdController.initialize();
+  generalConfigController.loadFromStorage();
 
   displayManager.begin(generalConfigController.brightness());
   onboardLed.begin();
@@ -57,7 +59,6 @@ void setup() {
 
   clockController.begin();
 
-  sdController.initialize();
   if (sdController.isReady()) {
     displayManager.showSdSelfTestResult(sdController.selfTestPassed());
   } else {

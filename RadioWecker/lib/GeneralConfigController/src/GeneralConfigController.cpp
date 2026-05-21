@@ -4,14 +4,18 @@
 #include <ClockController.h>
 #include <DisplayManager.h>
 #include <LittleFS.h>
+#include <SD.h>
+#include <SdController.h>
 #include <WebServer.h>
 
 GeneralConfigController::GeneralConfigController(ClockController& clockController,
+                                                 SdController& sdController,
                                                  DisplayManager& displayManager,
                                                  const char* defaultTimezonePosix,
                                                  int16_t defaultTimeOffsetMinutes,
                                                  uint8_t defaultBrightness)
     : clockController_(clockController),
+      sdController_(sdController),
       displayManager_(displayManager),
       timezonePosix_(defaultTimezonePosix),
       timeOffsetMinutes_(defaultTimeOffsetMinutes),
@@ -33,30 +37,11 @@ bool GeneralConfigController::isValidConfig(const String& timezone, int offsetMi
   return timezone.length() > 0 && offsetMinutes >= -720 && offsetMinutes <= 840 && brightness >= 0 && brightness <= 7;
 }
 
-void GeneralConfigController::loadFromLittleFs() {
-  timezonePosix_ = defaultTimezonePosix_;
-  timeOffsetMinutes_ = defaultTimeOffsetMinutes_;
-  brightness_ = defaultBrightness_;
-
-  if (!ensureInternalFsMounted()) {
-    return;
-  }
-
-  if (!LittleFS.exists(GENERAL_CONFIG_FILE)) {
-    saveToLittleFs();
-    return;
-  }
-
-  File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_READ);
-  if (!file) {
-    return;
-  }
-
+bool GeneralConfigController::readConfigFromJsonFile(const String& jsonPayload, ConfigData& outConfig) const {
   StaticJsonDocument<384> doc;
-  const DeserializationError err = deserializeJson(doc, file);
-  file.close();
+  const DeserializationError err = deserializeJson(doc, jsonPayload);
   if (err) {
-    return;
+    return false;
   }
 
   const String timezone = doc["timezone"] | defaultTimezonePosix_;
@@ -64,12 +49,76 @@ void GeneralConfigController::loadFromLittleFs() {
   const int brightness = doc["brightness"] | defaultBrightness_;
 
   if (!isValidConfig(timezone, offsetMinutes, brightness)) {
+    return false;
+  }
+
+  outConfig.timezonePosix = timezone;
+  outConfig.timeOffsetMinutes = static_cast<int16_t>(offsetMinutes);
+  outConfig.brightness = static_cast<uint8_t>(brightness);
+  return true;
+}
+
+bool GeneralConfigController::readFromLittleFs(ConfigData& outConfig) {
+  if (!ensureInternalFsMounted()) {
+    return false;
+  }
+
+  if (!LittleFS.exists(GENERAL_CONFIG_FILE)) {
+    return false;
+  }
+
+  File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_READ);
+  if (!file) {
+    return false;
+  }
+
+  const String payload = file.readString();
+  file.close();
+  return readConfigFromJsonFile(payload, outConfig);
+}
+
+bool GeneralConfigController::readFromSdCard(ConfigData& outConfig) {
+  if (!sdController_.isReady()) {
+    return false;
+  }
+
+  if (!SD.exists(GENERAL_CONFIG_FILE)) {
+    return false;
+  }
+
+  File file = SD.open(GENERAL_CONFIG_FILE, FILE_READ);
+  if (!file) {
+    return false;
+  }
+
+  const String payload = file.readString();
+  file.close();
+  return readConfigFromJsonFile(payload, outConfig);
+}
+
+void GeneralConfigController::loadFromStorage() {
+  timezonePosix_ = defaultTimezonePosix_;
+  timeOffsetMinutes_ = defaultTimeOffsetMinutes_;
+  brightness_ = defaultBrightness_;
+
+  ConfigData config;
+  if (readFromSdCard(config)) {
+    timezonePosix_ = config.timezonePosix;
+    timeOffsetMinutes_ = config.timeOffsetMinutes;
+    brightness_ = config.brightness;
+    saveToLittleFs();
     return;
   }
 
-  timezonePosix_ = timezone;
-  timeOffsetMinutes_ = static_cast<int16_t>(offsetMinutes);
-  brightness_ = static_cast<uint8_t>(brightness);
+  if (readFromLittleFs(config)) {
+    timezonePosix_ = config.timezonePosix;
+    timeOffsetMinutes_ = config.timeOffsetMinutes;
+    brightness_ = config.brightness;
+    saveToSdCard();
+    return;
+  }
+
+  saveToAllStorages();
 }
 
 void GeneralConfigController::applyToClock() {
@@ -102,6 +151,36 @@ bool GeneralConfigController::saveToLittleFs() {
   const bool ok = serializeJson(doc, file) > 0;
   file.close();
   return ok;
+}
+
+bool GeneralConfigController::saveToSdCard() {
+  if (!sdController_.isReady()) {
+    return false;
+  }
+
+  if (SD.exists(GENERAL_CONFIG_FILE) && !SD.remove(GENERAL_CONFIG_FILE)) {
+    return false;
+  }
+
+  StaticJsonDocument<384> doc;
+  doc["timezone"] = timezonePosix_;
+  doc["timeOffsetMinutes"] = timeOffsetMinutes_;
+  doc["brightness"] = brightness_;
+
+  File file = SD.open(GENERAL_CONFIG_FILE, FILE_WRITE);
+  if (!file) {
+    return false;
+  }
+
+  const bool ok = serializeJson(doc, file) > 0;
+  file.close();
+  return ok;
+}
+
+bool GeneralConfigController::saveToAllStorages() {
+  const bool littleFsOk = saveToLittleFs();
+  const bool sdOk = sdController_.isReady() ? saveToSdCard() : true;
+  return littleFsOk && sdOk;
 }
 
 void GeneralConfigController::handleGetConfig(WebServer& webServer) {
@@ -149,7 +228,7 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   applyToClock();
   applyToDisplay();
 
-  if (!saveToLittleFs()) {
+  if (!saveToAllStorages()) {
     webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to persist configuration\"}");
     return;
   }

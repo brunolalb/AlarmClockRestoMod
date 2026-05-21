@@ -4,17 +4,19 @@
 
 class ClockController;
 class DisplayManager;
+class SdController;
 class WebServer;
 
 class GeneralConfigController {
  public:
   explicit GeneralConfigController(ClockController& clockController,
+                                   SdController& sdController,
                                    DisplayManager& displayManager,
                                    const char* defaultTimezonePosix,
                                    int16_t defaultTimeOffsetMinutes,
                                    uint8_t defaultBrightness);
 
-  void loadFromLittleFs();
+  void loadFromStorage();
   void applyToClock();
   void applyToDisplay();
 
@@ -24,13 +26,25 @@ class GeneralConfigController {
   uint8_t brightness() const;
 
  private:
+  struct ConfigData {
+    String timezonePosix;
+    int16_t timeOffsetMinutes;
+    uint8_t brightness;
+  };
+
   bool ensureInternalFsMounted();
+  bool readFromLittleFs(ConfigData& outConfig);
+  bool readFromSdCard(ConfigData& outConfig);
+  bool readConfigFromJsonFile(const String& jsonPayload, ConfigData& outConfig) const;
+  bool saveToAllStorages();
   bool saveToLittleFs();
+  bool saveToSdCard();
   bool isValidConfig(const String& timezone, int offsetMinutes, int brightness) const;
 
   static constexpr const char* GENERAL_CONFIG_FILE = "/general_config.json";
 
   ClockController& clockController_;
+  SdController& sdController_;
   DisplayManager& displayManager_;
 
   String timezonePosix_;
