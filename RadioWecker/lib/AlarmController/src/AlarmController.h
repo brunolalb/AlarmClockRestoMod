@@ -34,8 +34,13 @@ class AlarmController {
   bool isValidTimeString(const String& timeValue) const;
   bool parseAlarmFromJson(JsonVariantConst alarmVariant, AlarmSettings& outSettings) const;
   void appendAlarmToJsonArray(const AlarmSettings& settings, JsonArray& alarms) const;
+  bool parseAlarmSettingsDocument(JsonVariantConst root, AlarmSettings* settings, uint8_t& count) const;
 
-  bool saveAlarmSettings(const AlarmSettings* settings, uint8_t count);
+  bool saveAlarmSettingsToSd(const AlarmSettings* settings, uint8_t count);
+  bool saveAlarmSettingsToLittleFs(const AlarmSettings* settings, uint8_t count);
+  bool saveAlarmSettingsToAll(const AlarmSettings* settings, uint8_t count);
+  bool loadAlarmSettingsFromSd(AlarmSettings* settings, uint8_t& count);
+  bool loadAlarmSettingsFromLittleFs(AlarmSettings* settings, uint8_t& count);
   bool loadAlarmSettings(AlarmSettings* settings, uint8_t& count);
   bool saveCurrentAlarmSettings();
 

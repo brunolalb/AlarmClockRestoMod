@@ -1,6 +1,7 @@
 #include "AlarmController.h"
 
 #include <ArduinoJson.h>
+#include <LittleFS.h>
 #include <SD.h>
 #include <WebServer.h>
 
@@ -12,15 +13,10 @@ AlarmController::AlarmController(SdController& sdController)
 void AlarmController::begin() {
   initialized_ = false;
 
-  if (sdController_.isReady()) {
-    if (!loadAlarmSettings(alarmSettings_, alarmCount_)) {
-      setDefaultAlarmSettings(alarmSettings_[0]);
-      alarmCount_ = 1;
-      saveCurrentAlarmSettings();
-    }
-  } else {
+  if (!loadAlarmSettings(alarmSettings_, alarmCount_)) {
     setDefaultAlarmSettings(alarmSettings_[0]);
     alarmCount_ = 1;
+    saveCurrentAlarmSettings();
   }
 
   initialized_ = true;
@@ -114,7 +110,27 @@ void AlarmController::appendAlarmToJsonArray(const AlarmSettings& settings, Json
   alarmObj["musicPath"] = settings.musicPath;
 }
 
-bool AlarmController::saveAlarmSettings(const AlarmSettings* settings, uint8_t count) {
+bool AlarmController::parseAlarmSettingsDocument(JsonVariantConst root,
+                                                 AlarmSettings* settings,
+                                                 uint8_t& count) const {
+  JsonArrayConst alarms = root["alarms"].as<JsonArrayConst>();
+  if (alarms.isNull() || alarms.size() > MAX_ALARMS) {
+    return false;
+  }
+
+  uint8_t parsedCount = 0;
+  for (JsonVariantConst alarmVariant : alarms) {
+    if (!parseAlarmFromJson(alarmVariant, settings[parsedCount])) {
+      return false;
+    }
+    parsedCount++;
+  }
+
+  count = parsedCount;
+  return true;
+}
+
+bool AlarmController::saveAlarmSettingsToSd(const AlarmSettings* settings, uint8_t count) {
   if (!sdController_.isReady()) {
     return false;
   }
@@ -139,15 +155,44 @@ bool AlarmController::saveAlarmSettings(const AlarmSettings* settings, uint8_t c
   return ok;
 }
 
-bool AlarmController::loadAlarmSettings(AlarmSettings* settings, uint8_t& count) {
+bool AlarmController::saveAlarmSettingsToLittleFs(const AlarmSettings* settings, uint8_t count) {
+  if (!LittleFS.begin(true)) {
+    return false;
+  }
+
+  if (LittleFS.exists(ALARM_FILE) && !LittleFS.remove(ALARM_FILE)) {
+    return false;
+  }
+
+  StaticJsonDocument<4096> doc;
+  JsonArray alarms = doc.createNestedArray("alarms");
+  for (uint8_t i = 0; i < count; ++i) {
+    appendAlarmToJsonArray(settings[i], alarms);
+  }
+
+  File file = LittleFS.open(ALARM_FILE, FILE_WRITE);
+  if (!file) {
+    return false;
+  }
+
+  const bool ok = serializeJson(doc, file) > 0;
+  file.close();
+  return ok;
+}
+
+bool AlarmController::saveAlarmSettingsToAll(const AlarmSettings* settings, uint8_t count) {
+  const bool littleFsOk = saveAlarmSettingsToLittleFs(settings, count);
+  const bool sdOk = sdController_.isReady() ? saveAlarmSettingsToSd(settings, count) : true;
+  return littleFsOk && sdOk;
+}
+
+bool AlarmController::loadAlarmSettingsFromSd(AlarmSettings* settings, uint8_t& count) {
   if (!sdController_.isReady()) {
     return false;
   }
 
   if (!SD.exists(ALARM_FILE)) {
-    setDefaultAlarmSettings(settings[0]);
-    count = 1;
-    return saveAlarmSettings(settings, count);
+    return false;
   }
 
   File file = SD.open(ALARM_FILE, FILE_READ);
@@ -162,34 +207,51 @@ bool AlarmController::loadAlarmSettings(AlarmSettings* settings, uint8_t& count)
     return false;
   }
 
-  JsonArray alarms = doc["alarms"].as<JsonArray>();
-  if (!alarms.isNull()) {
-    if (alarms.size() > MAX_ALARMS) {
-      return false;
-    }
+  return parseAlarmSettingsDocument(doc.as<JsonVariantConst>(), settings, count);
+}
 
-    uint8_t parsedCount = 0;
-    for (JsonVariant alarmVariant : alarms) {
-      if (!parseAlarmFromJson(alarmVariant, settings[parsedCount])) {
-        return false;
-      }
-      parsedCount++;
-    }
-
-    count = parsedCount;
-    return true;
-  }
-
-  if (!parseAlarmFromJson(doc.as<JsonVariantConst>(), settings[0])) {
+bool AlarmController::loadAlarmSettingsFromLittleFs(AlarmSettings* settings, uint8_t& count) {
+  if (!LittleFS.begin(true)) {
     return false;
   }
 
-  count = 1;
-  return saveAlarmSettings(settings, count);
+  if (!LittleFS.exists(ALARM_FILE)) {
+    return false;
+  }
+
+  File file = LittleFS.open(ALARM_FILE, FILE_READ);
+  if (!file) {
+    return false;
+  }
+
+  StaticJsonDocument<4096> doc;
+  const DeserializationError err = deserializeJson(doc, file);
+  file.close();
+  if (err) {
+    return false;
+  }
+
+  return parseAlarmSettingsDocument(doc.as<JsonVariantConst>(), settings, count);
+}
+
+bool AlarmController::loadAlarmSettings(AlarmSettings* settings, uint8_t& count) {
+  if (loadAlarmSettingsFromSd(settings, count)) {
+    saveAlarmSettingsToLittleFs(settings, count);
+    return true;
+  }
+
+  if (loadAlarmSettingsFromLittleFs(settings, count)) {
+    if (sdController_.isReady()) {
+      saveAlarmSettingsToSd(settings, count);
+    }
+    return true;
+  }
+
+  return false;
 }
 
 bool AlarmController::saveCurrentAlarmSettings() {
-  return saveAlarmSettings(alarmSettings_, alarmCount_);
+  return saveAlarmSettingsToAll(alarmSettings_, alarmCount_);
 }
 
 void AlarmController::sendAlarmConfigJson(WebServer& webServer) {
@@ -243,7 +305,7 @@ void AlarmController::handleSaveAlarmConfig(WebServer& webServer) {
     nextCount++;
   }
 
-  if (!saveAlarmSettings(next, nextCount)) {
+  if (!saveAlarmSettingsToAll(next, nextCount)) {
     webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to save alarm\"}");
     return;
   }
