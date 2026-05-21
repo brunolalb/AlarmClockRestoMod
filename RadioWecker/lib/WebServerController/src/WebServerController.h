@@ -24,7 +24,7 @@ class WebServerController {
 
  private:
   bool ensureInternalFsMounted();
-  void serveFile(const char* path, const char* notFoundMessage);
+  void serveFile(const char* path, const char* notFoundMessage, const char* contentType = "text/html");
   void handleIndexPage();
   void handleAlarmPage();
   void handleConfigPage();

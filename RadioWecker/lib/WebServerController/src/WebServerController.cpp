@@ -100,7 +100,7 @@ bool WebServerController::ensureInternalFsMounted() {
   return internalFsMounted_;
 }
 
-void WebServerController::serveFile(const char* path, const char* notFoundMessage) {
+void WebServerController::serveFile(const char* path, const char* notFoundMessage, const char* contentType) {
   if (!ensureInternalFsMounted()) {
     webServer_.send(500, "text/plain", "LittleFS mount failed");
     return;
@@ -112,7 +112,7 @@ void WebServerController::serveFile(const char* path, const char* notFoundMessag
     return;
   }
 
-  webServer_.streamFile(page, "text/html");
+  webServer_.streamFile(page, contentType);
   page.close();
 }
 
@@ -192,6 +192,8 @@ void WebServerController::setupRoutes() {
   webServer_.on("/alarm", HTTP_GET, [this]() { handleAlarmPage(); });
   webServer_.on("/config", HTTP_GET, [this]() { handleConfigPage(); });
   webServer_.on("/status", HTTP_GET, [this]() { handleStatusPage(); });
+  webServer_.on("/common.css", HTTP_GET,
+                [this]() { serveFile("/common.css", "common.css not found", "text/css"); });
   webServer_.on("/api/status", HTTP_GET, [this]() { handleGetStatus(); });
   webServer_.on("/api/reboot", HTTP_POST, [this]() { handleReboot(); });
   webServer_.on("/api/config", HTTP_GET, [this]() { generalConfigController_.handleGetConfig(webServer_); });

@@ -4,44 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RadioWecker General Config</title>
+    <link rel="stylesheet" href="/common.css" />
     <style>
-      :root {
-        --bg: #10131a;
-        --card: #161b24;
-        --line: #2a3140;
-        --text: #e9edf7;
-        --muted: #9aa4b8;
-        --accent: #7ecbff;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Arial, sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at 15% 15%, #1f2636 0, transparent 35%),
-          radial-gradient(circle at 85% 0%, #2a1e2f 0, transparent 32%),
-          linear-gradient(160deg, #10131a 0%, #0b0d12 100%);
-      }
-
-      .wrap {
-        max-width: 520px;
-        margin: 0 auto;
-        padding: 20px 14px 28px;
-      }
-
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 16px;
-      }
-
       h1 {
         margin: 0 0 8px;
       }
@@ -51,65 +15,7 @@
       }
 
       .field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
         margin-top: 12px;
-      }
-
-      input,
-      select {
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        background: #0f141d;
-        color: var(--text);
-        padding: 10px 11px;
-        font: inherit;
-      }
-
-      .actions {
-        margin-top: 14px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-
-      button {
-        border: 0;
-        border-radius: 9px;
-        padding: 10px 14px;
-        background: var(--accent);
-        color: #001625;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      a.home-btn {
-        display: inline-block;
-        margin-top: 10px;
-        padding: 10px 14px;
-        border-radius: 9px;
-        background: #7ecbff;
-        color: #001625;
-        font-weight: 700;
-        text-decoration: none;
-      }
-
-      a.home-btn:hover {
-        filter: brightness(0.95);
-      }
-
-      .status {
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .status.ok {
-        color: #4fd18b;
-      }
-
-      .status.err {
-        color: #ff7777;
       }
 
       .hint {
@@ -129,7 +35,7 @@
     </style>
   </head>
   <body>
-    <main class="wrap">
+    <main class="wrap wrap--narrow">
       <section class="card">
         <h1>General Configuration</h1>
         <p>Configure timezone, time offset, display brightness, and FTP access.</p>

@@ -4,34 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RadioWecker - Status</title>
+    <link rel="stylesheet" href="/common.css" />
     <style>
-      :root {
-        --bg0: #0d1117;
-        --bg1: #121821;
-        --card: #171f2b;
-        --line: #2b3647;
-        --txt: #e7eefc;
-        --muted: #a8b4cb;
-        --ok: #47d18c;
-        --warn: #ffcb5a;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Arial, sans-serif;
-        color: var(--txt);
-        background:
-          radial-gradient(circle at 10% 0%, #21344f 0, transparent 32%),
-          radial-gradient(circle at 95% 90%, #2b1e38 0, transparent 34%),
-          linear-gradient(170deg, var(--bg1) 0%, var(--bg0) 100%);
-      }
-
-      .wrap {
-        width: min(920px, 92vw);
-        margin: 24px auto;
-      }
-
       .head {
         display: flex;
         justify-content: space-between;
@@ -44,31 +18,10 @@
         font-size: 1.6rem;
       }
 
-      .head a.home-btn {
-        display: inline-block;
-        padding: 10px 14px;
-        border-radius: 9px;
-        background: #7ecbff;
-        color: #001625;
-        font-weight: 700;
-        text-decoration: none;
-      }
-
-      .head a.home-btn:hover {
-        filter: brightness(0.95);
-      }
-
       .grid {
         display: grid;
         gap: 12px;
         grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      }
-
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 12px;
       }
 
       .title {
@@ -93,13 +46,13 @@
         border: 1px solid transparent;
       }
 
-      .ok {
+      .badge.ok {
         color: var(--ok);
         border-color: color-mix(in oklab, var(--ok) 40%, transparent);
         background: color-mix(in oklab, var(--ok) 14%, transparent);
       }
 
-      .warn {
+      .badge.warn {
         color: var(--warn);
         border-color: color-mix(in oklab, var(--warn) 40%, transparent);
         background: color-mix(in oklab, var(--warn) 14%, transparent);
@@ -113,7 +66,7 @@
     </style>
   </head>
   <body>
-    <main class="wrap">
+    <main class="wrap wrap--wide">
       <div class="head">
         <h1>Device Status</h1>
         <a class="home-btn" href="/">Back to Home</a>
