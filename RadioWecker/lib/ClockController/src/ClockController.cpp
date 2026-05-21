@@ -1,6 +1,7 @@
 #include "ClockController.h"
 
 #include <I2C_RTC.h>
+#include <Wire.h>
 
 #define CLOCK_CONTROLLER_USE_DS3231 1
 #if CLOCK_CONTROLLER_USE_DS3231
@@ -15,10 +16,15 @@ namespace {
 RtcChip rtc;
 }
 
-ClockController::ClockController(uint8_t rtcSqwPin)
-    : rtcSqwPin_(rtcSqwPin) {}
+ClockController::ClockController(uint8_t rtcSqwPin, uint8_t i2cSdaPin, uint8_t i2cSclPin, uint32_t i2cFrequencyHz)
+    : rtcSqwPin_(rtcSqwPin),
+      i2cSdaPin_(i2cSdaPin),
+      i2cSclPin_(i2cSclPin),
+      i2cFrequencyHz_(i2cFrequencyHz) {}
 
 bool ClockController::begin() {
+  Wire.begin(i2cSdaPin_, i2cSclPin_, i2cFrequencyHz_);
+
   ready_ = rtc.begin() != 0;
   timeValid_ = false;
 

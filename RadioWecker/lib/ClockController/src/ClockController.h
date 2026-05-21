@@ -4,7 +4,7 @@
 
 class ClockController {
  public:
-  ClockController(uint8_t rtcSqwPin);
+  ClockController(uint8_t rtcSqwPin, uint8_t i2cSdaPin, uint8_t i2cSclPin, uint32_t i2cFrequencyHz = 100000);
   bool begin();
   void update();
 
@@ -23,6 +23,9 @@ class ClockController {
   static ClockController* activeInstance_;
 
   uint8_t rtcSqwPin_;
+  uint8_t i2cSdaPin_;
+  uint8_t i2cSclPin_;
+  uint32_t i2cFrequencyHz_;
 
   bool ready_ = false;
   bool timeValid_ = false;

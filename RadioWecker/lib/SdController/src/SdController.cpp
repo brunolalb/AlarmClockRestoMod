@@ -2,8 +2,18 @@
 
 #include <SD.h>
 
-SdController::SdController(uint8_t csPin)
-    : csPin_(csPin) {}
+SdController::SdController(uint8_t csPin,
+                           uint8_t spiSckPin,
+                           uint8_t spiMisoPin,
+                           uint8_t spiMosiPin,
+                           uint32_t spiFrequencyHz,
+                           SPIClass& spiBus)
+    : csPin_(csPin),
+      spiSckPin_(spiSckPin),
+      spiMisoPin_(spiMisoPin),
+      spiMosiPin_(spiMosiPin),
+      spiFrequencyHz_(spiFrequencyHz),
+      spiBus_(&spiBus) {}
 
 bool SdController::runSelfTest() {
   static const char* kTestPath = "/sdtest.txt";
@@ -33,7 +43,8 @@ bool SdController::runSelfTest() {
 }
 
 SdController::InitResult SdController::initialize() {
-  ready_ = SD.begin(csPin_);
+  spiBus_->begin(spiSckPin_, spiMisoPin_, spiMosiPin_, csPin_);
+  ready_ = SD.begin(csPin_, *spiBus_, spiFrequencyHz_);
   selfTestPassed_ = false;
 
   if (!ready_) {

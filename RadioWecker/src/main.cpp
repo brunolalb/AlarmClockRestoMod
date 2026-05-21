@@ -13,8 +13,8 @@
 
 DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
-ClockController clockController(RTC_SQW_PIN);
-SdController sdController(SD_CS_PIN);
+ClockController clockController(RTC_SQW_PIN, RTC_I2C_SDA_PIN, RTC_I2C_SCL_PIN, RTC_I2C_FREQUENCY_HZ);
+SdController sdController(SD_SPI_CS_PIN, SD_SPI_SCK_PIN, SD_SPI_MISO_PIN, SD_SPI_MOSI_PIN, SD_SPI_FREQUENCY_HZ);
 AlarmController alarmController(sdController);
 WebServerController webServerController(alarmController);
 WiFiManager tzapuWifiManager;
