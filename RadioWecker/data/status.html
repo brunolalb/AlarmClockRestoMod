@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RadioWecker - Status</title>
+    <style>
+      :root {
+        --bg0: #0d1117;
+        --bg1: #121821;
+        --card: #171f2b;
+        --line: #2b3647;
+        --txt: #e7eefc;
+        --muted: #a8b4cb;
+        --ok: #47d18c;
+        --warn: #ffcb5a;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        color: var(--txt);
+        background:
+          radial-gradient(circle at 10% 0%, #21344f 0, transparent 32%),
+          radial-gradient(circle at 95% 90%, #2b1e38 0, transparent 34%),
+          linear-gradient(170deg, var(--bg1) 0%, var(--bg0) 100%);
+      }
+
+      .wrap {
+        width: min(920px, 92vw);
+        margin: 24px auto;
+      }
+
+      .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+
+      .head h1 {
+        margin: 0;
+        font-size: 1.6rem;
+      }
+
+      .head a {
+        color: #7ecbff;
+        text-decoration: none;
+        font-weight: bold;
+      }
+
+      .head a:hover {
+        text-decoration: underline;
+      }
+
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+      }
+
+      .title {
+        margin: 0 0 8px;
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .value {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        border: 1px solid transparent;
+      }
+
+      .ok {
+        color: var(--ok);
+        border-color: color-mix(in oklab, var(--ok) 40%, transparent);
+        background: color-mix(in oklab, var(--ok) 14%, transparent);
+      }
+
+      .warn {
+        color: var(--warn);
+        border-color: color-mix(in oklab, var(--warn) 40%, transparent);
+        background: color-mix(in oklab, var(--warn) 14%, transparent);
+      }
+
+      .foot {
+        color: var(--muted);
+        margin-top: 10px;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="head">
+        <h1>Device Status</h1>
+        <a href="/">Back</a>
+      </div>
+
+      <section class="grid">
+        <article class="card">
+          <h2 class="title">WiFi</h2>
+          <p class="value" id="wifi">-</p>
+          <p class="foot" id="wifiMeta"></p>
+        </article>
+
+        <article class="card">
+          <h2 class="title">Web Server</h2>
+          <p class="value" id="webserver">-</p>
+        </article>
+
+        <article class="card">
+          <h2 class="title">Clock</h2>
+          <p class="value" id="clock">-</p>
+          <span class="badge" id="ntp">-</span>
+        </article>
+
+        <article class="card">
+          <h2 class="title">SD Card</h2>
+          <p class="value" id="sd">-</p>
+          <p class="foot" id="sdMeta"></p>
+        </article>
+
+        <article class="card">
+          <h2 class="title">Alarm</h2>
+          <p class="value" id="alarm">-</p>
+          <p class="foot" id="alarmMeta"></p>
+        </article>
+      </section>
+
+      <p class="foot" id="updated">Last update: -</p>
+    </main>
+
+    <script>
+      function setText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      }
+
+      function setNtpBadge(status) {
+        const el = document.getElementById("ntp");
+        if (!el) return;
+        el.textContent = "NTP: " + status;
+        el.className = "badge " + (status === "sync" ? "ok" : "warn");
+      }
+
+      async function refresh() {
+        try {
+          const r = await fetch("/api/status", { cache: "no-store" });
+          if (!r.ok) throw new Error("status request failed");
+          const s = await r.json();
+
+          const wifiLabel = s.wifiConnected ? "connected" : "disconnected";
+          setText("wifi", wifiLabel);
+          if (s.wifiConnected) {
+            setText("wifiMeta", "SSID: " + s.wifiSsid + " | RSSI: " + s.wifiRssi + " dBm | IP: " + s.ip);
+          } else {
+            setText("wifiMeta", "No network connection");
+          }
+
+          setText("webserver", s.webserver || "-");
+          setText("clock", s.clock || "-");
+          setNtpBadge(s.ntp || "not sync");
+
+          setText("sd", s.sd || "-");
+          setText("sdMeta", "Free: " + (s.sdFree || "0 B") + " / Total: " + (s.sdTotal || "0 B"));
+
+          setText("alarm", s.alarm || "-");
+          setText("alarmMeta", "Configured alarms: " + (s.alarmCount ?? 0));
+
+          setText("updated", "Last update: " + new Date().toLocaleTimeString());
+        } catch (err) {
+          setText("updated", "Last update failed");
+        }
+      }
+
+      refresh();
+      setInterval(refresh, 3000);
+    </script>
+  </body>
+</html>

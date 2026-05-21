@@ -31,7 +31,7 @@ GeneralConfigController generalConfigController(clockController,
                                                 RTC_TIMEZONE_POSIX_DEFAULT,
                                                 RTC_TIME_OFFSET_MINUTES_DEFAULT,
                                                 DISPLAY_BRIGHTNESS_DEFAULT);
-WebServerController webServerController(alarmController, generalConfigController);
+WebServerController webServerController(alarmController, clockController, sdController, generalConfigController);
 WiFiManager tzapuWifiManager;
 SerialController serialController(clockController, sdController, alarmController, webServerController);
 
