@@ -11,6 +11,26 @@ String toCommandKey(const String& source) {
   key.toLowerCase();
   return key;
 }
+
+String formatBytes(uint64_t bytes) {
+  const double kib = 1024.0;
+  const double mib = kib * 1024.0;
+  const double gib = mib * 1024.0;
+
+  if (bytes >= static_cast<uint64_t>(gib)) {
+    return String(bytes / gib, 2) + " GiB";
+  }
+
+  if (bytes >= static_cast<uint64_t>(mib)) {
+    return String(bytes / mib, 2) + " MiB";
+  }
+
+  if (bytes >= static_cast<uint64_t>(kib)) {
+    return String(bytes / kib, 2) + " KiB";
+  }
+
+  return String(static_cast<unsigned long>(bytes)) + " B";
+}
 }
 
 SerialController::SerialController(ClockController& clockController,
@@ -132,10 +152,16 @@ void SerialController::printModuleStatus() const {
   Serial.print("  sd: ");
   if (!sdController_.isReady()) {
     Serial.println("not ready");
-  } else if (!sdController_.selfTestPassed()) {
-    Serial.println("ready, self-test failed");
   } else {
-    Serial.println("ready, self-test passed");
+    Serial.print("ready");
+  }
+  if (sdController_.isReady()) {
+    Serial.print(", free ");
+    Serial.print(formatBytes(sdController_.availableBytes()));
+    Serial.print("/");
+    Serial.println(formatBytes(sdController_.totalBytes()));
+  } else {
+    Serial.println();
   }
 
   Serial.print("  alarm: ");

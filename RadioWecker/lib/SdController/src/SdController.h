@@ -19,6 +19,9 @@ class SdController {
   InitResult initialize();
   bool isReady() const;
   bool selfTestPassed() const;
+  uint64_t totalBytes() const;
+  uint64_t usedBytes() const;
+  uint64_t availableBytes() const;
 
  private:
   bool runSelfTest();

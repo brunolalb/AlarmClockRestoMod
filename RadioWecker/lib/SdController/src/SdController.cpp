@@ -62,3 +62,25 @@ bool SdController::isReady() const {
 bool SdController::selfTestPassed() const {
   return selfTestPassed_;
 }
+
+uint64_t SdController::totalBytes() const {
+  if (!ready_) {
+    return 0;
+  }
+
+  return SD.totalBytes();
+}
+
+uint64_t SdController::usedBytes() const {
+  if (!ready_) {
+    return 0;
+  }
+
+  return SD.usedBytes();
+}
+
+uint64_t SdController::availableBytes() const {
+  const uint64_t total = totalBytes();
+  const uint64_t used = usedBytes();
+  return used <= total ? (total - used) : 0;
+}
