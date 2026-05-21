@@ -6,6 +6,7 @@ DisplayManager::DisplayManager(uint8_t clkPin, uint8_t dioPin)
 void DisplayManager::begin(uint8_t brightness) {
   display_.init();
   setBrightness(brightness);
+  display_.clearScreen();
   display_.colonOff();
 }
 
