@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RadioWecker Sound Player</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+      .hero {
+        margin-bottom: 14px;
+      }
+
+      .layout {
+        display: grid;
+        gap: 14px;
+      }
+
+      .songs {
+        max-height: 320px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #111723;
+      }
+
+      .song-btn {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        border-radius: 0;
+        padding: 10px 12px;
+        background: transparent;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .song-btn:last-child {
+        border-bottom: 0;
+      }
+
+      .song-btn.active {
+        background: #2a1f18;
+        color: #ffd8be;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .range-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      input[type="range"] {
+        width: 100%;
+      }
+
+      .meta {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .radio-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .radio-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="hero">
+        <h1>Sound Player</h1>
+        <p>Play music files from the SD card.</p>
+        <a class="home-btn" href="/">Back to Home</a>
+      </section>
+
+      <section class="card" style="margin-bottom: 14px">
+        <div class="actions" style="margin-top: 0">
+          <button id="refreshBtn" type="button">Refresh List</button>
+          <button id="playBtn" class="secondary" type="button">Play Selected</button>
+          <button id="stopBtn" class="danger" type="button">Stop</button>
+          <span id="status" class="status">Loading...</span>
+        </div>
+      </section>
+
+      <section class="card" style="margin-bottom: 14px">
+        <div class="range-row">
+          <label for="volume">Volume</label>
+          <strong id="volumeLabel">12</strong>
+        </div>
+        <input id="volume" type="range" min="0" max="21" value="12" />
+        <p class="meta" id="playbackMeta">No track selected.</p>
+      </section>
+
+      <section class="card" style="margin-bottom: 14px">
+        <div class="radio-row">
+          <label for="radioUrl">Internet Radio URL</label>
+          <input id="radioUrl" type="text" placeholder="https://example.com/stream" />
+          <div class="radio-actions">
+            <button id="playRadioBtn" type="button">Play Radio URL</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card layout">
+        <h2 style="margin: 0">Tracks</h2>
+        <div id="songs" class="songs"></div>
+      </section>
+    </main>
+
+    <script>
+      const songsEl = document.getElementById("songs");
+      const statusEl = document.getElementById("status");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const playBtn = document.getElementById("playBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const volumeEl = document.getElementById("volume");
+      const volumeLabelEl = document.getElementById("volumeLabel");
+      const playbackMetaEl = document.getElementById("playbackMeta");
+      const radioUrlEl = document.getElementById("radioUrl");
+      const playRadioBtn = document.getElementById("playRadioBtn");
+
+      let files = [];
+      let selectedTrack = "";
+
+      function setStatus(text, type = "") {
+        statusEl.textContent = text;
+        statusEl.className = "status" + (type ? " " + type : "");
+      }
+
+      function secondsToClock(sec) {
+        const total = Number.isFinite(sec) ? Math.max(0, Math.floor(sec)) : 0;
+        const min = Math.floor(total / 60);
+        const rem = total % 60;
+        return String(min).padStart(2, "0") + ":" + String(rem).padStart(2, "0");
+      }
+
+      function renderSongs() {
+        songsEl.innerHTML = "";
+        if (!files.length) {
+          songsEl.innerHTML = '<p class="muted" style="padding:12px;margin:0">No music files found on SD card.</p>';
+          return;
+        }
+
+        files.forEach((file) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "song-btn" + (file === selectedTrack ? " active" : "");
+          btn.textContent = file;
+          btn.addEventListener("click", () => {
+            selectedTrack = file;
+            renderSongs();
+          });
+          songsEl.appendChild(btn);
+        });
+      }
+
+      async function loadMusicFiles() {
+        setStatus("Loading songs...", "");
+        try {
+          const response = await fetch("/api/music", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const result = await response.json();
+          files = Array.isArray(result) ? result : [];
+          if (selectedTrack && !files.includes(selectedTrack)) {
+            selectedTrack = "";
+          }
+          if (!selectedTrack && files.length > 0) {
+            selectedTrack = files[0];
+          }
+          renderSongs();
+          setStatus("Songs loaded", "ok");
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to load songs", "err");
+        }
+      }
+
+      async function refreshStatus() {
+        try {
+          const response = await fetch("/api/sound/status", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const s = await response.json();
+          volumeEl.value = Number.isFinite(s.volume) ? s.volume : 12;
+          volumeLabelEl.textContent = volumeEl.value;
+
+          const track = s.track || "-";
+          const state = s.playing ? "playing" : s.paused ? "paused" : "stopped";
+          playbackMetaEl.textContent =
+            "State: " +
+            state +
+            " | Track: " +
+            track +
+            " | " +
+            secondsToClock(s.positionSec) +
+            " / " +
+            secondsToClock(s.durationSec);
+
+          if (s.track && typeof s.track === "string") {
+            selectedTrack = s.track;
+            renderSongs();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      async function playSelected() {
+        if (!selectedTrack) {
+          setStatus("Select a track first", "err");
+          return;
+        }
+
+        setStatus("Starting playback...", "");
+        try {
+          const response = await fetch("/api/sound/play", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: selectedTrack }),
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Play failed");
+          }
+
+          setStatus("Playing " + selectedTrack, "ok");
+          await refreshStatus();
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to play track", "err");
+        }
+      }
+
+      async function stopPlayback() {
+        try {
+          const response = await fetch("/api/sound/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          if (!response.ok) {
+            throw new Error("Stop failed");
+          }
+          setStatus("Playback stopped", "ok");
+          await refreshStatus();
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to stop playback", "err");
+        }
+      }
+
+      async function playRadio() {
+        const url = (radioUrlEl.value || "").trim();
+        if (!url) {
+          setStatus("Enter a radio URL first", "err");
+          return;
+        }
+
+        setStatus("Starting radio stream...", "");
+        try {
+          const response = await fetch("/api/sound/radio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Radio start failed");
+          }
+
+          setStatus("Streaming radio", "ok");
+          await refreshStatus();
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to start radio", "err");
+        }
+      }
+
+      async function saveVolume() {
+        const volume = Number(volumeEl.value);
+        volumeLabelEl.textContent = String(volume);
+
+        try {
+          const response = await fetch("/api/sound/volume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ volume }),
+          });
+          if (!response.ok) {
+            throw new Error("Volume update failed");
+          }
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to set volume", "err");
+        }
+      }
+
+      refreshBtn.addEventListener("click", loadMusicFiles);
+      playBtn.addEventListener("click", playSelected);
+      stopBtn.addEventListener("click", stopPlayback);
+      volumeEl.addEventListener("change", saveVolume);
+      playRadioBtn.addEventListener("click", playRadio);
+
+      loadMusicFiles();
+      refreshStatus();
+      setInterval(refreshStatus, 1000);
+    </script>
+  </body>
+</html>

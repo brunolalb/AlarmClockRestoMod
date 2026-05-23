@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RadioWecker Upload</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+      .hero {
+        margin-bottom: 14px;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 8px;
+      }
+
+      .upload-row {
+        display: grid;
+        gap: 10px;
+      }
+
+      .file-input {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0f141d;
+        color: var(--ink);
+        padding: 10px;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap wrap--narrow">
+      <section class="hero">
+        <h1>Upload to SD Root</h1>
+        <p>Upload a file directly to the SD card root folder.</p>
+        <a class="home-btn" href="/">Back to Home</a>
+      </section>
+
+      <section class="card">
+        <div class="upload-row">
+          <label for="fileInput">Select file</label>
+          <input id="fileInput" class="file-input" type="file" />
+          <div class="actions">
+            <button id="uploadBtn" type="button">Upload File</button>
+            <span id="status" class="status">Waiting for file...</span>
+          </div>
+          <p id="result" class="meta">Target: SD root (/)</p>
+          <p class="hint">If a file with the same name exists, it will be replaced.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const fileInputEl = document.getElementById("fileInput");
+      const uploadBtnEl = document.getElementById("uploadBtn");
+      const statusEl = document.getElementById("status");
+      const resultEl = document.getElementById("result");
+
+      function setStatus(text, type = "") {
+        statusEl.textContent = text;
+        statusEl.className = "status" + (type ? " " + type : "");
+      }
+
+      uploadBtnEl.addEventListener("click", async () => {
+        if (!fileInputEl.files || fileInputEl.files.length === 0) {
+          setStatus("Select a file first", "err");
+          return;
+        }
+
+        const file = fileInputEl.files[0];
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+
+        setStatus("Uploading...", "");
+        resultEl.textContent = "";
+
+        try {
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) {
+            throw new Error(payload.error || "Upload failed");
+          }
+
+          setStatus("Upload successful", "ok");
+          resultEl.textContent = "Saved to: " + payload.path;
+        } catch (err) {
+          console.error(err);
+          setStatus("Upload failed", "err");
+          resultEl.textContent = "Error: " + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>

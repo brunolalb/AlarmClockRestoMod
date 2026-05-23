@@ -10,6 +10,7 @@
 #include <OnboardLedController.h>
 #include <SerialController.h>
 #include <SdController.h>
+#include <SoundController.h>
 #include <WebServerController.h>
 
 DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN, DISPLAY_SEPARATOR_MODE_DEFAULT);
@@ -25,13 +26,15 @@ ClockController clockController(RTC_SQW_PIN,
                                 RTC_NTP_RETRY_INTERVAL_MS);
 SdController sdController(SD_SPI_CS_PIN, SD_SPI_SCK_PIN, SD_SPI_MISO_PIN, SD_SPI_MOSI_PIN, SD_SPI_FREQUENCY_HZ);
 AlarmController alarmController(sdController);
+SoundController soundController(sdController, I2S_BCLK_PIN, I2S_LRCLK_PIN, I2S_DATA_PIN);
 GeneralConfigController generalConfigController(clockController,
                                                 sdController,
                                                 displayManager,
                                                 RTC_TIMEZONE_POSIX_DEFAULT,
                                                 RTC_TIME_OFFSET_MINUTES_DEFAULT,
                                                 DISPLAY_BRIGHTNESS_DEFAULT);
-WebServerController webServerController(alarmController, clockController, sdController, generalConfigController);
+WebServerController webServerController(
+  alarmController, clockController, sdController, soundController, generalConfigController);
 WiFiManager tzapuWifiManager;
 SerialController serialController(clockController, sdController, alarmController, webServerController);
 
@@ -66,6 +69,7 @@ void setup() {
   }
 
   alarmController.begin();
+  soundController.begin();
 
   webServerController.begin(wifiConnected);
 
@@ -75,27 +79,33 @@ void setup() {
 }
 
 void loop() {
+  static uint32_t lastDisplayUpdateMs = 0;
+
   serialController.update();
 
   webServerController.update();
+  soundController.update();
 
-  if (clockController.isReady()) {
-    clockController.update();
+  const uint32_t now = millis();
+  if (now - lastDisplayUpdateMs >= 200) {
+    lastDisplayUpdateMs = now;
 
-    if (clockController.isTimeValid()) {
-      displayManager.showTimeHHMM(clockController.displayValueHHMM());
-    } else {
+    if (clockController.isReady()) {
+      clockController.update();
+
+      if (clockController.isTimeValid()) {
+        displayManager.showTimeHHMM(clockController.displayValueHHMM());
+      } else {
+        displayManager.showRtcFailure();
+      }
+    } else if (sdController.isReady() && sdController.selfTestPassed()) {
       displayManager.showRtcFailure();
+    } else if (!sdController.isReady()) {
+      displayManager.showSdFailure();
+    } else {
+      displayManager.showSdSelfTestResult(false);
     }
-  } else if (sdController.isReady() && sdController.selfTestPassed()) {
-    displayManager.showRtcFailure();
-  } else if (!sdController.isReady()) {
-    displayManager.showSdFailure();
-  } else {
-    displayManager.showSdSelfTestResult(false);
   }
 
   onboardLed.update();
-
-  delay(100);
 }

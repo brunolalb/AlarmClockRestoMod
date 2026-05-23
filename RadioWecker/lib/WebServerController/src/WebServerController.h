@@ -8,12 +8,14 @@
 #include <ClockController.h>
 #include <GeneralConfigController.h>
 #include <SdController.h>
+#include <SoundController.h>
 
 class WebServerController {
  public:
   explicit WebServerController(AlarmController& alarmController,
                                ClockController& clockController,
                                SdController& sdController,
+                               SoundController& soundController,
                                GeneralConfigController& generalConfigController,
                                uint16_t port = 80);
 
@@ -28,7 +30,11 @@ class WebServerController {
   void handleIndexPage();
   void handleAlarmPage();
   void handleConfigPage();
+  void handleUploadPage();
+  void handleSoundPage();
   void handleStatusPage();
+  void handleUploadFile();
+  void handleUploadCompleted();
   void handleGetStatus();
   void handleReboot();
   void setupRoutes();
@@ -37,10 +43,13 @@ class WebServerController {
   AlarmController& alarmController_;
   ClockController& clockController_;
   SdController& sdController_;
+  SoundController& soundController_;
   GeneralConfigController& generalConfigController_;
   FtpServer ftpServer_;
   WebServer webServer_;
   uint16_t port_;
+  File currentUploadFile_;
+  String currentUploadFilePath_;
   bool started_ = false;
   bool internalFsMounted_ = false;
   bool ftpStarted_ = false;
