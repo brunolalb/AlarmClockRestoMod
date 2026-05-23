@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <DisplayManager.h>
 
 // on board LED
 static constexpr uint8_t ONBOARD_LED_PIN = LED_RED;//46;
@@ -9,6 +10,7 @@ static constexpr uint8_t ONBOARD_LED_PIN = LED_RED;//46;
 static constexpr uint8_t DISPLAY_CLK_PIN = D2;
 static constexpr uint8_t DISPLAY_DIO_PIN = D3;
 static constexpr uint8_t DISPLAY_BRIGHTNESS_DEFAULT = 1;
+static constexpr DisplayManager::SeparatorMode DISPLAY_SEPARATOR_MODE_DEFAULT = DisplayManager::SeparatorMode::Dots;
 
 // SD Card
 static constexpr uint8_t SD_SPI_CS_PIN = D10;

@@ -12,7 +12,7 @@
 #include <SdController.h>
 #include <WebServerController.h>
 
-DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
+DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN, DISPLAY_SEPARATOR_MODE_DEFAULT);
 OnboardLedController onboardLed(ONBOARD_LED_PIN);
 ClockController clockController(RTC_SQW_PIN,
                                 RTC_I2C_SDA_PIN,

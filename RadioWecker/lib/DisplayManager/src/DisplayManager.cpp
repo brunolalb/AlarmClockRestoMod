@@ -1,13 +1,14 @@
 #include "DisplayManager.h"
 
-DisplayManager::DisplayManager(uint8_t clkPin, uint8_t dioPin)
-    : display_(clkPin, dioPin) {}
+DisplayManager::DisplayManager(uint8_t clkPin, uint8_t dioPin, SeparatorMode separatorMode)
+    : display_(clkPin, dioPin),
+      separatorMode_(separatorMode) {}
 
 void DisplayManager::begin(uint8_t brightness) {
   display_.init();
   setBrightness(brightness);
   display_.clearScreen();
-  display_.colonOff();
+  applySeparatorMode(separatorMode_);
 }
 
 void DisplayManager::setBrightness(uint8_t brightness) {
@@ -20,7 +21,7 @@ uint8_t DisplayManager::brightness() const {
 }
 
 void DisplayManager::showTimeHHMM(int timeValue) {
-  display_.colonOn();
+  applySeparatorMode(separatorMode_);
   char hhmm[5];
   snprintf(hhmm, sizeof(hhmm), "%04d", timeValue);
   String text(hhmm);
@@ -31,16 +32,33 @@ void DisplayManager::showTimeHHMM(int timeValue) {
 }
 
 void DisplayManager::showRtcFailure() {
-  display_.colonOff();
+  applySeparatorMode(SeparatorMode::None);
   display_.display("RTCF");
 }
 
 void DisplayManager::showSdFailure() {
-  display_.colonOff();
+  applySeparatorMode(SeparatorMode::None);
   display_.display("SDFL");
 }
 
 void DisplayManager::showSdSelfTestResult(bool passed) {
-  display_.colonOff();
+  applySeparatorMode(SeparatorMode::None);
   display_.display(passed ? "TSTP" : "TSTF");
+}
+
+void DisplayManager::applySeparatorMode(SeparatorMode separatorMode) {
+  switch (separatorMode) {
+    case SeparatorMode::Dots:
+      display_.setDp(0x02);
+      break;
+    case SeparatorMode::Colon:
+      display_.setDp(0x00);
+      display_.colonOn();
+      break;
+    case SeparatorMode::None:
+    default:
+      display_.setDp(0x00);
+      display_.colonOff();
+      break;
+  }
 }
