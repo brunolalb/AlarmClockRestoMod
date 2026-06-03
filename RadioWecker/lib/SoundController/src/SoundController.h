@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <Audio.h>
 
 #include <SdController.h>
@@ -22,7 +23,10 @@ class SoundController {
   void handleGetStatus(WebServer& webServer);
   void handlePlay(WebServer& webServer);
   void handlePlayRadio(WebServer& webServer);
+  void handlePauseToggle(WebServer& webServer);
   void handleStop(WebServer& webServer);
+  void handleNext(WebServer& webServer);
+  void handlePrevious(WebServer& webServer);
   void handleSetVolume(WebServer& webServer);
 
   bool isReady() const;
@@ -35,6 +39,14 @@ class SoundController {
   bool isMusicFilename(const String& name) const;
   String normalizePath(const String& requestedPath) const;
   String normalizeRadioUrl(const String& requestedUrl) const;
+  bool resolveLocalPlaybackPath(const String& path, String& playbackPath) const;
+  bool startLocalTrack(const String& playbackPath, String& error);
+  bool listMusicFiles(JsonArray& files) const;
+  bool findNextMusicFile(String& nextTrack) const;
+  bool findPreviousMusicFile(String& prevTrack) const;
+  void buildFileTree(const String& path, JsonObject& parentObj) const;
+  void clearTrackMetadata();
+  void populateTrackMetadataFromFile(const String& playbackPath);
 
   SdController& sdController_;
   Audio audio_;
@@ -46,4 +58,10 @@ class SoundController {
   bool playing_ = false;
   bool paused_ = false;
   String currentTrack_;
+  String trackTitle_;
+  String trackArtist_;
+  String trackAlbum_;
+  String trackYear_;
+  String trackFormat_;
+  String trackFolder_;
 };

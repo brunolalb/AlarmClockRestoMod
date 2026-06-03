@@ -8,6 +8,7 @@
     <style>
       .hero {
         margin-bottom: 14px;
+        text-align: center;
       }
 
       .layout {
@@ -64,15 +65,142 @@
         color: var(--muted);
       }
 
-      .radio-row {
-        display: grid;
+      .progress {
+        margin-top: 10px;
+      }
+
+      .progress-track {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        background: #0f141d;
+        border: 1px solid var(--line);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #77d4ff, #4fd18b);
+        transition: width 0.2s ease;
+      }
+
+      .progress-time {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .player-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        margin: 14px 0;
+      }
+
+      .icon-btn {
+        width: 48px;
+        height: 48px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #0f141d;
+        color: var(--ink);
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .icon-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: scale(1.05);
+      }
+
+      .icon-btn.danger {
+        border-color: var(--bad);
+        color: var(--bad);
+      }
+
+      .icon-btn.danger:hover {
+        background: rgba(255, 119, 119, 0.1);
+      }
+
+      .icon-btn.secondary:hover {
+        background: rgba(127, 101, 94, 0.2);
+      }
+
+      .controls-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         gap: 8px;
       }
 
-      .radio-actions {
+      .meta-row {
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .track-meta {
+        display: grid;
+        gap: 4px;
+        justify-items: center;
+      }
+
+      .track-meta-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .track-meta-sub {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .player-status {
+        margin-top: 6px;
+        min-height: 18px;
+      }
+
+      .player-status:empty {
+        display: none;
+      }
+
+      .top-section {
+        text-align: center;
+      }
+
+      .top-section .progress-time {
+        text-align: center;
+      }
+
+      .top-section .range-row {
+        grid-template-columns: auto auto;
+        justify-content: center;
+        gap: 14px;
+        margin: 14px auto 0;
+      }
+
+      .top-section input[type="range"] {
+        max-width: 340px;
+        margin: 8px auto 0;
+        display: block;
+      }
+
+      .track-actions {
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .track-actions .icon-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
       }
     </style>
   </head>
@@ -84,37 +212,49 @@
         <a class="home-btn" href="/">Back to Home</a>
       </section>
 
-      <section class="card" style="margin-bottom: 14px">
-        <div class="actions" style="margin-top: 0">
-          <button id="refreshBtn" type="button">Refresh List</button>
-          <button id="playBtn" class="secondary" type="button">Play Selected</button>
-          <button id="stopBtn" class="danger" type="button">Stop</button>
-          <span id="status" class="status">Loading...</span>
+      <section class="card top-section" style="margin-bottom: 14px">
+        <div class="controls-row" style="margin-top: 0">
+          <button id="playBtn" class="icon-btn secondary" type="button" title="Play Selected">▶</button>
+          <button id="pauseBtn" class="icon-btn secondary" type="button" title="Pause">⏸</button>
+          <button id="prevBtn" class="icon-btn secondary" type="button" title="Previous Song">⏮</button>
+          <button id="nextBtn" class="icon-btn secondary" type="button" title="Next Song">⏭</button>
+          <button id="stopBtn" class="icon-btn danger" type="button" title="Stop">⏹</button>
         </div>
-      </section>
 
-      <section class="card" style="margin-bottom: 14px">
-        <div class="range-row">
+        <div class="meta meta-row track-meta" id="trackMeta">
+          <div id="trackMetaTitle" class="track-meta-title">No track selected</div>
+          <div id="trackMetaMain" class="track-meta-sub">Artist: - | Album: - | Year: -</div>
+          <div id="trackMetaTech" class="track-meta-sub">Folder: / | Format: - | Duration: --:--</div>
+        </div>
+        <div id="playerStatus" class="status err player-status" aria-live="polite"></div>
+
+        <div class="progress">
+          <div class="progress-track" aria-label="Song progress">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <div id="progressTime" class="progress-time">00:00 / 00:00</div>
+        </div>
+
+        <div class="range-row" style="margin-top: 14px">
           <label for="volume">Volume</label>
           <strong id="volumeLabel">12</strong>
         </div>
         <input id="volume" type="range" min="0" max="21" value="12" />
-        <p class="meta" id="playbackMeta">No track selected.</p>
-      </section>
-
-      <section class="card" style="margin-bottom: 14px">
-        <div class="radio-row">
-          <label for="radioUrl">Internet Radio URL</label>
-          <input id="radioUrl" type="text" placeholder="https://example.com/stream" />
-          <div class="radio-actions">
-            <button id="playRadioBtn" type="button">Play Radio URL</button>
-          </div>
-        </div>
       </section>
 
       <section class="card layout">
-        <h2 style="margin: 0">Tracks</h2>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+          <h2 style="margin: 0">Tracks</h2>
+          <div class="track-actions">
+            <button id="refreshBtn" class="icon-btn" type="button" title="Refresh List">↻</button>
+            <button id="createFolderBtn" class="icon-btn" type="button" title="Create Folder">📁+</button>
+            <button id="uploadBtn" class="icon-btn" type="button" title="Upload to Current Folder">⤴</button>
+            <button id="deleteBtn" class="icon-btn danger" type="button" title="Delete Selected">🗑</button>
+          </div>
+          <span id="status" class="status" style="margin-left: auto; text-align: right">Loading...</span>
+        </div>
         <div id="songs" class="songs"></div>
+        <input id="uploadInput" type="file" style="display: none" />
       </section>
     </main>
 
@@ -122,20 +262,38 @@
       const songsEl = document.getElementById("songs");
       const statusEl = document.getElementById("status");
       const refreshBtn = document.getElementById("refreshBtn");
+      const createFolderBtn = document.getElementById("createFolderBtn");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const deleteBtn = document.getElementById("deleteBtn");
+      const uploadInputEl = document.getElementById("uploadInput");
       const playBtn = document.getElementById("playBtn");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const prevBtn = document.getElementById("prevBtn");
+      const nextBtn = document.getElementById("nextBtn");
       const stopBtn = document.getElementById("stopBtn");
       const volumeEl = document.getElementById("volume");
       const volumeLabelEl = document.getElementById("volumeLabel");
-      const playbackMetaEl = document.getElementById("playbackMeta");
-      const radioUrlEl = document.getElementById("radioUrl");
-      const playRadioBtn = document.getElementById("playRadioBtn");
+      const trackMetaTitleEl = document.getElementById("trackMetaTitle");
+      const trackMetaMainEl = document.getElementById("trackMetaMain");
+      const trackMetaTechEl = document.getElementById("trackMetaTech");
+      const playerStatusEl = document.getElementById("playerStatus");
+      const progressFillEl = document.getElementById("progressFill");
+      const progressTimeEl = document.getElementById("progressTime");
 
       let files = [];
       let selectedTrack = "";
+      let selectedEntryPath = "";
+      let selectedEntryType = "";
+      let fileTree = {};
+      let currentPath = [];
 
-      function setStatus(text, type = "") {
+      function setListStatus(text, type = "") {
         statusEl.textContent = text;
         statusEl.className = "status" + (type ? " " + type : "");
+      }
+
+      function setPlayerError(message = "") {
+        playerStatusEl.textContent = message;
       }
 
       function secondsToClock(sec) {
@@ -145,47 +303,221 @@
         return String(min).padStart(2, "0") + ":" + String(rem).padStart(2, "0");
       }
 
-      function renderSongs() {
-        songsEl.innerHTML = "";
-        if (!files.length) {
-          songsEl.innerHTML = '<p class="muted" style="padding:12px;margin:0">No music files found on SD card.</p>';
-          return;
+      function clampPercent(value) {
+        if (!Number.isFinite(value)) {
+          return 0;
+        }
+        return Math.max(0, Math.min(100, value));
+      }
+
+      function normalizeFsPath(path) {
+        if (!path || typeof path !== "string") {
+          return "/";
         }
 
-        files.forEach((file) => {
+        let p = path.replace(/\\/g, "/").replace(/\/+/g, "/");
+        if (!p.startsWith("/")) {
+          p = "/" + p;
+        }
+        if (p.length > 1 && !p.endsWith("/")) {
+          p += "/";
+        }
+        return p;
+      }
+
+      function renderTrackMetadata(status) {
+        const title = status.trackTitle || "";
+        const artist = status.trackArtist || "";
+        const album = status.trackAlbum || "";
+        const year = status.trackYear || "";
+        const format = status.trackFormat || "Unknown";
+        const folder = status.trackFolder || "/";
+        const durationSec = Number(status.durationSec) || 0;
+        const duration = durationSec > 0 ? secondsToClock(durationSec) : "--:--";
+
+        trackMetaTitleEl.textContent = title || "No track selected";
+        trackMetaMainEl.textContent =
+          "Artist: " + (artist || "-") +
+          " | Album: " + (album || "-") +
+          " | Year: " + (year || "-");
+        trackMetaTechEl.textContent =
+          "Folder: " + folder +
+          " | Format: " + format +
+          " | Duration: " + duration;
+      }
+
+      function getCurrentDir() {
+        let dir = fileTree;
+        for (const folderPath of currentPath) {
+          const folder = (dir.folders || []).find(
+            f => normalizeFsPath(f.path) === normalizeFsPath(folderPath)
+          );
+          if (folder) {
+            dir = folder;
+          } else {
+            break;
+          }
+        }
+        return dir;
+      }
+
+      function getCurrentDirPath() {
+        if (currentPath.length === 0) {
+          return "/";
+        }
+        return normalizeFsPath(currentPath[currentPath.length - 1]);
+      }
+
+      function updateSelectionHighlight() {
+        const buttons = songsEl.querySelectorAll(".song-btn[data-entry-path]");
+        buttons.forEach((btn) => {
+          const entryPath = btn.getAttribute("data-entry-path") || "";
+          if (entryPath === selectedEntryPath) {
+            btn.classList.add("active");
+          } else {
+            btn.classList.remove("active");
+          }
+        });
+      }
+
+      function renderSongs() {
+        songsEl.innerHTML = "";
+        const dir = getCurrentDir();
+        const folders = dir.folders || [];
+        const songs = dir.files || [];
+
+        if (currentPath.length > 0) {
+          const backBtn = document.createElement("button");
+          backBtn.type = "button";
+          backBtn.className = "song-btn";
+          backBtn.textContent = "📁 ..";
+          backBtn.addEventListener("click", () => {
+            currentPath.pop();
+            renderSongs();
+          });
+          songsEl.appendChild(backBtn);
+        }
+
+        folders.forEach((folder) => {
           const btn = document.createElement("button");
+          const folderPath = normalizeFsPath(folder.path);
           btn.type = "button";
-          btn.className = "song-btn" + (file === selectedTrack ? " active" : "");
-          btn.textContent = file;
+          btn.setAttribute("data-entry-path", folderPath);
+          btn.className = "song-btn" + (folderPath === selectedEntryPath ? " active" : "");
+          btn.textContent = "📁 " + folder.name;
           btn.addEventListener("click", () => {
-            selectedTrack = file;
+            selectedEntryPath = folderPath;
+            selectedEntryType = "folder";
+            updateSelectionHighlight();
+          });
+          btn.addEventListener("dblclick", async () => {
+            // Load folder contents if not already loaded
+            if (!folder.folders && !folder.files) {
+              await loadMusicFilesForFolder(folderPath);
+            }
+            currentPath.push(folderPath);
             renderSongs();
           });
           songsEl.appendChild(btn);
         });
+
+        songs.forEach((file) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.setAttribute("data-entry-path", file.path);
+          btn.className = "song-btn" + (file.path === selectedEntryPath ? " active" : "");
+          btn.textContent = "🎵 " + file.name;
+          btn.addEventListener("click", () => {
+            selectedTrack = file.path;
+            selectedEntryPath = file.path;
+            selectedEntryType = "file";
+            updateSelectionHighlight();
+          });
+          btn.addEventListener("dblclick", async () => {
+            selectedTrack = file.path;
+            selectedEntryPath = file.path;
+            selectedEntryType = "file";
+            updateSelectionHighlight();
+            await playSelected();
+          });
+          songsEl.appendChild(btn);
+        });
+
+        if (folders.length === 0 && songs.length === 0 && currentPath.length === 0) {
+          songsEl.innerHTML = '<p class="muted" style="padding:12px;margin:0">No music files found on SD card.</p>';
+        }
+      }
+
+      async function loadMusicFilesForFolder(folderPath) {
+        try {
+          const normalizedFolderPath = normalizeFsPath(folderPath);
+          const url = "/api/music?path=" + encodeURIComponent(normalizedFolderPath);
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const data = await response.json();
+
+          // Find the folder object in the tree and update it with the loaded data
+          const findByPath = (node, path) => {
+            const folders = node && node.folders ? node.folders : [];
+            for (const f of folders) {
+              if (normalizeFsPath(f.path) === normalizeFsPath(path)) {
+                return f;
+              }
+              const nested = findByPath(f, path);
+              if (nested) {
+                return nested;
+              }
+            }
+            return null;
+          };
+
+          const target = normalizedFolderPath === "/" ? fileTree : findByPath(fileTree, normalizedFolderPath);
+          if (target) {
+            target.folders = data.folders || [];
+            target.files = data.files || [];
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
 
       async function loadMusicFiles() {
-        setStatus("Loading songs...", "");
+        setListStatus("Loading songs...", "");
         try {
           const response = await fetch("/api/music", { cache: "no-store" });
           if (!response.ok) {
             throw new Error("HTTP " + response.status);
           }
 
-          const result = await response.json();
-          files = Array.isArray(result) ? result : [];
-          if (selectedTrack && !files.includes(selectedTrack)) {
-            selectedTrack = "";
-          }
-          if (!selectedTrack && files.length > 0) {
-            selectedTrack = files[0];
-          }
+          fileTree = await response.json();
+          currentPath = [];
+          selectedEntryPath = "";
+          selectedEntryType = "";
           renderSongs();
-          setStatus("Songs loaded", "ok");
+          setListStatus("Songs loaded", "ok");
         } catch (err) {
           console.error(err);
-          setStatus("Failed to load songs", "err");
+          setListStatus("Failed to load songs", "err");
+        }
+      }
+
+      async function reloadCurrentPath() {
+        const savedPath = [...currentPath];
+
+        const response = await fetch("/api/music", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        fileTree = await response.json();
+        currentPath = [];
+
+        for (const folderPath of savedPath) {
+          await loadMusicFilesForFolder(folderPath);
+          currentPath.push(folderPath);
         }
       }
 
@@ -200,34 +532,35 @@
           volumeEl.value = Number.isFinite(s.volume) ? s.volume : 12;
           volumeLabelEl.textContent = volumeEl.value;
 
-          const track = s.track || "-";
-          const state = s.playing ? "playing" : s.paused ? "paused" : "stopped";
-          playbackMetaEl.textContent =
-            "State: " +
-            state +
-            " | Track: " +
-            track +
-            " | " +
-            secondsToClock(s.positionSec) +
-            " / " +
-            secondsToClock(s.durationSec);
+          const durationSec = Number(s.durationSec) || 0;
+          const positionSec = Number(s.positionSec) || 0;
+          const progressPct =
+            Number.isFinite(Number(s.progressPct)) && durationSec > 0
+              ? clampPercent(Number(s.progressPct))
+              : durationSec > 0
+                ? clampPercent((100 * positionSec) / durationSec)
+                : 0;
 
-          if (s.track && typeof s.track === "string") {
-            selectedTrack = s.track;
-            renderSongs();
-          }
+          renderTrackMetadata(s);
+
+          progressFillEl.style.width = String(progressPct) + "%";
+          progressTimeEl.textContent = secondsToClock(positionSec) + " / " + secondsToClock(durationSec);
+          pauseBtn.textContent = s.paused ? "▶" : "⏸";
+          pauseBtn.disabled = !s.playing && !s.paused;
+
+          setPlayerError("");
         } catch (err) {
           console.error(err);
+          setPlayerError("Failed to refresh player status");
         }
       }
 
       async function playSelected() {
         if (!selectedTrack) {
-          setStatus("Select a track first", "err");
+          setPlayerError("Select a track first");
           return;
         }
 
-        setStatus("Starting playback...", "");
         try {
           const response = await fetch("/api/sound/play", {
             method: "POST",
@@ -240,11 +573,11 @@
             throw new Error(result.error || "Play failed");
           }
 
-          setStatus("Playing " + selectedTrack, "ok");
           await refreshStatus();
+          setPlayerError("");
         } catch (err) {
           console.error(err);
-          setStatus("Failed to play track", "err");
+          setPlayerError(err && err.message ? err.message : "Failed to play track");
         }
       }
 
@@ -258,39 +591,72 @@
           if (!response.ok) {
             throw new Error("Stop failed");
           }
-          setStatus("Playback stopped", "ok");
           await refreshStatus();
+          setPlayerError("");
         } catch (err) {
           console.error(err);
-          setStatus("Failed to stop playback", "err");
+          setPlayerError(err && err.message ? err.message : "Failed to stop playback");
         }
       }
 
-      async function playRadio() {
-        const url = (radioUrlEl.value || "").trim();
-        if (!url) {
-          setStatus("Enter a radio URL first", "err");
-          return;
-        }
-
-        setStatus("Starting radio stream...", "");
+      async function togglePause() {
         try {
-          const response = await fetch("/api/sound/radio", {
+          const response = await fetch("/api/sound/pause", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url }),
+            body: "{}",
+          });
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Pause/resume failed");
+          }
+          await refreshStatus();
+          setPlayerError("");
+        } catch (err) {
+          console.error(err);
+          setPlayerError(err && err.message ? err.message : "Failed to pause or resume");
+        }
+      }
+
+      async function playPrevious() {
+        try {
+          const response = await fetch("/api/sound/prev", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
           });
 
           const result = await response.json();
           if (!response.ok || !result.ok) {
-            throw new Error(result.error || "Radio start failed");
+            throw new Error(result.error || "Previous song failed");
           }
 
-          setStatus("Streaming radio", "ok");
           await refreshStatus();
+          setPlayerError("");
         } catch (err) {
           console.error(err);
-          setStatus("Failed to start radio", "err");
+          setPlayerError(err && err.message ? err.message : "Failed to play previous song");
+        }
+      }
+
+      async function playNext() {
+        try {
+          const response = await fetch("/api/sound/next", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Next song failed");
+          }
+
+          await refreshStatus();
+          setPlayerError("");
+        } catch (err) {
+          console.error(err);
+          setPlayerError(err && err.message ? err.message : "Failed to play next song");
         }
       }
 
@@ -307,17 +673,126 @@
           if (!response.ok) {
             throw new Error("Volume update failed");
           }
+          setPlayerError("");
         } catch (err) {
           console.error(err);
-          setStatus("Failed to set volume", "err");
+          setPlayerError(err && err.message ? err.message : "Failed to set volume");
+        }
+      }
+
+      async function createFolder() {
+        const folderNameRaw = prompt("New folder name:");
+        if (folderNameRaw === null) {
+          return;
+        }
+
+        const folderName = folderNameRaw.trim();
+        if (!folderName) {
+          setListStatus("Folder name is required", "err");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/fs/mkdir", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: getCurrentDirPath(), name: folderName }),
+          });
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Create folder failed");
+          }
+
+          await reloadCurrentPath();
+          renderSongs();
+          setListStatus("Folder created", "ok");
+        } catch (err) {
+          console.error(err);
+          setListStatus(err && err.message ? err.message : "Failed to create folder", "err");
+        }
+      }
+
+      async function uploadSelectedFile() {
+        const file = uploadInputEl.files && uploadInputEl.files[0];
+        if (!file) {
+          return;
+        }
+
+        const currentDir = getCurrentDirPath();
+        const formData = new FormData();
+        formData.append("path", currentDir);
+        formData.append("file", file, file.name);
+
+        try {
+          setListStatus("Uploading...", "");
+          const response = await fetch("/api/upload?path=" + encodeURIComponent(currentDir), {
+            method: "POST",
+            body: formData,
+          });
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Upload failed");
+          }
+
+          await reloadCurrentPath();
+          renderSongs();
+          setListStatus("Upload completed", "ok");
+        } catch (err) {
+          console.error(err);
+          setListStatus(err && err.message ? err.message : "Upload failed", "err");
+        } finally {
+          uploadInputEl.value = "";
+        }
+      }
+
+      async function deleteSelectedEntry() {
+        if (!selectedEntryPath || !selectedEntryType) {
+          setListStatus("Select a file or folder first", "err");
+          return;
+        }
+
+        const confirmMsg = "Delete selected " + selectedEntryType + "?\n" + selectedEntryPath;
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/fs/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: selectedEntryPath }),
+          });
+          const result = await response.json();
+          if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Delete failed");
+          }
+
+          if (selectedEntryType === "file" && selectedTrack === selectedEntryPath) {
+            selectedTrack = "";
+          }
+          selectedEntryPath = "";
+          selectedEntryType = "";
+
+          await reloadCurrentPath();
+          renderSongs();
+          setListStatus("Deleted", "ok");
+        } catch (err) {
+          console.error(err);
+          setListStatus(err && err.message ? err.message : "Delete failed", "err");
         }
       }
 
       refreshBtn.addEventListener("click", loadMusicFiles);
+      createFolderBtn.addEventListener("click", createFolder);
+      uploadBtn.addEventListener("click", () => uploadInputEl.click());
+      uploadInputEl.addEventListener("change", uploadSelectedFile);
+      deleteBtn.addEventListener("click", deleteSelectedEntry);
       playBtn.addEventListener("click", playSelected);
+      pauseBtn.addEventListener("click", togglePause);
+      prevBtn.addEventListener("click", playPrevious);
+      nextBtn.addEventListener("click", playNext);
       stopBtn.addEventListener("click", stopPlayback);
       volumeEl.addEventListener("change", saveVolume);
-      playRadioBtn.addEventListener("click", playRadio);
 
       loadMusicFiles();
       refreshStatus();

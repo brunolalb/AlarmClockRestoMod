@@ -84,3 +84,43 @@ uint64_t SdController::availableBytes() const {
   const uint64_t used = usedBytes();
   return used <= total ? (total - used) : 0;
 }
+
+bool SdController::exists(const String& path) const {
+  if (!ready_) {
+    return false;
+  }
+
+  return SD.exists(path);
+}
+
+bool SdController::remove(const String& path) {
+  if (!ready_) {
+    return false;
+  }
+
+  return SD.remove(path);
+}
+
+bool SdController::mkdir(const String& path) {
+  if (!ready_) {
+    return false;
+  }
+
+  return SD.mkdir(path);
+}
+
+bool SdController::rmdir(const String& path) {
+  if (!ready_) {
+    return false;
+  }
+
+  return SD.rmdir(path);
+}
+
+File SdController::open(const String& path, const char* mode) {
+  if (!ready_) {
+    return File();
+  }
+
+  return SD.open(path, mode);
+}

@@ -33,6 +33,8 @@ class WebServerController {
   void handleUploadPage();
   void handleSoundPage();
   void handleStatusPage();
+  void handleCreateFolder();
+  void handleDeletePath();
   void handleUploadFile();
   void handleUploadCompleted();
   void handleGetStatus();

@@ -2,7 +2,6 @@
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
-#include <SD.h>
 #include <WiFi.h>
 
 namespace {
@@ -24,6 +23,65 @@ String formatBytes(uint64_t bytes) {
   }
 
   return String(static_cast<unsigned long>(bytes)) + " B";
+}
+
+String normalizeSdPath(const String& rawPath) {
+  String path = rawPath;
+  path.trim();
+  if (path.length() == 0) {
+    return String("/");
+  }
+
+  path.replace("\\", "/");
+  if (path.indexOf("..") >= 0) {
+    return String();
+  }
+
+  if (!path.startsWith("/")) {
+    path = "/" + path;
+  }
+
+  while (path.indexOf("//") >= 0) {
+    path.replace("//", "/");
+  }
+
+  if (path.length() > 1 && path.endsWith("/")) {
+    path.remove(path.length() - 1);
+  }
+
+  return path;
+}
+
+bool removeDirectoryRecursive(SdController& sdController, const String& path) {
+  File dir = sdController.open(path);
+  if (!dir || !dir.isDirectory()) {
+    return false;
+  }
+
+  File entry = dir.openNextFile();
+  while (entry) {
+    const String name = String(entry.name());
+    const String childPath = path + (path.endsWith("/") ? "" : "/") + name;
+    bool ok = true;
+
+    if (entry.isDirectory()) {
+      entry.close();
+      ok = removeDirectoryRecursive(sdController, childPath);
+    } else {
+      entry.close();
+      ok = sdController.remove(childPath);
+    }
+
+    if (!ok) {
+      dir.close();
+      return false;
+    }
+
+    entry = dir.openNextFile();
+  }
+
+  dir.close();
+  return sdController.rmdir(path);
 }
 }
 
@@ -208,6 +266,17 @@ void WebServerController::handleUploadFile() {
 
   HTTPUpload& upload = webServer_.upload();
   if (upload.status == UPLOAD_FILE_START) {
+    String targetDir = normalizeSdPath(webServer_.arg("path"));
+    if (targetDir.length() == 0) {
+      currentUploadFilePath_ = "";
+      return;
+    }
+
+    if (!sdController_.exists(targetDir)) {
+      currentUploadFilePath_ = "";
+      return;
+    }
+
     String filename = upload.filename;
     filename.replace("\\", "/");
     const int slash = filename.lastIndexOf('/');
@@ -221,11 +290,16 @@ void WebServerController::handleUploadFile() {
       return;
     }
 
-    currentUploadFilePath_ = "/" + filename;
-    if (SD.exists(currentUploadFilePath_)) {
-      SD.remove(currentUploadFilePath_);
+    if (targetDir == "/") {
+      currentUploadFilePath_ = "/" + filename;
+    } else {
+      currentUploadFilePath_ = targetDir + "/" + filename;
     }
-    currentUploadFile_ = SD.open(currentUploadFilePath_, FILE_WRITE);
+
+    if (sdController_.exists(currentUploadFilePath_)) {
+      sdController_.remove(currentUploadFilePath_);
+    }
+    currentUploadFile_ = sdController_.open(currentUploadFilePath_, FILE_WRITE);
     if (!currentUploadFile_) {
       currentUploadFilePath_ = "";
     }
@@ -241,11 +315,120 @@ void WebServerController::handleUploadFile() {
     if (currentUploadFile_) {
       currentUploadFile_.close();
     }
-    if (currentUploadFilePath_.length() > 0 && SD.exists(currentUploadFilePath_)) {
-      SD.remove(currentUploadFilePath_);
+    if (currentUploadFilePath_.length() > 0 && sdController_.exists(currentUploadFilePath_)) {
+      sdController_.remove(currentUploadFilePath_);
     }
     currentUploadFilePath_ = "";
   }
+}
+
+void WebServerController::handleCreateFolder() {
+  if (webServer_.method() != HTTP_POST) {
+    webServer_.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
+    return;
+  }
+
+  if (!sdController_.isReady()) {
+    webServer_.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
+    return;
+  }
+
+  if (!webServer_.hasArg("plain")) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+    return;
+  }
+
+  StaticJsonDocument<256> doc;
+  const DeserializationError err = deserializeJson(doc, webServer_.arg("plain"));
+  if (err) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  String basePath = normalizeSdPath(String(doc["path"] | "/"));
+  String name = String(doc["name"] | "");
+  name.trim();
+
+  if (basePath.length() == 0 || name.length() == 0 || name.indexOf("/") >= 0 || name.indexOf("..") >= 0) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid folder name or path\"}");
+    return;
+  }
+
+  const String fullPath = basePath == "/" ? ("/" + name) : (basePath + "/" + name);
+  if (sdController_.exists(fullPath)) {
+    webServer_.send(409, "application/json", "{\"ok\":false,\"error\":\"Path already exists\"}");
+    return;
+  }
+
+  if (!sdController_.mkdir(fullPath)) {
+    webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to create folder\"}");
+    return;
+  }
+
+  StaticJsonDocument<192> response;
+  response["ok"] = true;
+  response["path"] = fullPath;
+  String payload;
+  serializeJson(response, payload);
+  webServer_.send(200, "application/json", payload);
+}
+
+void WebServerController::handleDeletePath() {
+  if (webServer_.method() != HTTP_POST) {
+    webServer_.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
+    return;
+  }
+
+  if (!sdController_.isReady()) {
+    webServer_.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
+    return;
+  }
+
+  if (!webServer_.hasArg("plain")) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+    return;
+  }
+
+  StaticJsonDocument<256> doc;
+  const DeserializationError err = deserializeJson(doc, webServer_.arg("plain"));
+  if (err) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  const String path = normalizeSdPath(String(doc["path"] | ""));
+  if (path.length() == 0 || path == "/") {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid delete path\"}");
+    return;
+  }
+
+  File entry = sdController_.open(path);
+  if (!entry) {
+    webServer_.send(404, "application/json", "{\"ok\":false,\"error\":\"Path not found\"}");
+    return;
+  }
+
+  const bool isDir = entry.isDirectory();
+  entry.close();
+
+  bool ok = false;
+  if (isDir) {
+    ok = removeDirectoryRecursive(sdController_, path);
+  } else {
+    ok = sdController_.remove(path);
+  }
+
+  if (!ok) {
+    webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Delete failed\"}");
+    return;
+  }
+
+  StaticJsonDocument<192> response;
+  response["ok"] = true;
+  response["path"] = path;
+  String payload;
+  serializeJson(response, payload);
+  webServer_.send(200, "application/json", payload);
 }
 
 void WebServerController::handleUploadCompleted() {
@@ -263,7 +446,7 @@ void WebServerController::handleUploadCompleted() {
     currentUploadFile_.close();
   }
 
-  const bool ok = currentUploadFilePath_.length() > 1 && SD.exists(currentUploadFilePath_);
+  const bool ok = currentUploadFilePath_.length() > 1 && sdController_.exists(currentUploadFilePath_);
   String savedPath = currentUploadFilePath_;
   currentUploadFilePath_ = "";
 
@@ -299,8 +482,13 @@ void WebServerController::setupRoutes() {
   webServer_.on("/api/sound/status", HTTP_GET, [this]() { soundController_.handleGetStatus(webServer_); });
   webServer_.on("/api/sound/play", HTTP_POST, [this]() { soundController_.handlePlay(webServer_); });
   webServer_.on("/api/sound/radio", HTTP_POST, [this]() { soundController_.handlePlayRadio(webServer_); });
+  webServer_.on("/api/sound/pause", HTTP_POST, [this]() { soundController_.handlePauseToggle(webServer_); });
+  webServer_.on("/api/sound/next", HTTP_POST, [this]() { soundController_.handleNext(webServer_); });
+  webServer_.on("/api/sound/prev", HTTP_POST, [this]() { soundController_.handlePrevious(webServer_); });
   webServer_.on("/api/sound/stop", HTTP_POST, [this]() { soundController_.handleStop(webServer_); });
   webServer_.on("/api/sound/volume", HTTP_POST, [this]() { soundController_.handleSetVolume(webServer_); });
+  webServer_.on("/api/fs/mkdir", HTTP_POST, [this]() { handleCreateFolder(); });
+  webServer_.on("/api/fs/delete", HTTP_POST, [this]() { handleDeletePath(); });
   webServer_.on("/api/upload", HTTP_POST,
                 [this]() { handleUploadCompleted(); },
                 [this]() { handleUploadFile(); });

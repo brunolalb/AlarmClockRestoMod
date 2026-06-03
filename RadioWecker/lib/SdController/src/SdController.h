@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <FS.h>
 #include <SPI.h>
 
 class SdController {
@@ -22,6 +23,11 @@ class SdController {
   uint64_t totalBytes() const;
   uint64_t usedBytes() const;
   uint64_t availableBytes() const;
+  bool exists(const String& path) const;
+  bool remove(const String& path);
+  bool mkdir(const String& path);
+  bool rmdir(const String& path);
+  File open(const String& path, const char* mode = FILE_READ);
 
  private:
   bool runSelfTest();
