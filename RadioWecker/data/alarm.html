@@ -284,8 +284,9 @@
         musicPathEl.innerHTML = "";
 
         try {
-          const response = await fetch("/api/music");
-          const files = await response.json();
+          const response = await fetch("/api/sdcard/listMusicFiles", { cache: "no-store" });
+          const payload = await response.json();
+          const files = Array.isArray(payload.files) ? payload.files.map((file) => file.path || file.name || "") : [];
 
           if (!Array.isArray(files) || files.length === 0) {
             const emptyOption = document.createElement("option");

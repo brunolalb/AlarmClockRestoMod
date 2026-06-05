@@ -451,7 +451,7 @@
       async function loadMusicFilesForFolder(folderPath) {
         try {
           const normalizedFolderPath = normalizeFsPath(folderPath);
-          const url = "/api/music?path=" + encodeURIComponent(normalizedFolderPath);
+          const url = "/api/sdcard/listMusicFiles?path=" + encodeURIComponent(normalizedFolderPath);
           const response = await fetch(url, { cache: "no-store" });
           if (!response.ok) {
             throw new Error("HTTP " + response.status);
@@ -487,7 +487,7 @@
       async function loadMusicFiles() {
         setListStatus("Loading songs...", "");
         try {
-          const response = await fetch("/api/music", { cache: "no-store" });
+          const response = await fetch("/api/sdcard/listMusicFiles", { cache: "no-store" });
           if (!response.ok) {
             throw new Error("HTTP " + response.status);
           }
@@ -507,7 +507,7 @@
       async function reloadCurrentPath() {
         const savedPath = [...currentPath];
 
-        const response = await fetch("/api/music", { cache: "no-store" });
+        const response = await fetch("/api/sdcard/listMusicFiles", { cache: "no-store" });
         if (!response.ok) {
           throw new Error("HTTP " + response.status);
         }
