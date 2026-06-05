@@ -1,21 +1,14 @@
 #include "ClockController.h"
 
-#include <I2C_RTC.h>
+#include <RTClib.h>
 #include <WiFi.h>
 #include <Wire.h>
 #include <time.h>
 
-#define CLOCK_CONTROLLER_USE_DS3231 1
-#if CLOCK_CONTROLLER_USE_DS3231
-using RtcChip = DS3231;
-#else
-using RtcChip = DS1307;
-#endif
-
 ClockController* ClockController::activeInstance_ = nullptr;
 
 namespace {
-RtcChip rtc;
+RTC_DS3231 rtc;
 }
 
 ClockController::ClockController(uint8_t rtcSqwPin,
@@ -41,25 +34,15 @@ ClockController::ClockController(uint8_t rtcSqwPin,
 bool ClockController::begin() {
   Wire.begin(i2cSdaPin_, i2cSclPin_, i2cFrequencyHz_);
 
-  ready_ = rtc.begin() != 0;
+  ready_ = rtc.begin();
   timeValid_ = false;
 
   if (!ready_) {
     return false;
   }
 
-  if (!rtc.isRunning()) {
-    rtc.startClock();
-  }
-
   timeValid_ = initializeRtcTimeFromChip();
-
-#if CLOCK_CONTROLLER_USE_DS3231
-  rtc.enableSqwePin();
-  rtc.setOutPin(SQW001Hz);
-#else
-  rtc.setOutPin(SQW001Hz);
-#endif
+  rtc.writeSqwPinMode(DS3231_SquareWave1Hz);
 
   pinMode(rtcSqwPin_, INPUT_PULLUP);
   const int sqwInterrupt = digitalPinToInterrupt(rtcSqwPin_);
@@ -125,38 +108,25 @@ int16_t ClockController::timeOffsetMinutes() const {
   return timeOffsetMinutes_;
 }
 
-bool ClockController::initializeClockFromTm(const struct tm& now) {
-  if (now.tm_hour < 0 || now.tm_hour > 23 ||
-      now.tm_min < 0 || now.tm_min > 59 ||
-      now.tm_sec < 0 || now.tm_sec > 59) {
+bool ClockController::initializeClockFromDateTime(const DateTime& now) {
+  if (!now.isValid()) {
     return false;
   }
 
-  hour_ = static_cast<uint8_t>(now.tm_hour);
-  minute_ = static_cast<uint8_t>(now.tm_min);
-  second_ = static_cast<uint8_t>(now.tm_sec);
+  currentTime_ = now;
   updateDisplayedValue();
   return true;
 }
 
-bool ClockController::initializeClockFromTimeString(const String& timeStr) {
-  if (timeStr.length() < 8) {
-    return false;
-  }
-
-  struct tm now = {};
-  now.tm_hour = timeStr.substring(0, 2).toInt();
-  now.tm_min = timeStr.substring(3, 5).toInt();
-  now.tm_sec = timeStr.substring(6, 8).toInt();
-  return initializeClockFromTm(now);
-}
-
 bool ClockController::initializeRtcTimeFromChip() {
-  return initializeClockFromTimeString(rtc.getTimeString());
+  const DateTime now = rtc.now();
+  return initializeClockFromDateTime(now);
 }
 
 void ClockController::updateDisplayedValue() {
-  int totalMinutes = static_cast<int>(hour_) * 60 + static_cast<int>(minute_) + static_cast<int>(timeOffsetMinutes_);
+  int totalMinutes = static_cast<int>(currentTime_.hour()) * 60 +
+                     static_cast<int>(currentTime_.minute()) +
+                     static_cast<int>(timeOffsetMinutes_);
   const int minutesPerDay = 24 * 60;
   totalMinutes %= minutesPerDay;
   if (totalMinutes < 0) {
@@ -169,16 +139,7 @@ void ClockController::updateDisplayedValue() {
 }
 
 void ClockController::advanceSoftwareClockOneSecond() {
-  second_++;
-  if (second_ >= 60) {
-    second_ = 0;
-    minute_++;
-    if (minute_ >= 60) {
-      minute_ = 0;
-      hour_ = static_cast<uint8_t>((hour_ + 1) % 24);
-    }
-  }
-
+  currentTime_ = currentTime_ + TimeSpan(1);
   updateDisplayedValue();
 }
 
@@ -211,7 +172,16 @@ bool ClockController::syncFromNtp() {
     return false;
   }
 
-  const bool initialized = initializeClockFromTm(now);
+  const DateTime ntpNow(now.tm_year + 1900,
+                        now.tm_mon + 1,
+                        now.tm_mday,
+                        now.tm_hour,
+                        now.tm_min,
+                        now.tm_sec);
+
+  rtc.adjust(ntpNow);
+
+  const bool initialized = initializeClockFromDateTime(ntpNow);
   if (initialized) {
     ntpSynchronized_ = true;
     Serial.println("NTP sync successful");

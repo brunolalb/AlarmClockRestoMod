@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <RTClib.h>
 
 class ClockController {
  public:
@@ -25,8 +26,7 @@ class ClockController {
   int16_t timeOffsetMinutes() const;
 
  private:
-  bool initializeClockFromTm(const struct tm& now);
-  bool initializeClockFromTimeString(const String& timeStr);
+    bool initializeClockFromDateTime(const DateTime& now);
   bool initializeRtcTimeFromChip();
   void updateDisplayedValue();
   void advanceSoftwareClockOneSecond();
@@ -51,9 +51,7 @@ class ClockController {
 
   bool ready_ = false;
   bool timeValid_ = false;
-  uint8_t hour_ = 0;
-  uint8_t minute_ = 0;
-  uint8_t second_ = 0;
+  DateTime currentTime_;
   int displayedHHMM_ = 0;
   volatile bool secondTick_ = false;
   bool ntpConfigured_ = false;
