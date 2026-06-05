@@ -68,6 +68,38 @@ bool hasAllowedExtension(const String& name, const char* const* allowedExtension
 
   return false;
 }
+
+bool removeDirectoryRecursive(SdController& sdController, const String& path) {
+  File dir = sdController.open(path);
+  if (!dir || !dir.isDirectory()) {
+    return false;
+  }
+
+  File entry = dir.openNextFile();
+  while (entry) {
+    const String name = String(entry.name());
+    const String childPath = path + (path.endsWith("/") ? "" : "/") + name;
+    bool ok = true;
+
+    if (entry.isDirectory()) {
+      entry.close();
+      ok = removeDirectoryRecursive(sdController, childPath);
+    } else {
+      entry.close();
+      ok = sdController.remove(childPath);
+    }
+
+    if (!ok) {
+      dir.close();
+      return false;
+    }
+
+    entry = dir.openNextFile();
+  }
+
+  dir.close();
+  return sdController.rmdir(path);
+}
 }
 
 SdController::SdController(uint8_t csPin,
@@ -265,5 +297,201 @@ void SdController::handleListFiles(WebServer& webServer,
 
   String payload;
   serializeJson(doc, payload);
+  webServer.send(200, "application/json", payload);
+}
+
+void SdController::handleCreateFolder(WebServer& webServer) {
+  if (webServer.method() != HTTP_POST) {
+    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
+    return;
+  }
+
+  if (!ready_) {
+    webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
+    return;
+  }
+
+  if (!webServer.hasArg("plain")) {
+    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+    return;
+  }
+
+  StaticJsonDocument<256> doc;
+  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
+  if (err) {
+    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  const String basePath = normalizeFsPath(String(doc["path"] | "/"), false);
+  String name = String(doc["name"] | "");
+  name.trim();
+
+  if (basePath.length() == 0 || name.length() == 0 || name.indexOf("/") >= 0 || name.indexOf("..") >= 0) {
+    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid folder name or path\"}");
+    return;
+  }
+
+  const String fullPath = basePath == "/" ? ("/" + name) : (basePath + "/" + name);
+  if (exists(fullPath)) {
+    webServer.send(409, "application/json", "{\"ok\":false,\"error\":\"Path already exists\"}");
+    return;
+  }
+
+  if (!mkdir(fullPath)) {
+    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to create folder\"}");
+    return;
+  }
+
+  StaticJsonDocument<192> response;
+  response["ok"] = true;
+  response["path"] = fullPath;
+  String payload;
+  serializeJson(response, payload);
+  webServer.send(200, "application/json", payload);
+}
+
+void SdController::handleDeletePath(WebServer& webServer) {
+  if (webServer.method() != HTTP_POST) {
+    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
+    return;
+  }
+
+  if (!ready_) {
+    webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
+    return;
+  }
+
+  if (!webServer.hasArg("plain")) {
+    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+    return;
+  }
+
+  StaticJsonDocument<256> doc;
+  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
+  if (err) {
+    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  const String path = normalizeFsPath(String(doc["path"] | ""), false);
+  if (path.length() == 0 || path == "/") {
+    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid delete path\"}");
+    return;
+  }
+
+  File entry = open(path);
+  if (!entry) {
+    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Path not found\"}");
+    return;
+  }
+
+  const bool isDir = entry.isDirectory();
+  entry.close();
+
+  bool ok = false;
+  if (isDir) {
+    ok = removeDirectoryRecursive(*this, path);
+  } else {
+    ok = remove(path);
+  }
+
+  if (!ok) {
+    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Delete failed\"}");
+    return;
+  }
+
+  StaticJsonDocument<192> response;
+  response["ok"] = true;
+  response["path"] = path;
+  String payload;
+  serializeJson(response, payload);
+  webServer.send(200, "application/json", payload);
+}
+
+void SdController::handleUploadFile(WebServer& webServer) {
+  if (!ready_) {
+    return;
+  }
+
+  HTTPUpload& upload = webServer.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    const String targetDir = normalizeFsPath(webServer.arg("path"), false);
+    if (targetDir.length() == 0 || !exists(targetDir)) {
+      currentUploadFilePath_ = "";
+      return;
+    }
+
+    String filename = upload.filename;
+    filename.replace("\\", "/");
+    const int slash = filename.lastIndexOf('/');
+    if (slash >= 0) {
+      filename = filename.substring(slash + 1);
+    }
+
+    filename.trim();
+    if (filename.length() == 0 || filename.indexOf("..") >= 0) {
+      currentUploadFilePath_ = "";
+      return;
+    }
+
+    currentUploadFilePath_ = targetDir == "/" ? ("/" + filename) : (targetDir + "/" + filename);
+
+    if (exists(currentUploadFilePath_)) {
+      remove(currentUploadFilePath_);
+    }
+
+    currentUploadFile_ = open(currentUploadFilePath_, FILE_WRITE);
+    if (!currentUploadFile_) {
+      currentUploadFilePath_ = "";
+    }
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (currentUploadFile_) {
+      currentUploadFile_.write(upload.buf, upload.currentSize);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (currentUploadFile_) {
+      currentUploadFile_.close();
+    }
+  } else if (upload.status == UPLOAD_FILE_ABORTED) {
+    if (currentUploadFile_) {
+      currentUploadFile_.close();
+    }
+    if (currentUploadFilePath_.length() > 0 && exists(currentUploadFilePath_)) {
+      remove(currentUploadFilePath_);
+    }
+    currentUploadFilePath_ = "";
+  }
+}
+
+void SdController::handleUploadCompleted(WebServer& webServer) {
+  if (webServer.method() != HTTP_POST) {
+    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
+    return;
+  }
+
+  if (!ready_) {
+    webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
+    return;
+  }
+
+  if (currentUploadFile_) {
+    currentUploadFile_.close();
+  }
+
+  const bool ok = currentUploadFilePath_.length() > 1 && exists(currentUploadFilePath_);
+  const String savedPath = currentUploadFilePath_;
+  currentUploadFilePath_ = "";
+
+  if (!ok) {
+    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Upload failed\"}");
+    return;
+  }
+
+  StaticJsonDocument<192> response;
+  response["ok"] = true;
+  response["path"] = savedPath;
+  String payload;
+  serializeJson(response, payload);
   webServer.send(200, "application/json", payload);
 }

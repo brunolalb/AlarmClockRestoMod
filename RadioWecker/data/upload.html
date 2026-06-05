@@ -82,7 +82,7 @@
         resultEl.textContent = "";
 
         try {
-          const response = await fetch("/api/upload", {
+          const response = await fetch("/api/sdcard/upload", {
             method: "POST",
             body: formData,
           });

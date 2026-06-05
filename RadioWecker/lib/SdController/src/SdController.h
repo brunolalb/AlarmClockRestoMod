@@ -32,9 +32,16 @@ class SdController {
   File open(const String& path, const char* mode = FILE_READ);
   fs::FS& fs();
   void handleListFiles(WebServer& webServer, const char* const* allowedExtensions, size_t allowedExtensionCount);
+  void handleCreateFolder(WebServer& webServer);
+  void handleDeletePath(WebServer& webServer);
+  void handleUploadFile(WebServer& webServer);
+  void handleUploadCompleted(WebServer& webServer);
 
  private:
   bool runSelfTest();
+
+  File currentUploadFile_;
+  String currentUploadFilePath_;
 
   uint8_t csPin_;
   uint8_t spiSckPin_;

@@ -33,10 +33,6 @@ class WebServerController {
   void handleUploadPage();
   void handleSoundPage();
   void handleStatusPage();
-  void handleCreateFolder();
-  void handleDeletePath();
-  void handleUploadFile();
-  void handleUploadCompleted();
   void handleGetStatus();
   void handleReboot();
   void setupRoutes();
@@ -50,8 +46,6 @@ class WebServerController {
   FtpServer ftpServer_;
   WebServer webServer_;
   uint16_t port_;
-  File currentUploadFile_;
-  String currentUploadFilePath_;
   bool started_ = false;
   bool internalFsMounted_ = false;
   bool ftpStarted_ = false;

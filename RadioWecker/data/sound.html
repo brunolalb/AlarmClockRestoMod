@@ -693,7 +693,7 @@
         }
 
         try {
-          const response = await fetch("/api/fs/mkdir", {
+          const response = await fetch("/api/sdcard/mkdir", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ path: getCurrentDirPath(), name: folderName }),
@@ -725,7 +725,7 @@
 
         try {
           setListStatus("Uploading...", "");
-          const response = await fetch("/api/upload?path=" + encodeURIComponent(currentDir), {
+          const response = await fetch("/api/sdcard/upload?path=" + encodeURIComponent(currentDir), {
             method: "POST",
             body: formData,
           });
@@ -757,7 +757,7 @@
         }
 
         try {
-          const response = await fetch("/api/fs/delete", {
+          const response = await fetch("/api/sdcard/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ path: selectedEntryPath }),
