@@ -1,6 +1,74 @@
 #include "SdController.h"
 
+#include <ArduinoJson.h>
 #include <SD.h>
+#include <WebServer.h>
+
+namespace {
+String normalizeFsPath(const String& rawPath, bool ensureTrailingSlash) {
+  String path = rawPath;
+  path.trim();
+  path.replace("\\", "/");
+  while (path.indexOf("//") >= 0) {
+    path.replace("//", "/");
+  }
+
+  if (path.length() == 0) {
+    path = "/";
+  }
+
+  if (path.indexOf("..") >= 0) {
+    return String();
+  }
+
+  if (!path.startsWith("/")) {
+    path = "/" + path;
+  }
+
+  if (ensureTrailingSlash) {
+    if (!path.endsWith("/")) {
+      path += "/";
+    }
+  } else if (path.length() > 1 && path.endsWith("/")) {
+    path.remove(path.length() - 1);
+  }
+
+  return path;
+}
+
+String entryBaseName(const String& rawName) {
+  String name = rawName;
+  name.replace("\\", "/");
+  while (name.endsWith("/")) {
+    name.remove(name.length() - 1);
+  }
+
+  const int slash = name.lastIndexOf('/');
+  if (slash >= 0) {
+    name = name.substring(slash + 1);
+  }
+
+  return name;
+}
+
+String joinDirAndName(const String& dirPath, const String& name, bool asDirectory) {
+  String fullPath = normalizeFsPath(dirPath, true) + name;
+  return normalizeFsPath(fullPath, asDirectory);
+}
+
+bool hasAllowedExtension(const String& name, const char* const* allowedExtensions, size_t allowedExtensionCount) {
+  String lower = name;
+  lower.toLowerCase();
+
+  for (size_t i = 0; i < allowedExtensionCount; ++i) {
+    if (lower.endsWith(allowedExtensions[i])) {
+      return true;
+    }
+  }
+
+  return false;
+}
+}
 
 SdController::SdController(uint8_t csPin,
                            uint8_t spiSckPin,
@@ -127,4 +195,75 @@ File SdController::open(const String& path, const char* mode) {
 
 fs::FS& SdController::fs() {
   return SD;
+}
+
+void SdController::handleListFiles(WebServer& webServer,
+                                   const char* const* allowedExtensions,
+                                   size_t allowedExtensionCount) {
+  String requestPath = "/";
+  if (webServer.hasArg("path")) {
+    requestPath = normalizeFsPath(webServer.arg("path"), false);
+    if (requestPath.length() == 0) {
+      webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid path\"}");
+      return;
+    }
+  }
+
+  StaticJsonDocument<4096> doc;
+  JsonObject root = doc.to<JsonObject>();
+  JsonArray folders = root.createNestedArray("folders");
+  JsonArray files = root.createNestedArray("files");
+
+  if (!ready_) {
+    String payload;
+    serializeJson(doc, payload);
+    webServer.send(200, "application/json", payload);
+    return;
+  }
+
+  const String normalizedPath = normalizeFsPath(requestPath, true);
+  String openPath = normalizedPath;
+  if (openPath.length() > 1 && openPath.endsWith("/")) {
+    openPath.remove(openPath.length() - 1);
+  }
+
+  File dir = open(openPath, FILE_READ);
+  if (!dir || !dir.isDirectory()) {
+    dir = open(normalizedPath, FILE_READ);
+  }
+  if (!dir || !dir.isDirectory()) {
+    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Path not found\"}");
+    return;
+  }
+
+  File file = dir.openNextFile();
+  while (file) {
+    const String rawName = String(file.name());
+    const String name = entryBaseName(rawName);
+
+    if (name.length() == 0) {
+      file.close();
+      file = dir.openNextFile();
+      continue;
+    }
+
+    if (file.isDirectory()) {
+      JsonObject folderObj = folders.createNestedObject();
+      folderObj["name"] = name;
+      folderObj["path"] = joinDirAndName(normalizedPath, name, true);
+    } else if (hasAllowedExtension(name, allowedExtensions, allowedExtensionCount)) {
+      JsonObject fileObj = files.createNestedObject();
+      fileObj["name"] = name;
+      fileObj["path"] = joinDirAndName(normalizedPath, name, false);
+    }
+
+    file.close();
+    file = dir.openNextFile();
+  }
+
+  dir.close();
+
+  String payload;
+  serializeJson(doc, payload);
+  webServer.send(200, "application/json", payload);
 }

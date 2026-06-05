@@ -80,49 +80,9 @@ String titleFromPath(const String& path) {
   }
   return path.substring(slashIdx + 1, endIdx);
 }
-
-String normalizeFsPath(const String& rawPath, bool ensureTrailingSlash) {
-  String path = rawPath;
-  path.replace("\\", "/");
-  while (path.indexOf("//") >= 0) {
-    path.replace("//", "/");
-  }
-
-  if (!path.startsWith("/")) {
-    path = "/" + path;
-  }
-
-  if (ensureTrailingSlash) {
-    if (!path.endsWith("/")) {
-      path += "/";
-    }
-  } else if (path.length() > 1 && path.endsWith("/")) {
-    path.remove(path.length() - 1);
-  }
-
-  return path;
 }
 
-String entryBaseName(const String& rawName) {
-  String name = rawName;
-  name.replace("\\", "/");
-  while (name.endsWith("/")) {
-    name.remove(name.length() - 1);
-  }
-
-  const int slash = name.lastIndexOf('/');
-  if (slash >= 0) {
-    name = name.substring(slash + 1);
-  }
-
-  return name;
-}
-
-String joinDirAndName(const String& dirPath, const String& name, bool asDirectory) {
-  String fullPath = normalizeFsPath(dirPath, true) + name;
-  return normalizeFsPath(fullPath, asDirectory);
-}
-}
+const char* const SoundController::kSupportedFileExtensions[] = {".mp3", ".wav", ".ogg"};
 
 SoundController::SoundController(SdController& sdController,
                                  uint8_t i2sBclkPin,
@@ -191,7 +151,12 @@ bool SoundController::ensureAudioReady() {
 bool SoundController::isMusicFilename(const String& name) const {
   String lower = name;
   lower.toLowerCase();
-  return lower.endsWith(".mp3") || lower.endsWith(".wav") || lower.endsWith(".ogg");
+  for (size_t i = 0; i < kSupportedFileExtensionCount; ++i) {
+    if (lower.endsWith(kSupportedFileExtensions[i])) {
+      return true;
+    }
+  }
+  return false;
 }
 
 String SoundController::normalizePath(const String& requestedPath) const {
@@ -322,32 +287,6 @@ void SoundController::populateTrackMetadataFromFile(const String& playbackPath) 
   trackFile.close();
 }
 
-bool SoundController::listMusicFiles(JsonArray& files) const {
-  if (!sdController_.isReady()) {
-    return false;
-  }
-
-  File root = sdController_.open("/", FILE_READ);
-  if (!root || !root.isDirectory()) {
-    return false;
-  }
-
-  File file = root.openNextFile();
-  while (file) {
-    if (!file.isDirectory()) {
-      const String name = String(file.name());
-      if (isMusicFilename(name)) {
-        files.add(name);
-      }
-    }
-    file.close();
-    file = root.openNextFile();
-  }
-
-  root.close();
-  return true;
-}
-
 bool SoundController::findNextMusicFile(String& nextTrack) const {
   nextTrack = String();
   if (!sdController_.isReady()) {
@@ -452,79 +391,6 @@ bool SoundController::findPreviousMusicFile(String& prevTrack) const {
   }
 
   return false;
-}
-
-void SoundController::handleListMusicFiles(WebServer& webServer) {
-  // Get requested directory path from query string, default to root
-  String requestPath = "/";
-  if (webServer.hasArg("path")) {
-    requestPath = normalizePath(webServer.arg("path"));
-    if (requestPath.length() == 0) {
-      requestPath = "/";
-    }
-  }
-
-  StaticJsonDocument<4096> doc;
-  JsonObject root = doc.to<JsonObject>();
-
-  if (sdController_.isReady()) {
-    buildFileTree(requestPath, root);
-  }
-
-  String payload;
-  serializeJson(doc, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::buildFileTree(const String& path, JsonObject& parentObj) const {
-  if (!sdController_.isReady()) {
-    return;
-  }
-
-  const String normalizedPath = normalizeFsPath(path, true);
-  String openPath = normalizedPath;
-  if (openPath.length() > 1 && openPath.endsWith("/")) {
-    openPath.remove(openPath.length() - 1);
-  }
-
-  File dir = sdController_.open(openPath, FILE_READ);
-  if (!dir || !dir.isDirectory()) {
-    dir = sdController_.open(normalizedPath, FILE_READ);
-  }
-  if (!dir || !dir.isDirectory()) {
-    return;
-  }
-
-  // Only list immediate children (single level, non-recursive)
-  JsonArray folders = parentObj.createNestedArray("folders");
-  JsonArray files = parentObj.createNestedArray("files");
-
-  File file = dir.openNextFile();
-  while (file) {
-    const String rawName = String(file.name());
-    const String name = entryBaseName(rawName);
-
-    if (name.length() == 0) {
-      file.close();
-      file = dir.openNextFile();
-      continue;
-    }
-    
-    if (file.isDirectory()) {
-      JsonObject folderObj = folders.createNestedObject();
-      folderObj["name"] = name;
-      folderObj["path"] = joinDirAndName(normalizedPath, name, true);
-    } else if (isMusicFilename(name)) {
-      JsonObject fileObj = files.createNestedObject();
-      fileObj["name"] = name;
-      fileObj["path"] = joinDirAndName(normalizedPath, name, false);
-    }
-    
-    file.close();
-    file = dir.openNextFile();
-  }
-
-  dir.close();
 }
 
 void SoundController::handleWebServerCommand(WebServer& webServer, WebServerCommand command) {

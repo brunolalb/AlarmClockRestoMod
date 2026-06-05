@@ -27,10 +27,12 @@ class SoundController {
                   uint8_t i2sDataPin,
                   uint8_t volume = 5);
 
+  static const char* const kSupportedFileExtensions[];
+  static constexpr size_t kSupportedFileExtensionCount = 3;
+
   void begin();
   void update();
 
-  void handleListMusicFiles(WebServer& webServer);
   void handleWebServerCommand(WebServer& webServer, WebServerCommand command);
 
   bool isReady() const;
@@ -45,10 +47,8 @@ class SoundController {
   String normalizeRadioUrl(const String& requestedUrl) const;
   bool resolveLocalPlaybackPath(const String& path, String& playbackPath) const;
   bool startLocalTrack(const String& playbackPath, String& error);
-  bool listMusicFiles(JsonArray& files) const;
   bool findNextMusicFile(String& nextTrack) const;
   bool findPreviousMusicFile(String& prevTrack) const;
-  void buildFileTree(const String& path, JsonObject& parentObj) const;
   void clearTrackMetadata();
   void populateTrackMetadataFromFile(const String& playbackPath);
 

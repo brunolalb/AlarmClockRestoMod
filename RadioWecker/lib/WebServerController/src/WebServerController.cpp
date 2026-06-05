@@ -478,7 +478,11 @@ void WebServerController::setupRoutes() {
   webServer_.on("/api/config", HTTP_POST, [this]() { generalConfigController_.handleSaveConfig(webServer_); });
   webServer_.on("/api/alarm", HTTP_GET, [this]() { alarmController_.handleGetAlarmConfig(webServer_); });
   webServer_.on("/api/alarm", HTTP_POST, [this]() { alarmController_.handleSaveAlarmConfig(webServer_); });
-  webServer_.on("/api/music", HTTP_GET, [this]() { soundController_.handleListMusicFiles(webServer_); });
+  webServer_.on("/api/sdcard/listMusicFiles", HTTP_GET, [this]() {
+    sdController_.handleListFiles(webServer_,
+                                  SoundController::kSupportedFileExtensions,
+                                  SoundController::kSupportedFileExtensionCount);
+  });
   webServer_.on("/api/sound/status", HTTP_GET, [this]() {
     soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::GetStatus);
   });

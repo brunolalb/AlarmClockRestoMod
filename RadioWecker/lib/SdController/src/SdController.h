@@ -4,6 +4,8 @@
 #include <FS.h>
 #include <SPI.h>
 
+class WebServer;
+
 class SdController {
  public:
   struct InitResult {
@@ -29,6 +31,7 @@ class SdController {
   bool rmdir(const String& path);
   File open(const String& path, const char* mode = FILE_READ);
   fs::FS& fs();
+  void handleListFiles(WebServer& webServer, const char* const* allowedExtensions, size_t allowedExtensionCount);
 
  private:
   bool runSelfTest();
