@@ -479,14 +479,30 @@ void WebServerController::setupRoutes() {
   webServer_.on("/api/alarm", HTTP_GET, [this]() { alarmController_.handleGetAlarmConfig(webServer_); });
   webServer_.on("/api/alarm", HTTP_POST, [this]() { alarmController_.handleSaveAlarmConfig(webServer_); });
   webServer_.on("/api/music", HTTP_GET, [this]() { soundController_.handleListMusicFiles(webServer_); });
-  webServer_.on("/api/sound/status", HTTP_GET, [this]() { soundController_.handleGetStatus(webServer_); });
-  webServer_.on("/api/sound/play", HTTP_POST, [this]() { soundController_.handlePlay(webServer_); });
-  webServer_.on("/api/sound/radio", HTTP_POST, [this]() { soundController_.handlePlayRadio(webServer_); });
-  webServer_.on("/api/sound/pause", HTTP_POST, [this]() { soundController_.handlePauseToggle(webServer_); });
-  webServer_.on("/api/sound/next", HTTP_POST, [this]() { soundController_.handleNext(webServer_); });
-  webServer_.on("/api/sound/prev", HTTP_POST, [this]() { soundController_.handlePrevious(webServer_); });
-  webServer_.on("/api/sound/stop", HTTP_POST, [this]() { soundController_.handleStop(webServer_); });
-  webServer_.on("/api/sound/volume", HTTP_POST, [this]() { soundController_.handleSetVolume(webServer_); });
+  webServer_.on("/api/sound/status", HTTP_GET, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::GetStatus);
+  });
+  webServer_.on("/api/sound/play", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Play);
+  });
+  webServer_.on("/api/sound/radio", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::PlayRadio);
+  });
+  webServer_.on("/api/sound/pause", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::PauseToggle);
+  });
+  webServer_.on("/api/sound/next", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Next);
+  });
+  webServer_.on("/api/sound/prev", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Previous);
+  });
+  webServer_.on("/api/sound/stop", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Stop);
+  });
+  webServer_.on("/api/sound/volume", HTTP_POST, [this]() {
+    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::SetVolume);
+  });
   webServer_.on("/api/fs/mkdir", HTTP_POST, [this]() { handleCreateFolder(); });
   webServer_.on("/api/fs/delete", HTTP_POST, [this]() { handleDeletePath(); });
   webServer_.on("/api/upload", HTTP_POST,

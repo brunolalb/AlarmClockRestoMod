@@ -527,296 +527,280 @@ void SoundController::buildFileTree(const String& path, JsonObject& parentObj) c
   dir.close();
 }
 
-void SoundController::handleGetStatus(WebServer& webServer) {
-  StaticJsonDocument<768> doc;
-  doc["ready"] = isReady();
-  doc["playing"] = isPlaying();
-  doc["paused"] = paused_;
-  doc["track"] = currentTrack_;
-  doc["trackTitle"] = trackTitle_;
-  doc["trackArtist"] = trackArtist_;
-  doc["trackAlbum"] = trackAlbum_;
-  doc["trackYear"] = trackYear_;
-  doc["trackFormat"] = trackFormat_;
-  doc["trackFolder"] = trackFolder_;
-  doc["volume"] = volume_;
-
-  if (isReady()) {
-    const uint32_t positionSec = audio_.getAudioCurrentTime();
-    const uint32_t durationSec = audio_.getAudioFileDuration();
-    doc["positionSec"] = positionSec;
-    doc["durationSec"] = durationSec;
-    doc["progressPct"] = durationSec > 0 ? (100.0 * static_cast<double>(positionSec) / static_cast<double>(durationSec)) : 0.0;
-  } else {
-    doc["positionSec"] = 0;
-    doc["durationSec"] = 0;
-    doc["progressPct"] = 0.0;
-  }
-
-  String payload;
-  serializeJson(doc, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handlePlay(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
+void SoundController::handleWebServerCommand(WebServer& webServer, WebServerCommand command) {
+  if (command != WebServerCommand::GetStatus && webServer.method() != HTTP_POST) {
     webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
     return;
   }
 
-  if (!webServer.hasArg("plain")) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
-    return;
+  switch (command) {
+    case WebServerCommand::GetStatus: {
+      StaticJsonDocument<768> doc;
+      doc["ready"] = isReady();
+      doc["playing"] = isPlaying();
+      doc["paused"] = paused_;
+      doc["track"] = currentTrack_;
+      doc["trackTitle"] = trackTitle_;
+      doc["trackArtist"] = trackArtist_;
+      doc["trackAlbum"] = trackAlbum_;
+      doc["trackYear"] = trackYear_;
+      doc["trackFormat"] = trackFormat_;
+      doc["trackFolder"] = trackFolder_;
+      doc["volume"] = volume_;
+
+      if (isReady()) {
+        const uint32_t positionSec = audio_.getAudioCurrentTime();
+        const uint32_t durationSec = audio_.getAudioFileDuration();
+        doc["positionSec"] = positionSec;
+        doc["durationSec"] = durationSec;
+        doc["progressPct"] = durationSec > 0
+                                 ? (100.0 * static_cast<double>(positionSec) / static_cast<double>(durationSec))
+                                 : 0.0;
+      } else {
+        doc["positionSec"] = 0;
+        doc["durationSec"] = 0;
+        doc["progressPct"] = 0.0;
+      }
+
+      String payload;
+      serializeJson(doc, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::Play: {
+      if (!webServer.hasArg("plain")) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+        return;
+      }
+
+      StaticJsonDocument<256> doc;
+      const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
+      if (err) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+        return;
+      }
+
+      const String requestedPath = doc["path"] | "";
+      const String path = normalizePath(requestedPath);
+      if (path.length() == 0 || !isMusicFilename(path)) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid music path\"}");
+        return;
+      }
+
+      if (!sdController_.isReady()) {
+        webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
+        return;
+      }
+
+      String playbackPath;
+      if (!resolveLocalPlaybackPath(path, playbackPath)) {
+        webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"File not found\"}");
+        return;
+      }
+
+      String error;
+      if (!startLocalTrack(playbackPath, error)) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"" + error + "\"}");
+        return;
+      }
+
+      StaticJsonDocument<192> response;
+      response["ok"] = true;
+      response["track"] = currentTrack_;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::PlayRadio: {
+      if (!webServer.hasArg("plain")) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+        return;
+      }
+
+      StaticJsonDocument<256> doc;
+      const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
+      if (err) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+        return;
+      }
+
+      const String requestedUrl = doc["url"] | "";
+      const String url = normalizeRadioUrl(requestedUrl);
+      if (url.length() == 0) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid radio URL\"}");
+        return;
+      }
+
+      if (WiFi.status() != WL_CONNECTED) {
+        webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"WiFi not connected\"}");
+        return;
+      }
+
+      if (!ensureAudioReady()) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Audio init failed\"}");
+        return;
+      }
+
+      audio_.stopSong();
+      if (!audio_.connecttohost(url.c_str())) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Radio stream start failed\"}");
+        return;
+      }
+
+      warmUpAudioDecoder(audio_);
+
+      currentTrack_ = url;
+      clearTrackMetadata();
+      playing_ = true;
+      paused_ = false;
+
+      StaticJsonDocument<192> response;
+      response["ok"] = true;
+      response["track"] = currentTrack_;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::PauseToggle: {
+      if (!ensureAudioReady()) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Audio init failed\"}");
+        return;
+      }
+
+      if (currentTrack_.length() == 0 || (!playing_ && !paused_)) {
+        webServer.send(409, "application/json", "{\"ok\":false,\"error\":\"Nothing to pause or resume\"}");
+        return;
+      }
+
+      if (!audio_.pauseResume()) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Pause/resume failed\"}");
+        return;
+      }
+
+      paused_ = !paused_;
+      playing_ = !paused_;
+
+      StaticJsonDocument<160> response;
+      response["ok"] = true;
+      response["paused"] = paused_;
+      response["playing"] = playing_;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::Stop: {
+      if (audioReady_) {
+        audio_.stopSong();
+      }
+      playing_ = false;
+      paused_ = false;
+      currentTrack_ = "";
+      clearTrackMetadata();
+
+      StaticJsonDocument<128> response;
+      response["ok"] = true;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::Next: {
+      String nextTrack;
+      if (!findNextMusicFile(nextTrack)) {
+        webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"No music files found\"}");
+        return;
+      }
+
+      String playbackPath;
+      if (!resolveLocalPlaybackPath(nextTrack, playbackPath)) {
+        webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Next track not found\"}");
+        return;
+      }
+
+      String error;
+      if (!startLocalTrack(playbackPath, error)) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"" + error + "\"}");
+        return;
+      }
+
+      StaticJsonDocument<192> response;
+      response["ok"] = true;
+      response["track"] = currentTrack_;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::Previous: {
+      String prevTrack;
+      if (!findPreviousMusicFile(prevTrack)) {
+        webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"No music files found\"}");
+        return;
+      }
+
+      String playbackPath;
+      if (!resolveLocalPlaybackPath(prevTrack, playbackPath)) {
+        webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Previous track not found\"}");
+        return;
+      }
+
+      String error;
+      if (!startLocalTrack(playbackPath, error)) {
+        webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"" + error + "\"}");
+        return;
+      }
+
+      StaticJsonDocument<192> response;
+      response["ok"] = true;
+      response["track"] = currentTrack_;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
+
+    case WebServerCommand::SetVolume: {
+      if (!webServer.hasArg("plain")) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+        return;
+      }
+
+      StaticJsonDocument<128> doc;
+      const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
+      if (err || !doc.containsKey("volume")) {
+        webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+        return;
+      }
+
+      int nextVolume = doc["volume"] | static_cast<int>(volume_);
+      if (nextVolume < 0) {
+        nextVolume = 0;
+      }
+      if (nextVolume > 21) {
+        nextVolume = 21;
+      }
+
+      volume_ = static_cast<uint8_t>(nextVolume);
+      if (ensureAudioReady()) {
+        audio_.setVolume(volume_);
+      }
+
+      StaticJsonDocument<128> response;
+      response["ok"] = true;
+      response["volume"] = volume_;
+      String payload;
+      serializeJson(response, payload);
+      webServer.send(200, "application/json", payload);
+      return;
+    }
   }
-
-  StaticJsonDocument<256> doc;
-  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
-  if (err) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
-    return;
-  }
-
-  const String requestedPath = doc["path"] | "";
-  const String path = normalizePath(requestedPath);
-  if (path.length() == 0 || !isMusicFilename(path)) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid music path\"}");
-    return;
-  }
-
-  if (!sdController_.isReady()) {
-    webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
-    return;
-  }
-
-  String playbackPath;
-  if (!resolveLocalPlaybackPath(path, playbackPath)) {
-    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"File not found\"}");
-    return;
-  }
-
-  String error;
-  if (!startLocalTrack(playbackPath, error)) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"" + error + "\"}");
-    return;
-  }
-
-  StaticJsonDocument<192> response;
-  response["ok"] = true;
-  response["track"] = currentTrack_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handlePauseToggle(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  if (!ensureAudioReady()) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Audio init failed\"}");
-    return;
-  }
-
-  if (currentTrack_.length() == 0 || (!playing_ && !paused_)) {
-    webServer.send(409, "application/json", "{\"ok\":false,\"error\":\"Nothing to pause or resume\"}");
-    return;
-  }
-
-  if (!audio_.pauseResume()) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Pause/resume failed\"}");
-    return;
-  }
-
-  paused_ = !paused_;
-  playing_ = !paused_;
-
-  StaticJsonDocument<160> response;
-  response["ok"] = true;
-  response["paused"] = paused_;
-  response["playing"] = playing_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handlePlayRadio(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  if (!webServer.hasArg("plain")) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
-    return;
-  }
-
-  StaticJsonDocument<256> doc;
-  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
-  if (err) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
-    return;
-  }
-
-  const String requestedUrl = doc["url"] | "";
-  const String url = normalizeRadioUrl(requestedUrl);
-  if (url.length() == 0) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid radio URL\"}");
-    return;
-  }
-
-  if (WiFi.status() != WL_CONNECTED) {
-    webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"WiFi not connected\"}");
-    return;
-  }
-
-  if (!ensureAudioReady()) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Audio init failed\"}");
-    return;
-  }
-
-  audio_.stopSong();
-  if (!audio_.connecttohost(url.c_str())) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Radio stream start failed\"}");
-    return;
-  }
-
-  warmUpAudioDecoder(audio_);
-
-  currentTrack_ = url;
-  clearTrackMetadata();
-  playing_ = true;
-  paused_ = false;
-
-  StaticJsonDocument<192> response;
-  response["ok"] = true;
-  response["track"] = currentTrack_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handleStop(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  if (audioReady_) {
-    audio_.stopSong();
-  }
-  playing_ = false;
-  paused_ = false;
-  currentTrack_ = "";
-  clearTrackMetadata();
-
-  StaticJsonDocument<128> response;
-  response["ok"] = true;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handleNext(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  String nextTrack;
-  if (!findNextMusicFile(nextTrack)) {
-    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"No music files found\"}");
-    return;
-  }
-
-  String playbackPath;
-  if (!resolveLocalPlaybackPath(nextTrack, playbackPath)) {
-    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Next track not found\"}");
-    return;
-  }
-
-  String error;
-  if (!startLocalTrack(playbackPath, error)) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"" + error + "\"}");
-    return;
-  }
-
-  StaticJsonDocument<192> response;
-  response["ok"] = true;
-  response["track"] = currentTrack_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handlePrevious(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  String prevTrack;
-  if (!findPreviousMusicFile(prevTrack)) {
-    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"No music files found\"}");
-    return;
-  }
-
-  String playbackPath;
-  if (!resolveLocalPlaybackPath(prevTrack, playbackPath)) {
-    webServer.send(404, "application/json", "{\"ok\":false,\"error\":\"Previous track not found\"}");
-    return;
-  }
-
-  String error;
-  if (!startLocalTrack(playbackPath, error)) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"" + error + "\"}");
-    return;
-  }
-
-  StaticJsonDocument<192> response;
-  response["ok"] = true;
-  response["track"] = currentTrack_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
-
-void SoundController::handleSetVolume(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  if (!webServer.hasArg("plain")) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
-    return;
-  }
-
-  StaticJsonDocument<128> doc;
-  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
-  if (err || !doc.containsKey("volume")) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
-    return;
-  }
-
-  int nextVolume = doc["volume"] | static_cast<int>(volume_);
-  if (nextVolume < 0) {
-    nextVolume = 0;
-  }
-  if (nextVolume > 21) {
-    nextVolume = 21;
-  }
-
-  volume_ = static_cast<uint8_t>(nextVolume);
-  if (ensureAudioReady()) {
-    audio_.setVolume(volume_);
-  }
-
-  StaticJsonDocument<128> response;
-  response["ok"] = true;
-  response["volume"] = volume_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
 }

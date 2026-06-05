@@ -10,6 +10,17 @@ class WebServer;
 
 class SoundController {
  public:
+  enum class WebServerCommand {
+    GetStatus,
+    Play,
+    PlayRadio,
+    PauseToggle,
+    Stop,
+    Next,
+    Previous,
+    SetVolume,
+  };
+
   SoundController(SdController& sdController,
                   uint8_t i2sBclkPin,
                   uint8_t i2sLrclkPin,
@@ -20,14 +31,7 @@ class SoundController {
   void update();
 
   void handleListMusicFiles(WebServer& webServer);
-  void handleGetStatus(WebServer& webServer);
-  void handlePlay(WebServer& webServer);
-  void handlePlayRadio(WebServer& webServer);
-  void handlePauseToggle(WebServer& webServer);
-  void handleStop(WebServer& webServer);
-  void handleNext(WebServer& webServer);
-  void handlePrevious(WebServer& webServer);
-  void handleSetVolume(WebServer& webServer);
+  void handleWebServerCommand(WebServer& webServer, WebServerCommand command);
 
   bool isReady() const;
   bool isPlaying() const;
