@@ -37,6 +37,9 @@ WebServerController webServerController(
   alarmController, clockController, sdController, soundController, generalConfigController);
 WiFiManager tzapuWifiManager;
 SerialController serialController(clockController, sdController, alarmController, webServerController);
+bool wifiServicesStarted = false;
+bool wifiWasConnected = false;
+unsigned long nextWifiReconnectAttemptMs = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -50,15 +53,19 @@ void setup() {
   generalConfigController.applyToClock();
 
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  tzapuWifiManager.setConfigPortalBlocking(false);
   tzapuWifiManager.setConfigPortalTimeout(300);
   tzapuWifiManager.setHostname("RadioWecker");
   const bool wifiConnected = tzapuWifiManager.autoConnect("RadioWecker-Setup");
   if (wifiConnected) {
     Serial.println("WiFi connected via tzapu WiFiManager");
     Serial.println(WiFi.localIP());
+    wifiServicesStarted = true;
   } else {
-    Serial.println("WiFi setup timed out; continuing without WiFi");
+    Serial.println("WiFi setup started in non-blocking mode");
   }
+  wifiWasConnected = wifiConnected;
 
   clockController.begin();
 
@@ -71,7 +78,7 @@ void setup() {
   alarmController.begin();
   soundController.begin();
 
-  webServerController.begin(wifiConnected);
+  webServerController.begin(wifiServicesStarted);
 
   serialController.begin();
 
@@ -80,6 +87,27 @@ void setup() {
 
 void loop() {
   static uint32_t lastDisplayUpdateMs = 0;
+
+  tzapuWifiManager.process();
+  const bool wifiConnected = WiFi.status() == WL_CONNECTED;
+
+  if (wifiConnected && !wifiWasConnected) {
+    Serial.println("WiFi connected");
+    Serial.println(WiFi.localIP());
+    webServerController.begin(true);
+    wifiServicesStarted = true;
+  } else if (!wifiConnected && wifiWasConnected) {
+    Serial.println("WiFi disconnected");
+  }
+
+  if (!wifiConnected) {
+    const unsigned long nowMs = millis();
+    if (static_cast<long>(nowMs - nextWifiReconnectAttemptMs) >= 0) {
+      WiFi.reconnect();
+      nextWifiReconnectAttemptMs = nowMs + 10000UL;
+    }
+  }
+  wifiWasConnected = wifiConnected;
 
   serialController.update();
 

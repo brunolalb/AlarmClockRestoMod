@@ -2,6 +2,7 @@
 
 #include <ArduinoJson.h>
 #include <SD.h>
+#include <WiFi.h>
 #include <WebServer.h>
 
 namespace {
@@ -663,6 +664,11 @@ void SoundController::handlePlayRadio(WebServer& webServer) {
   const String url = normalizeRadioUrl(requestedUrl);
   if (url.length() == 0) {
     webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid radio URL\"}");
+    return;
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"WiFi not connected\"}");
     return;
   }
 
