@@ -4,7 +4,6 @@
 #include <ClockController.h>
 #include <DisplayManager.h>
 #include <LittleFS.h>
-#include <SD.h>
 #include <SdController.h>
 #include <WebServer.h>
 
@@ -177,11 +176,11 @@ bool GeneralConfigController::readFromSdCard(ConfigData& outConfig) {
     return false;
   }
 
-  if (!SD.exists(GENERAL_CONFIG_FILE)) {
+  if (!sdController_.exists(GENERAL_CONFIG_FILE)) {
     return false;
   }
 
-  File file = SD.open(GENERAL_CONFIG_FILE, FILE_READ);
+  File file = sdController_.open(GENERAL_CONFIG_FILE, FILE_READ);
   if (!file) {
     return false;
   }
@@ -261,7 +260,7 @@ bool GeneralConfigController::saveToSdCard() {
     return false;
   }
 
-  if (SD.exists(GENERAL_CONFIG_FILE) && !SD.remove(GENERAL_CONFIG_FILE)) {
+  if (sdController_.exists(GENERAL_CONFIG_FILE) && !sdController_.remove(GENERAL_CONFIG_FILE)) {
     return false;
   }
 
@@ -272,7 +271,7 @@ bool GeneralConfigController::saveToSdCard() {
   doc["ftpUsername"] = ftpUsername_;
   doc["ftpPasswordEnc"] = encryptPassword(ftpPassword_);
 
-  File file = SD.open(GENERAL_CONFIG_FILE, FILE_WRITE);
+  File file = sdController_.open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
     return false;
   }

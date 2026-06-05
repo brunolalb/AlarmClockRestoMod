@@ -2,7 +2,6 @@
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
-#include <SD.h>
 #include <WebServer.h>
 
 const char* AlarmController::ALARM_FILE = "/alarm_config.json";
@@ -135,7 +134,7 @@ bool AlarmController::saveAlarmSettingsToSd(const AlarmSettings* settings, uint8
     return false;
   }
 
-  if (SD.exists(ALARM_FILE) && !SD.remove(ALARM_FILE)) {
+  if (sdController_.exists(ALARM_FILE) && !sdController_.remove(ALARM_FILE)) {
     return false;
   }
 
@@ -145,7 +144,7 @@ bool AlarmController::saveAlarmSettingsToSd(const AlarmSettings* settings, uint8
     appendAlarmToJsonArray(settings[i], alarms);
   }
 
-  File file = SD.open(ALARM_FILE, FILE_WRITE);
+  File file = sdController_.open(ALARM_FILE, FILE_WRITE);
   if (!file) {
     return false;
   }
@@ -191,11 +190,11 @@ bool AlarmController::loadAlarmSettingsFromSd(AlarmSettings* settings, uint8_t& 
     return false;
   }
 
-  if (!SD.exists(ALARM_FILE)) {
+  if (!sdController_.exists(ALARM_FILE)) {
     return false;
   }
 
-  File file = SD.open(ALARM_FILE, FILE_READ);
+  File file = sdController_.open(ALARM_FILE, FILE_READ);
   if (!file) {
     return false;
   }
@@ -328,7 +327,7 @@ void AlarmController::handleListMusicFiles(WebServer& webServer) {
   JsonArray files = doc.to<JsonArray>();
 
   if (sdController_.isReady()) {
-    File root = SD.open("/");
+    File root = sdController_.open("/", FILE_READ);
     if (root && root.isDirectory()) {
       File file = root.openNextFile();
       while (file) {

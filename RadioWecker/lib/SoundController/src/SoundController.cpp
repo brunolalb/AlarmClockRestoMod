@@ -1,7 +1,6 @@
 #include "SoundController.h"
 
 #include <ArduinoJson.h>
-#include <SD.h>
 #include <WiFi.h>
 #include <WebServer.h>
 
@@ -233,13 +232,13 @@ bool SoundController::resolveLocalPlaybackPath(const String& path, String& playb
   }
 
   playbackPath = path;
-  if (SD.exists(playbackPath)) {
+  if (sdController_.exists(playbackPath)) {
     return true;
   }
 
   if (playbackPath.startsWith("/")) {
     const String noSlashPath = playbackPath.substring(1);
-    if (SD.exists(noSlashPath)) {
+    if (sdController_.exists(noSlashPath)) {
       playbackPath = noSlashPath;
       return true;
     }
@@ -255,7 +254,7 @@ bool SoundController::startLocalTrack(const String& playbackPath, String& error)
   }
 
   audio_.stopSong();
-  if (!audio_.connecttoFS(SD, playbackPath.c_str())) {
+  if (!audio_.connecttoFS(sdController_.fs(), playbackPath.c_str())) {
     error = "Playback start failed";
     return false;
   }
@@ -290,9 +289,9 @@ void SoundController::populateTrackMetadataFromFile(const String& playbackPath) 
   trackFormat_ = upperExtensionFromPath(normalizedPath);
   trackFolder_ = folderFromPath(normalizedPath);
 
-  File trackFile = SD.open(normalizedPath);
+  File trackFile = sdController_.open(normalizedPath, FILE_READ);
   if (!trackFile) {
-    trackFile = SD.open(playbackPath);
+    trackFile = sdController_.open(playbackPath, FILE_READ);
   }
 
   if (!trackFile) {
@@ -328,7 +327,7 @@ bool SoundController::listMusicFiles(JsonArray& files) const {
     return false;
   }
 
-  File root = SD.open("/");
+  File root = sdController_.open("/", FILE_READ);
   if (!root || !root.isDirectory()) {
     return false;
   }
@@ -358,7 +357,7 @@ bool SoundController::findNextMusicFile(String& nextTrack) const {
   const String currentNoSlash = currentTrack_.startsWith("/") ? currentTrack_.substring(1) : currentTrack_;
   const String currentWithSlash = currentTrack_.startsWith("/") ? currentTrack_ : ("/" + currentTrack_);
 
-  File root = SD.open("/");
+  File root = sdController_.open("/", FILE_READ);
   if (!root || !root.isDirectory()) {
     return false;
   }
@@ -410,7 +409,7 @@ bool SoundController::findPreviousMusicFile(String& prevTrack) const {
   const String currentNoSlash = currentTrack_.startsWith("/") ? currentTrack_.substring(1) : currentTrack_;
   const String currentWithSlash = currentTrack_.startsWith("/") ? currentTrack_ : ("/" + currentTrack_);
 
-  File root = SD.open("/");
+  File root = sdController_.open("/", FILE_READ);
   if (!root || !root.isDirectory()) {
     return false;
   }
@@ -488,9 +487,9 @@ void SoundController::buildFileTree(const String& path, JsonObject& parentObj) c
     openPath.remove(openPath.length() - 1);
   }
 
-  File dir = SD.open(openPath);
+  File dir = sdController_.open(openPath, FILE_READ);
   if (!dir || !dir.isDirectory()) {
-    dir = SD.open(normalizedPath);
+    dir = sdController_.open(normalizedPath, FILE_READ);
   }
   if (!dir || !dir.isDirectory()) {
     return;

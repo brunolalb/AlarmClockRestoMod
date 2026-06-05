@@ -28,6 +28,7 @@ class SdController {
   bool mkdir(const String& path);
   bool rmdir(const String& path);
   File open(const String& path, const char* mode = FILE_READ);
+  fs::FS& fs();
 
  private:
   bool runSelfTest();

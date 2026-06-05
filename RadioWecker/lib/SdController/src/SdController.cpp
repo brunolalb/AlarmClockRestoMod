@@ -124,3 +124,7 @@ File SdController::open(const String& path, const char* mode) {
 
   return SD.open(path, mode);
 }
+
+fs::FS& SdController::fs() {
+  return SD;
+}
