@@ -2409,10 +2409,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "1115674a-f918-4953-aada-1bb016ced2ca")
 		(property "Reference" "DISPLAY1"
 			(at 227.33 93.98 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2456,6 +2456,16 @@
 		(property "Description" "4 Digit 7-Segment Display with dots 0.8\""
 			(at 200.914 126.238 0)
 			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Name" "DISPLAY"
+			(at 206.502 123.952 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
