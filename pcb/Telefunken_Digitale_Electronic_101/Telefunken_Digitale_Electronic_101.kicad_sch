@@ -1,0 +1,584 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "df1af5ff-c8b9-4769-9610-ead9e11e7e65")
+	(paper "A4")
+	(title_block
+		(title "Telefunken_Digitale_Electronic_101 - Display")
+		(date "2026-06-17")
+		(rev "1.0")
+		(company "brunolalb@gmail.com")
+		(comment 1 "Bruno Landau Albrecht")
+	)
+	(lib_symbols)
+	(junction
+		(at 143.51 71.12)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "15e80e8b-e6d6-4711-9c24-de00df2efbe5")
+	)
+	(junction
+		(at 140.97 67.31)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "360be5bb-3ceb-4a47-90e7-fa0409cf5aa3")
+	)
+	(junction
+		(at 140.97 76.2)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a6500ef5-e585-400b-902f-aa74103d23b8")
+	)
+	(junction
+		(at 143.51 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "fcac46fc-5460-4f1e-8048-87ef01510061")
+	)
+	(wire
+		(pts
+			(xy 143.51 78.74) (xy 143.51 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "06baaaec-fb78-4747-9698-810e8c72cbcd")
+	)
+	(wire
+		(pts
+			(xy 140.97 67.31) (xy 140.97 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0810a9b8-72a5-420e-90a5-ed2f918265d4")
+	)
+	(wire
+		(pts
+			(xy 140.97 45.72) (xy 180.34 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5183717d-159e-4104-b366-860eb717343a")
+	)
+	(wire
+		(pts
+			(xy 180.34 76.2) (xy 140.97 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5378f2dc-4071-4ab4-a60e-48853d05cc90")
+	)
+	(wire
+		(pts
+			(xy 143.51 109.22) (xy 143.51 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5b186742-8ff8-4d6b-965b-4c5ca03b786a")
+	)
+	(wire
+		(pts
+			(xy 143.51 48.26) (xy 143.51 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "63dc79cc-1a14-4a6a-a2d5-724cff4fa38b")
+	)
+	(wire
+		(pts
+			(xy 143.51 71.12) (xy 121.92 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6a400631-c0d9-4515-8bc2-ccba46078ec4")
+	)
+	(wire
+		(pts
+			(xy 140.97 106.68) (xy 140.97 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6e09f63c-af5e-41bd-860a-8b6b40e4d198")
+	)
+	(wire
+		(pts
+			(xy 180.34 78.74) (xy 143.51 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7974874a-1f4a-4691-9827-680763b2c5f0")
+	)
+	(wire
+		(pts
+			(xy 180.34 48.26) (xy 143.51 48.26)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cb18fedf-43f6-42a6-9334-62bedc9333a9")
+	)
+	(wire
+		(pts
+			(xy 140.97 76.2) (xy 140.97 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cc3746a2-a3f9-4e6a-bcb2-8ffbadc0ac96")
+	)
+	(wire
+		(pts
+			(xy 180.34 106.68) (xy 140.97 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d9bd8316-16f4-4d39-b63d-4f818173c7b7")
+	)
+	(wire
+		(pts
+			(xy 121.92 67.31) (xy 140.97 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e1ea1bd1-5030-4b73-92c8-94e0a7600d54")
+	)
+	(wire
+		(pts
+			(xy 180.34 109.22) (xy 143.51 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f680183b-d3c2-4bcf-b70a-fadc117a95fa")
+	)
+	(sheet
+		(at 95.25 63.5)
+		(size 26.67 63.5)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "75a1a5d9-cb48-4e12-a237-e00fbc51bad9")
+		(property "Sheetname" "Interface"
+			(at 95.25 62.7884 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "interface.kicad_sch"
+			(at 95.25 127.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "GND" bidirectional
+			(at 121.92 71.12 0)
+			(uuid "34417bc0-6fd1-42c8-b16e-dfbdbb99750e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "VCC" bidirectional
+			(at 121.92 67.31 0)
+			(uuid "a03fac9a-b3a1-4686-b106-9f6a3563fd94")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(instances
+			(project "Telefunken_Digitale_Electronic_101"
+				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 180.34 73.66)
+		(size 20.32 22.86)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "bbe7d115-46a0-489e-9136-389da3eb571d")
+		(property "Sheetname" "RTC"
+			(at 180.34 72.9484 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "rtc.kicad_sch"
+			(at 180.34 97.1046 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "VCC" bidirectional
+			(at 180.34 76.2 180)
+			(uuid "4ef26bd1-a068-49c2-b365-966ed47a7c66")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "GND" bidirectional
+			(at 180.34 78.74 180)
+			(uuid "65c00ee1-661e-4ad5-9504-16a2cbbf0e47")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SCL" input
+			(at 180.34 85.09 180)
+			(uuid "cdee46bb-1c8b-4c6c-b5c2-e5b74f3c764a")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SDA" bidirectional
+			(at 180.34 87.63 180)
+			(uuid "53b7af73-ccc4-4bd8-8b7a-2aca594e0376")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SQW" output
+			(at 180.34 90.17 180)
+			(uuid "fc887bfc-2122-4b2c-8c57-d68b944ef8c5")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "32K" input
+			(at 180.34 92.71 180)
+			(uuid "6b7cc581-b2c0-4c3a-8fd9-9da6a6f2864f")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project "Telefunken_Digitale_Electronic_101"
+				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 180.34 104.14)
+		(size 22.86 38.1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "d38ac94e-1578-41e7-bfce-23ec2afd3398")
+		(property "Sheetname" "Buttons"
+			(at 180.34 103.4284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "buttons.kicad_sch"
+			(at 180.34 142.8246 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "VCC" bidirectional
+			(at 180.34 106.68 180)
+			(uuid "81d81356-5504-49ee-9c24-b30c11683f98")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "GND" bidirectional
+			(at 180.34 109.22 180)
+			(uuid "90bdc348-dd9a-4fc5-8e61-f75e0cb40cf9")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SIGNAL" output
+			(at 180.34 116.84 180)
+			(uuid "e46427c4-9b43-4662-9534-c5d442b3b959")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "TIME" output
+			(at 180.34 119.38 180)
+			(uuid "69e09e53-8572-4ff7-9031-fc3f9ac66394")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "ILLUM" output
+			(at 180.34 124.46 180)
+			(uuid "ae5e9637-32e3-417a-8db0-0705dc069ccb")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "FAST" output
+			(at 180.34 129.54 180)
+			(uuid "924d5813-a966-4107-a20e-9c65dd511f30")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SLOW" output
+			(at 180.34 132.08 180)
+			(uuid "ad0d5501-08ed-463c-9cfb-b19d74f963b0")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SLEEP_TOP" output
+			(at 180.34 135.89 180)
+			(uuid "4bc4a442-0a42-4a48-bd8c-68cd06c1a03e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SLEEP_FRONT" output
+			(at 180.34 121.92 180)
+			(uuid "ad244a5a-a33c-4a89-9a3c-67a4df2ac66f")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project "Telefunken_Digitale_Electronic_101"
+				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 180.34 41.91)
+		(size 17.78 22.86)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "ef6275f4-75ba-4006-a847-a151b9f8c4ad")
+		(property "Sheetname" "Display"
+			(at 180.34 41.1984 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "display.kicad_sch"
+			(at 180.34 65.3546 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "VCC" bidirectional
+			(at 180.34 45.72 180)
+			(uuid "028e1058-df20-4aca-93a1-e9622d06ae54")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "GND" bidirectional
+			(at 180.34 48.26 180)
+			(uuid "1370e40b-a9b0-4e73-b6e2-f116ae68e364")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "CLK" input
+			(at 180.34 58.42 180)
+			(uuid "b76263ca-796b-48f1-b655-dff91ea7807a")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "DIO" bidirectional
+			(at 180.34 60.96 180)
+			(uuid "aa7f5676-9c1c-4f67-8be2-6472ecdfa40c")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project ""
+				(path "/a0fb8908-7e5d-4840-ad8a-7af41602e2b6"
+					(page "")
+				)
+			)
+			(project "Telefunken_Digitale_Electronic_101"
+				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65"
+					(page "5")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
