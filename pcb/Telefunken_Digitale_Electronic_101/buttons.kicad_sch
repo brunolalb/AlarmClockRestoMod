@@ -1813,10 +1813,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "20ac2223-43c9-4d71-9d31-7f8522698741")
-		(property "Reference" "BT_SIGNAL"
+		(property "Reference" "J2"
 			(at 67.31 64.7699 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1837,7 +1837,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical"
 			(at 66.04 64.77 0)
 			(hide yes)
 			(show_name no)
@@ -1870,6 +1870,16 @@
 				)
 			)
 		)
+		(property "Name" "BT_SIGNAL"
+			(at 72.136 64.77 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "86a203e1-566c-40b2-bbd5-066b4c364057")
 		)
@@ -1879,7 +1889,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "BT_SIGNAL")
+					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -2054,10 +2064,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "2d10da04-1b9c-4617-b6dd-598cafd63a1d")
-		(property "Reference" "FAST"
+		(property "Reference" "SW1"
 			(at 116.84 31.75 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2109,6 +2119,16 @@
 				)
 			)
 		)
+		(property "Name" "FAST"
+			(at 116.84 41.402 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "6f89c9d9-67ad-47e4-a8de-6643f8190137")
 		)
@@ -2118,7 +2138,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "FAST")
+					(reference "SW1")
 					(unit 1)
 				)
 			)
@@ -2692,10 +2712,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "7fe4f857-2486-4ca0-8fa8-0ba8d9ba6010")
-		(property "Reference" "BT_SLEEP_TOP"
+		(property "Reference" "J5"
 			(at 132.08 97.7899 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2716,7 +2736,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical"
 			(at 130.81 97.79 0)
 			(hide yes)
 			(show_name no)
@@ -2749,6 +2769,16 @@
 				)
 			)
 		)
+		(property "Name" "BT_SLEEP_TOP"
+			(at 139.192 97.536 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "91c1cf11-7637-48ab-aafe-b36a7261cff4")
 		)
@@ -2758,7 +2788,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "BT_SLEEP_TOP")
+					(reference "J5")
 					(unit 1)
 				)
 			)
@@ -2852,10 +2882,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "86511a01-f957-44ae-b9c1-ad08c806af9d")
-		(property "Reference" "BT_TIME"
+		(property "Reference" "J1"
 			(at 66.04 36.8299 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2876,7 +2906,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical"
 			(at 64.77 36.83 0)
 			(hide yes)
 			(show_name no)
@@ -2909,6 +2939,16 @@
 				)
 			)
 		)
+		(property "Name" "BT_TIME"
+			(at 69.85 36.83 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "f99c8f70-f571-4a5d-be10-59ee628f3724")
 		)
@@ -2918,7 +2958,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "BT_TIME")
+					(reference "J1")
 					(unit 1)
 				)
 			)
@@ -3097,10 +3137,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "9e0cb86c-6f2a-4c04-b534-b7092fa7b762")
-		(property "Reference" "BT_ILLUM"
+		(property "Reference" "J4"
 			(at 69.85 116.8399 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3121,7 +3161,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical"
 			(at 68.58 116.84 0)
 			(hide yes)
 			(show_name no)
@@ -3154,6 +3194,16 @@
 				)
 			)
 		)
+		(property "Name" "BT_ILLUM"
+			(at 74.168 116.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "75938b43-1014-4091-add1-0f624441e75b")
 		)
@@ -3163,7 +3213,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "BT_ILLUM")
+					(reference "J4")
 					(unit 1)
 				)
 			)
@@ -3413,10 +3463,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "ad37c83e-2514-40c5-a583-b16bb284fab4")
-		(property "Reference" "BT_SLEEP_FRONT"
+		(property "Reference" "J3"
 			(at 68.58 90.1699 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3437,7 +3487,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical"
 			(at 67.31 90.17 0)
 			(hide yes)
 			(show_name no)
@@ -3470,6 +3520,16 @@
 				)
 			)
 		)
+		(property "Name" "BT_SLEEP_FRONT"
+			(at 76.454 90.424 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "405d1231-3e44-43b7-b55f-d8d0d2e5d4ca")
 		)
@@ -3479,7 +3539,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "BT_SLEEP_FRONT")
+					(reference "J3")
 					(unit 1)
 				)
 			)
@@ -3738,10 +3798,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "b3920dfb-ead0-427f-8a30-87b04048e6c4")
-		(property "Reference" "SLOW"
+		(property "Reference" "SW2"
 			(at 116.84 55.88 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3793,6 +3853,16 @@
 				)
 			)
 		)
+		(property "Name" "SLOW"
+			(at 116.586 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "68d6aae7-e9ec-4bbb-8940-d09ecc6326c9")
 		)
@@ -3802,7 +3872,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "SLOW")
+					(reference "SW2")
 					(unit 1)
 				)
 			)
