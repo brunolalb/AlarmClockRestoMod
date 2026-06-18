@@ -2109,10 +2109,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "0968fd01-c5d2-4589-9741-4d4bf924b588")
-		(property "Reference" "BUTTONS2"
+		(property "Reference" "J10"
 			(at 43.815 123.19 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2164,6 +2164,16 @@
 				)
 			)
 		)
+		(property "Name" "BUTTONS2"
+			(at 44.45 123.444 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "a0a3cbe4-29d0-4920-a953-a39922acdeac")
 		)
@@ -2176,7 +2186,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "BUTTONS2")
+					(reference "J10")
 					(unit 1)
 				)
 			)
@@ -2426,10 +2436,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "4d50978a-6c4c-455b-ba66-63a7a4538279")
-		(property "Reference" "BUTTONS1"
+		(property "Reference" "J9"
 			(at 43.815 104.14 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2481,6 +2491,16 @@
 				)
 			)
 		)
+		(property "Name" "BUTTONS1"
+			(at 44.45 104.394 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "79d33897-9595-4a1c-be0e-84dc39fe51f7")
 		)
@@ -2496,7 +2516,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "BUTTONS1")
+					(reference "J9")
 					(unit 1)
 				)
 			)
@@ -2512,10 +2532,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "6063bd3a-a0a6-4954-92ac-b6e7cd08f297")
-		(property "Reference" "DISPLAY2"
+		(property "Reference" "J7"
 			(at 43.815 64.77 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2567,6 +2587,16 @@
 				)
 			)
 		)
+		(property "Name" "DISPLAY"
+			(at 43.688 64.77 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "9cc13407-a019-49f6-b8ab-fe0bca0f1123")
 		)
@@ -2576,7 +2606,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "DISPLAY2")
+					(reference "J7")
 					(unit 1)
 				)
 			)
@@ -2912,10 +2942,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "ca7ec260-c901-4574-9bf5-3a1ff5d95307")
-		(property "Reference" "RTC1"
+		(property "Reference" "J8"
 			(at 43.815 81.28 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2967,6 +2997,16 @@
 				)
 			)
 		)
+		(property "Name" "RTC"
+			(at 44.45 81.788 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "721dbfff-86e7-4138-a622-0967f373a868")
 		)
@@ -2982,7 +3022,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "RTC1")
+					(reference "J8")
 					(unit 1)
 				)
 			)
@@ -2998,10 +3038,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "e3da5d3f-c0f6-4384-9163-e02a36ea51f9")
-		(property "Reference" "POWER1"
+		(property "Reference" "J6"
 			(at 42.545 36.83 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3053,6 +3093,16 @@
 				)
 			)
 		)
+		(property "Name" "POWER"
+			(at 42.672 37.084 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "a951228e-a46f-4a0a-af65-e1ee312d4da0")
 		)
@@ -3062,7 +3112,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "POWER1")
+					(reference "J6")
 					(unit 1)
 				)
 			)
