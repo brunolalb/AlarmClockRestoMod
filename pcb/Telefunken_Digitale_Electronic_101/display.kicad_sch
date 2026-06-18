@@ -1987,13 +1987,15 @@
 		(at 168.91 93.98)
 		(uuid "704a7b7e-b45e-4ac9-a63d-8b1ccc913497")
 	)
-	(no_connect
-		(at 133.35 101.6)
-		(uuid "8cf8d3af-3bf6-4878-83b9-998bd1287d7d")
-	)
-	(no_connect
-		(at 133.35 104.14)
-		(uuid "b14864c7-d56a-4591-bce7-645a46aaea4a")
+	(wire
+		(pts
+			(xy 130.81 101.6) (xy 133.35 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "04b43e9e-ebdd-42c7-adfd-fac98acca1b0")
 	)
 	(wire
 		(pts
@@ -2167,6 +2169,16 @@
 	)
 	(wire
 		(pts
+			(xy 130.81 104.14) (xy 133.35 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f6f0f2a-c4a7-4a0e-a09b-88a925cd39ae")
+	)
+	(wire
+		(pts
 			(xy 53.34 58.42) (xy 57.15 58.42)
 		)
 		(stroke
@@ -2325,6 +2337,36 @@
 		)
 		(uuid "01b6a2a6-6f78-4919-8e2f-3817b043ec2a")
 	)
+	(label "KS3"
+		(at 168.91 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "06bc1716-7d5d-4723-a91a-a293933df074")
+	)
+	(label "KS6"
+		(at 168.91 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "1d473ce5-1b72-4a12-b78c-88e2f195c83c")
+	)
+	(label "K2"
+		(at 53.34 97.79 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "1e208785-c297-48e9-8aac-c18df53fd5dd")
+	)
 	(label "DIO"
 		(at 53.34 71.12 0)
 		(effects
@@ -2334,6 +2376,36 @@
 			(justify left bottom)
 		)
 		(uuid "4195486a-018b-4d0f-bd09-1e18741d6b62")
+	)
+	(label "KS2"
+		(at 53.34 87.63 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "49280bd9-0c38-4c93-9b7d-e58f1939f8aa")
+	)
+	(label "KS2"
+		(at 168.91 104.14 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4e11d418-d0ae-44b0-a039-f776563ab800")
+	)
+	(label "K2"
+		(at 130.81 104.14 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "8e9f531e-63e5-40cb-8a94-a0962a05a783")
 	)
 	(label "CLK"
 		(at 101.6 83.82 0)
@@ -2345,6 +2417,16 @@
 		)
 		(uuid "a37e924c-6967-4b8b-95e9-951d6c2f3622")
 	)
+	(label "KS3"
+		(at 53.34 90.17 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a9c20493-c2ce-410f-9d37-d03f5dea5333")
+	)
 	(label "CLK"
 		(at 53.34 68.58 0)
 		(effects
@@ -2354,6 +2436,67 @@
 			(justify left bottom)
 		)
 		(uuid "ae1692fc-912f-434b-92d7-58e535bd3b3d")
+	)
+	(label "KS1"
+		(at 53.34 85.09 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "c4dbdcd9-e606-40c6-9b29-2789549190be")
+	)
+	(label "KS6"
+		(at 53.34 92.71 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d6254e0c-6ea7-4758-99ec-9da58763cb6f")
+	)
+	(label "K1"
+		(at 53.34 95.25 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f2e0e995-0fa5-413c-92c9-ce14dfcc64c5")
+	)
+	(label "KS1"
+		(at 168.91 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f43fa614-89b0-4a57-98b4-02b2413c336a")
+	)
+	(label "K1"
+		(at 130.81 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fba4dba6-64fb-4914-91b8-b7e858fcec94")
+	)
+	(hierarchical_label "BUTTONS_K1"
+		(shape input)
+		(at 53.34 95.25 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "1001bf97-4412-41c5-ab3e-c76175230c95")
 	)
 	(hierarchical_label "CLK"
 		(shape input)
@@ -2366,6 +2509,17 @@
 		)
 		(uuid "2a6e21fd-ad68-40c1-9157-9a7c1b43b0ba")
 	)
+	(hierarchical_label "BUTTONS_GRID4"
+		(shape output)
+		(at 53.34 92.71 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "322fa278-7ed0-45d2-9214-2036d5460cdf")
+	)
 	(hierarchical_label "GND"
 		(shape bidirectional)
 		(at 53.34 58.42 180)
@@ -2377,6 +2531,28 @@
 		)
 		(uuid "45fe1160-b6de-4f70-b2af-8dff8a0b2229")
 	)
+	(hierarchical_label "BUTTONS_GRID2"
+		(shape output)
+		(at 53.34 87.63 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "509f06ed-ee8f-451c-abbc-eac22cdbe6da")
+	)
+	(hierarchical_label "BUTTONS_GRID1"
+		(shape output)
+		(at 53.34 85.09 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "58ce9576-e2cc-4b32-aa13-39eeae0b4db1")
+	)
 	(hierarchical_label "VCC"
 		(shape bidirectional)
 		(at 53.34 55.88 180)
@@ -2387,6 +2563,28 @@
 			(justify right)
 		)
 		(uuid "6d0364c4-2295-4bd7-a1c2-7bd42432ec41")
+	)
+	(hierarchical_label "BUTTONS_GRID3"
+		(shape output)
+		(at 53.34 90.17 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "7984bd3d-c7ba-480e-b80e-2173cd31b372")
+	)
+	(hierarchical_label "BUTTONS_K2"
+		(shape input)
+		(at 53.34 97.79 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "b5b3f11b-0a20-41ba-ad4f-f80ea275e092")
 	)
 	(hierarchical_label "DIO"
 		(shape bidirectional)
