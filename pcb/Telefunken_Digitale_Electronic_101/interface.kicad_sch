@@ -1684,18 +1684,8 @@
 		)
 		(uuid "0032c3d5-416d-4c55-aaa1-8d4403187b17")
 	)
-	(label "BT_SIGNAL"
-		(at 48.26 111.76 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "04ccf34a-51f7-406f-82bb-def97b576899")
-	)
 	(label "RTC_SDA"
-		(at 48.26 91.44 0)
+		(at 48.26 93.98 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1714,6 +1704,26 @@
 		)
 		(uuid "1173e07b-6524-47a6-be04-41ae700cfa85")
 	)
+	(label "BT_ILLUM"
+		(at 48.26 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "14d6a308-bb6f-47bb-bee8-7f8de68f4b4a")
+	)
+	(label "BT_SIGNAL"
+		(at 48.26 128.27 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2a02f9ae-2f5e-4567-ba5e-bc0f3c7ce7e2")
+	)
 	(label "BT_SLEEP_FRONT"
 		(at 107.95 114.3 0)
 		(effects
@@ -1723,6 +1733,16 @@
 			(justify left bottom)
 		)
 		(uuid "311eb24d-5666-43d7-908b-3cf4c0674de7")
+	)
+	(label "BT_SLOW"
+		(at 48.26 109.22 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "38db506d-efa5-4ac7-9079-10ab4761d02b")
 	)
 	(label "RTC_32K"
 		(at 106.68 85.09 0)
@@ -1754,25 +1774,15 @@
 		)
 		(uuid "63fbccbc-4b20-4f53-9c3d-a4f3dbb15ee2")
 	)
-	(label "BT_TIME"
-		(at 48.26 109.22 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "713f9b69-a93a-448d-ac96-98cf0b4a4b0b")
-	)
 	(label "BT_SLEEP_FRONT"
-		(at 48.26 114.3 0)
+		(at 48.26 116.84 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "8189597a-c013-4d9a-9f0a-646198b33adf")
+		(uuid "7467c719-a605-468a-ab73-6f432087789f")
 	)
 	(label "BT_SLEEP_TOP"
 		(at 109.22 128.27 0)
@@ -1784,16 +1794,6 @@
 		)
 		(uuid "84fdcd59-5ec4-46c5-ac28-7bf8952cb1f0")
 	)
-	(label "BT_FAST"
-		(at 48.26 128.27 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "88d9c40a-bef0-4468-9cdb-2daa744b55a8")
-	)
 	(label "DISPLAY_CLK"
 		(at 102.87 68.58 0)
 		(effects
@@ -1803,6 +1803,16 @@
 			(justify left bottom)
 		)
 		(uuid "89a3f297-795b-47ea-b854-028d8fae40a9")
+	)
+	(label "BT_TIME"
+		(at 48.26 130.81 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "8d5185b7-48a9-49db-bb08-c4482ab72fcf")
 	)
 	(label "RTC_SCL"
 		(at 106.68 92.71 0)
@@ -1815,7 +1825,7 @@
 		(uuid "9c0ffcc0-49b4-4230-a038-a98d4100b85b")
 	)
 	(label "RTC_SCL"
-		(at 48.26 93.98 0)
+		(at 48.26 91.44 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1884,6 +1894,16 @@
 		)
 		(uuid "d558bd63-f455-46dc-ae9a-a821b8081dc3")
 	)
+	(label "BT_FAST"
+		(at 48.26 111.76 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d66d514a-8d70-4173-b3d9-efb435613884")
+	)
 	(label "BT_SLEEP_TOP"
 		(at 48.26 133.35 0)
 		(effects
@@ -1913,26 +1933,6 @@
 			(justify left bottom)
 		)
 		(uuid "e63b79e9-1f37-421a-bead-dfb282a2deeb")
-	)
-	(label "BT_SLOW"
-		(at 48.26 130.81 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "e925c567-f3ad-4324-bf51-27b677fc0d0e")
-	)
-	(label "BT_ILLUM"
-		(at 48.26 116.84 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "f130b6ed-57f3-43cd-ad88-f6b7917558fb")
 	)
 	(hierarchical_label "BT_FAST"
 		(shape input)
