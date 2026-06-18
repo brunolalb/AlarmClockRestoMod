@@ -2086,7 +2086,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm_H4.3mm"
 			(at 116.84 34.29 0)
 			(hide yes)
 			(show_name no)
@@ -3820,7 +3820,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm_H4.3mm"
 			(at 116.84 58.42 0)
 			(hide yes)
 			(show_name no)
