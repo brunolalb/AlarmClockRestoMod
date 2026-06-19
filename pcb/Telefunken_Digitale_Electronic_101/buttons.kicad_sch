@@ -1257,7 +1257,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "20ac2223-43c9-4d71-9d31-7f8522698741")
-		(property "Reference" "J2"
+		(property "Reference" "J5"
 			(at 66.04 46.9899 0)
 			(hide yes)
 			(show_name no)
@@ -1332,7 +1332,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "J2")
+					(reference "J5")
 					(unit 1)
 				)
 			)
@@ -1439,7 +1439,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "7fe4f857-2486-4ca0-8fa8-0ba8d9ba6010")
-		(property "Reference" "J5"
+		(property "Reference" "J8"
 			(at 119.38 66.0399 0)
 			(hide yes)
 			(show_name no)
@@ -1514,7 +1514,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "J5")
+					(reference "J8")
 					(unit 1)
 				)
 			)
@@ -1531,7 +1531,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "86511a01-f957-44ae-b9c1-ad08c806af9d")
-		(property "Reference" "J1"
+		(property "Reference" "J4"
 			(at 66.04 36.8299 0)
 			(hide yes)
 			(show_name no)
@@ -1606,7 +1606,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "J1")
+					(reference "J4")
 					(unit 1)
 				)
 			)
@@ -1623,7 +1623,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "9e0cb86c-6f2a-4c04-b534-b7092fa7b762")
-		(property "Reference" "J4"
+		(property "Reference" "J7"
 			(at 66.04 68.5799 0)
 			(hide yes)
 			(show_name no)
@@ -1698,7 +1698,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "J4")
+					(reference "J7")
 					(unit 1)
 				)
 			)
@@ -1715,7 +1715,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "ad37c83e-2514-40c5-a583-b16bb284fab4")
-		(property "Reference" "J3"
+		(property "Reference" "J6"
 			(at 66.04 59.6899 0)
 			(hide yes)
 			(show_name no)
@@ -1790,7 +1790,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/d38ac94e-1578-41e7-bfce-23ec2afd3398"
-					(reference "J3")
+					(reference "J6")
 					(unit 1)
 				)
 			)

@@ -2017,7 +2017,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "02c8fdaf-ad0a-4421-ac53-9c122999dc0e")
-		(property "Reference" "J8"
+		(property "Reference" "J3"
 			(at 45.72 85.09 0)
 			(hide yes)
 			(show_name no)
@@ -2099,7 +2099,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "J8")
+					(reference "J3")
 					(unit 1)
 				)
 			)
@@ -2117,7 +2117,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "09f91214-9cac-401a-ab1c-33ce649db9d4")
-		(property "Reference" "#PWR020"
+		(property "Reference" "#PWR03"
 			(at 54.61 45.72 0)
 			(hide yes)
 			(show_name no)
@@ -2177,7 +2177,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR020")
+					(reference "#PWR03")
 					(unit 1)
 				)
 			)
@@ -2195,7 +2195,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "108db4b3-c19f-4506-b2ec-88cb3c86e4ad")
-		(property "Reference" "#PWR021"
+		(property "Reference" "#PWR04"
 			(at 54.61 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -2255,7 +2255,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR021")
+					(reference "#PWR04")
 					(unit 1)
 				)
 			)
@@ -2273,7 +2273,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "1a56b5d4-bb25-4cf9-bc8c-571e4bd2d0f2")
-		(property "Reference" "J7"
+		(property "Reference" "J2"
 			(at 45.72 62.23 0)
 			(hide yes)
 			(show_name no)
@@ -2349,7 +2349,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "J7")
+					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -2765,7 +2765,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "67d2a386-eb39-4881-8cf7-aba1b3f7e393")
-		(property "Reference" "#PWR030"
+		(property "Reference" "#PWR02"
 			(at 45.72 110.49 0)
 			(hide yes)
 			(show_name no)
@@ -2825,7 +2825,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR030")
+					(reference "#PWR02")
 					(unit 1)
 				)
 			)
@@ -2843,7 +2843,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "70635a70-7459-4462-8fec-6f79d1adee30")
-		(property "Reference" "C11"
+		(property "Reference" "C1"
 			(at 72.39 40.6399 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2907,7 +2907,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "C11")
+					(reference "C1")
 					(unit 1)
 				)
 			)
@@ -2925,7 +2925,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "78da055f-df8d-41ed-9eb0-51fb26791e1b")
-		(property "Reference" "#PWR025"
+		(property "Reference" "#PWR06"
 			(at 113.03 52.07 0)
 			(hide yes)
 			(show_name no)
@@ -2985,7 +2985,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR025")
+					(reference "#PWR06")
 					(unit 1)
 				)
 			)
@@ -3003,7 +3003,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "9a6cb0ab-f4f4-453e-be96-6c45c3db1ff1")
-		(property "Reference" "#PWR022"
+		(property "Reference" "#PWR05"
 			(at 72.39 133.35 0)
 			(hide yes)
 			(show_name no)
@@ -3063,7 +3063,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR022")
+					(reference "#PWR05")
 					(unit 1)
 				)
 			)
@@ -3319,7 +3319,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "c35fc59f-fbde-424d-84d7-f44d6c406633")
-		(property "Reference" "C12"
+		(property "Reference" "C2"
 			(at 85.09 39.7509 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3383,7 +3383,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "C12")
+					(reference "C2")
 					(unit 1)
 				)
 			)
@@ -3401,7 +3401,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "df5538c7-1c5b-4055-8a0b-b4c018a90da2")
-		(property "Reference" "#PWR029"
+		(property "Reference" "#PWR01"
 			(at 45.72 82.55 0)
 			(hide yes)
 			(show_name no)
@@ -3461,7 +3461,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR029")
+					(reference "#PWR01")
 					(unit 1)
 				)
 			)
@@ -3478,7 +3478,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "e3da5d3f-c0f6-4384-9163-e02a36ea51f9")
-		(property "Reference" "J6"
+		(property "Reference" "J1"
 			(at 42.545 36.83 0)
 			(hide yes)
 			(show_name no)
@@ -3551,7 +3551,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "J6")
+					(reference "J1")
 					(unit 1)
 				)
 			)
@@ -3569,7 +3569,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "f166ee1e-73b2-42b2-b959-2136d067cbda")
-		(property "Reference" "#PWR026"
+		(property "Reference" "#PWR07"
 			(at 113.03 58.42 0)
 			(hide yes)
 			(show_name no)
@@ -3629,7 +3629,7 @@
 		(instances
 			(project "Telefunken_Digitale_Electronic_101"
 				(path "/df1af5ff-c8b9-4769-9610-ead9e11e7e65/75a1a5d9-cb48-4e12-a237-e00fbc51bad9"
-					(reference "#PWR026")
+					(reference "#PWR07")
 					(unit 1)
 				)
 			)
