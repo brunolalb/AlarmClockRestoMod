@@ -615,12 +615,36 @@
           "label": "Datasheet",
           "name": "Datasheet",
           "show": true
+        },
+        {
+          "group_by": true,
+          "label": "Name",
+          "name": "Name",
+          "show": true
+        },
+        {
+          "group_by": false,
+          "label": "MANUFACTURER",
+          "name": "MANUFACTURER",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Description",
+          "name": "Description",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "#",
+          "name": "${ITEM_NUMBER}",
+          "show": false
         }
       ],
       "filter_string": "",
       "group_symbols": true,
       "include_excluded_from_bom": true,
-      "name": "Default Editing",
+      "name": "",
       "sort_asc": true,
       "sort_field": "Reference"
     },
@@ -665,7 +689,7 @@
         "uuid": "df1af5ff-c8b9-4769-9610-ead9e11e7e65"
       }
     ],
-    "used_designators": "#FLG1-2,DISPLAY1,R1-4,J1-10,SW1-2,H1-6,#PWR1-22,#PWR29-30,C1-8,U1-2",
+    "used_designators": "#FLG1-2,DISPLAY1,R1-4,J1-10,SW1-2,H1-6,#PWR1-23,#PWR29-30,C1-8,U1-2",
     "variants": []
   },
   "sheets": [
