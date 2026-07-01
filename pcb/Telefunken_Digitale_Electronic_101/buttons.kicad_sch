@@ -1370,7 +1370,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm_H4.3mm"
+		(property "Footprint" "RadioWecker:TACT_SWITCH_3.2X4.2X2.5MM"
 			(at 116.84 34.29 0)
 			(hide yes)
 			(show_name no)
@@ -1828,7 +1828,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm_H4.3mm"
+		(property "Footprint" "RadioWecker:TACT_SWITCH_3.2X4.2X2.5MM"
 			(at 116.84 46.99 0)
 			(hide yes)
 			(show_name no)
