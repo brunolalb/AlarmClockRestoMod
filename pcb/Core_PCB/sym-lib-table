@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "RadioWecker") (type "KiCad") (uri "${KIPRJMOD}/../library/RadioWecker.kicad_sym") (options "") (descr ""))
+)
