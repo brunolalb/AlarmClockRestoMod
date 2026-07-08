@@ -1949,6 +1949,16 @@
 	)
 	(wire
 		(pts
+			(xy 35.56 124.46) (xy 57.15 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "125b4ca0-ed06-4976-bb6e-2f53cd47f727")
+	)
+	(wire
+		(pts
 			(xy 106.68 96.52) (xy 121.92 96.52)
 		)
 		(stroke
@@ -1989,16 +1999,6 @@
 	)
 	(wire
 		(pts
-			(xy 49.53 168.91) (xy 59.69 168.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "286de919-cd4c-40e0-8cf1-1158cc9fa4d8")
-	)
-	(wire
-		(pts
 			(xy 233.68 72.39) (xy 237.49 72.39)
 		)
 		(stroke
@@ -2006,26 +2006,6 @@
 			(type default)
 		)
 		(uuid "2912e674-6dbb-41c4-8491-5bf331eec6e9")
-	)
-	(wire
-		(pts
-			(xy 49.53 166.37) (xy 59.69 166.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2ba1208c-1d07-4b8a-8c42-bc4921e58f3e")
-	)
-	(wire
-		(pts
-			(xy 109.22 88.9) (xy 121.92 88.9)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2d7f8ea8-3922-42b3-a27a-83c1857fd409")
 	)
 	(wire
 		(pts
@@ -2089,16 +2069,6 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 81.28) (xy 121.92 81.28)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4e5689b3-ca69-47ea-a48f-34e509e0b916")
-	)
-	(wire
-		(pts
 			(xy 90.17 25.4) (xy 99.06 25.4)
 		)
 		(stroke
@@ -2129,13 +2099,23 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 86.36) (xy 121.92 86.36)
+			(xy 44.45 115.57) (xy 57.15 115.57)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "61b70d37-4969-4802-a1aa-40a9eb1c3a54")
+		(uuid "62c70aa0-b2d8-4547-823d-355c37f12917")
+	)
+	(wire
+		(pts
+			(xy 35.56 121.92) (xy 57.15 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "65c92fb5-7713-4628-ba4a-88fccba7a4f2")
 	)
 	(wire
 		(pts
@@ -2149,6 +2129,16 @@
 	)
 	(wire
 		(pts
+			(xy 101.6 86.36) (xy 121.92 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6b7803a6-9e7f-4cb3-a490-4b30699f3291")
+	)
+	(wire
+		(pts
 			(xy 40.7162 6.4262) (xy 40.7162 3.8862)
 		)
 		(stroke
@@ -2156,36 +2146,6 @@
 			(type default)
 		)
 		(uuid "6c1dbdd0-6eda-4b19-b9d1-5d8a07cfd466")
-	)
-	(wire
-		(pts
-			(xy 49.53 163.83) (xy 59.69 163.83)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6c33865e-837d-4ab4-b46d-2dd15c4e47ee")
-	)
-	(wire
-		(pts
-			(xy 44.45 119.38) (xy 57.15 119.38)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7607418e-afe5-4071-9b74-67e9964ff255")
-	)
-	(wire
-		(pts
-			(xy 49.53 161.29) (xy 59.69 161.29)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7a74a07f-34e5-4b1d-9c11-366dd752deae")
 	)
 	(wire
 		(pts
@@ -2199,13 +2159,13 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 68.58) (xy 121.92 68.58)
+			(xy 101.6 81.28) (xy 121.92 81.28)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "83bed921-1fa7-452b-a244-d0db2582d41e")
+		(uuid "811722f7-ceb1-42f4-957d-1dbdfccc4056")
 	)
 	(wire
 		(pts
@@ -2219,17 +2179,7 @@
 	)
 	(wire
 		(pts
-			(xy 49.53 176.53) (xy 59.69 176.53)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8adfa8e2-8305-448a-a6af-6b74be4df184")
-	)
-	(wire
-		(pts
-			(xy 44.45 116.84) (xy 57.15 116.84)
+			(xy 35.56 119.38) (xy 57.15 119.38)
 		)
 		(stroke
 			(width 0)
@@ -2256,26 +2206,6 @@
 			(type default)
 		)
 		(uuid "93cbb691-d204-4491-9df3-113072ac9224")
-	)
-	(wire
-		(pts
-			(xy 109.22 83.82) (xy 121.92 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "951918f1-d5c2-4ac7-bdb2-1b04e14c7ae1")
-	)
-	(wire
-		(pts
-			(xy 109.22 78.74) (xy 121.92 78.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "98731bfb-50c9-4f7c-8331-6ea277e4eab5")
 	)
 	(wire
 		(pts
@@ -2326,6 +2256,16 @@
 			(type default)
 		)
 		(uuid "b0ecebb0-94ef-40f3-bc47-ff839f7790b5")
+	)
+	(wire
+		(pts
+			(xy 101.6 83.82) (xy 121.92 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b2c610bc-8c93-49da-99e9-04186a2d05f5")
 	)
 	(wire
 		(pts
@@ -2389,16 +2329,6 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 71.12) (xy 121.92 71.12)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d39a6b8f-9b57-4371-a3d4-a047dc8baf25")
-	)
-	(wire
-		(pts
 			(xy 44.45 109.22) (xy 57.15 109.22)
 		)
 		(stroke
@@ -2419,16 +2349,6 @@
 	)
 	(wire
 		(pts
-			(xy 49.53 173.99) (xy 59.69 173.99)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e4deef4b-262d-458f-998d-b2b452de1eeb")
-	)
-	(wire
-		(pts
 			(xy 106.68 93.98) (xy 121.92 93.98)
 		)
 		(stroke
@@ -2446,16 +2366,6 @@
 			(type default)
 		)
 		(uuid "f599843f-510a-4ab3-b99e-210b3493373e")
-	)
-	(wire
-		(pts
-			(xy 49.53 171.45) (xy 59.69 171.45)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "faea6519-6f0b-4fe2-bbac-3df2d3a5cfae")
 	)
 	(label "DISPLAY_CLK"
 		(at 109.22 73.66 0)
@@ -2487,18 +2397,8 @@
 		)
 		(uuid "0f7dbade-d50b-473e-8b6e-37fc41e7ed23")
 	)
-	(label "BT4"
-		(at 109.22 81.28 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "1291389a-fdac-40b9-8971-44fab45f9d87")
-	)
-	(label "AUDIO_GAIN"
-		(at 44.45 116.84 0)
+	(label "AUDIO_GAIN_MUX_S1"
+		(at 35.56 119.38 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2507,25 +2407,15 @@
 		)
 		(uuid "1c766b5f-6a28-472d-bbb3-7b687d3922f3")
 	)
-	(label "BT6"
-		(at 109.22 86.36 0)
+	(label "AUDIO_GAIN_MUX_S1"
+		(at 101.6 81.28 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "261ad1e5-820e-4c17-abe4-e4e24d457d40")
-	)
-	(label "BT5"
-		(at 49.53 171.45 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "2ac30f56-ad5b-44cf-a7ff-fd6dd05d90a9")
+		(uuid "29013647-3b81-49d2-a899-a728c940bbdd")
 	)
 	(label "VOLUME"
 		(at 157.48 101.6 0)
@@ -2597,36 +2487,6 @@
 		)
 		(uuid "490b1d97-d11d-4542-bda0-eec7969dc676")
 	)
-	(label "BT2"
-		(at 109.22 71.12 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "4a5f4b55-c984-42bf-9fad-0355fad91c76")
-	)
-	(label "BT3"
-		(at 49.53 166.37 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "53a6b7eb-6753-4827-9272-9a69f47e46dc")
-	)
-	(label "BT5"
-		(at 109.22 83.82 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "5485efeb-cca4-436b-8873-6abab4d139ac")
-	)
 	(label "I2S_LRCLK"
 		(at 157.48 88.9 0)
 		(effects
@@ -2657,26 +2517,6 @@
 		)
 		(uuid "5ad85c76-ed99-4209-954e-5324e1973656")
 	)
-	(label "BT7"
-		(at 109.22 88.9 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "5ed9f60c-f6fa-4c0c-bd5d-e5e7048a5172")
-	)
-	(label "BT6"
-		(at 49.53 173.99 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "5f35c743-1673-4c4f-bfb4-4b554164de2f")
-	)
 	(label "RTC_SQW"
 		(at 157.48 99.06 0)
 		(effects
@@ -2686,26 +2526,6 @@
 			(justify left bottom)
 		)
 		(uuid "6276d378-ca56-4584-931a-342390963995")
-	)
-	(label "BT2"
-		(at 49.53 163.83 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "71172375-1307-4487-a369-56f378f5fbcb")
-	)
-	(label "BT1"
-		(at 109.22 68.58 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "74b34fdc-2cd4-46fb-8b5c-fa1fdd7725be")
 	)
 	(label "SDCARD_SCK"
 		(at 44.45 138.43 0)
@@ -2727,16 +2547,6 @@
 		)
 		(uuid "81a83c0d-f9df-431b-a95c-57b016d2a346")
 	)
-	(label "BT1"
-		(at 49.53 161.29 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "81dfbb73-dcbc-4ccc-a029-eaa60a38c0a5")
-	)
 	(label "RADIO_LIGHT"
 		(at 106.68 91.44 0)
 		(effects
@@ -2747,16 +2557,6 @@
 		)
 		(uuid "82c23ff9-316c-4394-a637-4419b73b3336")
 	)
-	(label "BT3"
-		(at 109.22 78.74 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "83055bb5-b66a-4cbb-8505-349138295ac1")
-	)
 	(label "I2C_SCL"
 		(at 157.48 96.52 0)
 		(effects
@@ -2766,6 +2566,16 @@
 			(justify left bottom)
 		)
 		(uuid "8b075a3e-d17d-4b48-938d-1ae1bfe0e72b")
+	)
+	(label "AUDIO_GAIN_MUX_S3"
+		(at 35.56 124.46 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "9908bc82-899c-4103-9465-0ac295fcfd69")
 	)
 	(label "SDCARD_MISO"
 		(at 106.68 99.06 0)
@@ -2788,7 +2598,7 @@
 		(uuid "9e6f60fa-44ae-4167-9e95-1d6eaa81bf0f")
 	)
 	(label "AUDIO_SD"
-		(at 44.45 119.38 0)
+		(at 44.45 115.57 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2847,35 +2657,25 @@
 		)
 		(uuid "bc0e69b2-7ee7-4dd4-9e60-a89007e135cc")
 	)
-	(label "AUDIO_GAIN"
-		(at 109.22 118.11 0)
+	(label "AUDIO_GAIN_MUX_S3"
+		(at 101.6 86.36 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "c0ad9950-8ac4-4a48-ac21-fab72e9669a8")
+		(uuid "c6c179d7-753d-423e-a575-93c2a41ba4eb")
 	)
-	(label "BT4"
-		(at 49.53 168.91 0)
+	(label "AUDIO_GAIN_MUX_S2"
+		(at 35.56 121.92 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "d151d72a-6780-4893-9b1c-9e1c2f770e8c")
-	)
-	(label "BT7"
-		(at 49.53 176.53 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d2e4ccc2-2d73-49b7-b2ae-842f6d115112")
+		(uuid "d859c6a1-ef77-4003-9522-7fdf5f81a4e9")
 	)
 	(label "RTC_SQW"
 		(at 44.45 95.25 0)
@@ -2947,6 +2747,16 @@
 		)
 		(uuid "ec38709a-74af-4cfe-9476-dbf1642b81c1")
 	)
+	(label "AUDIO_GAIN_MUX_S2"
+		(at 101.6 83.82 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f1099bcf-6c63-41b6-8e5c-5d81f82032cd")
+	)
 	(label "I2S_DATA"
 		(at 44.45 106.68 0)
 		(effects
@@ -3012,17 +2822,6 @@
 		)
 		(uuid "258fdbc6-eadf-4140-a304-e0aaa5061b03")
 	)
-	(hierarchical_label "BT2"
-		(shape input)
-		(at 59.69 163.83 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "290fc054-3eb8-4b92-bd85-2d24193edbd4")
-	)
 	(hierarchical_label "RTC_SQW"
 		(shape input)
 		(at 57.15 95.25 0)
@@ -3034,27 +2833,16 @@
 		)
 		(uuid "383ae881-b999-4339-af81-44866f3d6a0c")
 	)
-	(hierarchical_label "BT1"
-		(shape input)
-		(at 59.69 161.29 0)
+	(hierarchical_label "AUDIO_GAIN_MUX_S3"
+		(shape output)
+		(at 57.15 124.46 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "3fb8f351-d4e3-4ac8-88a5-991c6d590844")
-	)
-	(hierarchical_label "BT6"
-		(shape input)
-		(at 59.69 173.99 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "42da8efe-816d-4f38-9d42-35ed25d147b4")
+		(uuid "4d77bbb9-83f2-40ea-be5c-384491a1cd16")
 	)
 	(hierarchical_label "DISPLAY_LED"
 		(shape output)
@@ -3111,39 +2899,6 @@
 		)
 		(uuid "725afac1-0346-4dfc-a3eb-17049bca829a")
 	)
-	(hierarchical_label "BT7"
-		(shape input)
-		(at 59.69 176.53 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "788c7b68-b114-40e2-b414-5a162e2a8f5d")
-	)
-	(hierarchical_label "BT4"
-		(shape input)
-		(at 59.69 168.91 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "80a0ce43-615b-40b3-b878-8a7b83081797")
-	)
-	(hierarchical_label "BT3"
-		(shape input)
-		(at 59.69 166.37 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "89ea9935-06b9-4fe6-aa3d-8c4972deb355")
-	)
 	(hierarchical_label "5V"
 		(shape output)
 		(at 52.07 48.26 0)
@@ -3155,9 +2910,9 @@
 		)
 		(uuid "8bf25b76-77ec-4c7e-9cb9-ef9997ce5747")
 	)
-	(hierarchical_label "AUDIO_GAIN"
+	(hierarchical_label "AUDIO_GAIN_MUX_S1"
 		(shape output)
-		(at 57.15 116.84 0)
+		(at 57.15 119.38 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3188,17 +2943,6 @@
 		)
 		(uuid "bce275fe-dbff-453e-ad64-30a59cd0c138")
 	)
-	(hierarchical_label "BT5"
-		(shape input)
-		(at 59.69 171.45 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "ccc45bb6-2e2d-4e12-bd02-2e06aed55b34")
-	)
 	(hierarchical_label "I2C_SDA"
 		(shape bidirectional)
 		(at 57.15 86.36 0)
@@ -3209,6 +2953,17 @@
 			(justify left)
 		)
 		(uuid "ccf74254-898a-46a0-8f96-f89da79d8043")
+	)
+	(hierarchical_label "AUDIO_GAIN_MUX_S2"
+		(shape output)
+		(at 57.15 121.92 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "cf9d91fd-91fd-40f8-b145-c473d90a3e97")
 	)
 	(hierarchical_label "I2S_LRCLK"
 		(shape output)
@@ -3223,7 +2978,7 @@
 	)
 	(hierarchical_label "AUDIO_SD"
 		(shape output)
-		(at 57.15 119.38 0)
+		(at 57.15 115.57 0)
 		(effects
 			(font
 				(size 1.27 1.27)
