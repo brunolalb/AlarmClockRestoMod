@@ -4,6 +4,13 @@
 	(generator_version "10.0")
 	(uuid "79975d02-cfea-4cc3-8869-9743c86248b2")
 	(paper "A4")
+	(title_block
+		(title "Alarm Clock Resto Mod - Core PCB")
+		(date "2026-07-08")
+		(rev "1.0")
+		(company "brunolalb@gmail.com")
+		(comment 1 "Bruno Landau Albrecht")
+	)
 	(lib_symbols)
 	(junction
 		(at 135.89 53.34)
@@ -608,7 +615,7 @@
 		(instances
 			(project "Core_PCB"
 				(path "/79975d02-cfea-4cc3-8869-9743c86248b2"
-					(page "2")
+					(page "3")
 				)
 			)
 		)
@@ -1222,7 +1229,7 @@
 		(instances
 			(project "Core_PCB"
 				(path "/79975d02-cfea-4cc3-8869-9743c86248b2"
-					(page "3")
+					(page "2")
 				)
 			)
 		)

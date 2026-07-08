@@ -8,7 +8,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "1.0"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -302,7 +302,7 @@
     "annotate_start_num": 0,
     "annotation": {
       "method": 0,
-      "sort_order": 0
+      "sort_order": 1
     },
     "bom_export_filename": "${PROJECTNAME}.csv",
     "bom_fmt_presets": [],
@@ -416,7 +416,7 @@
         "uuid": "79975d02-cfea-4cc3-8869-9743c86248b2"
       }
     ],
-    "used_designators": "#FLG1-2,R1-19,J1-9,#PWR1-65,C1-24,A1,SW1-2,U1-4,RV1,Q1",
+    "used_designators": "#FLG1-2,R1-19,J1-9,#PWR1-65,C1-24,A1,SW1-2,U1-4,RV1,Q1,BOOT1-2",
     "variants": []
   },
   "sheets": [
@@ -425,12 +425,12 @@
       "Root"
     ],
     [
-      "00b4dbc5-1324-45e9-962d-9bcf13f06c40",
-      "display"
-    ],
-    [
       "e03c6691-b9bf-461c-8a99-79097618af21",
       "processor"
+    ],
+    [
+      "00b4dbc5-1324-45e9-962d-9bcf13f06c40",
+      "display"
     ],
     [
       "19a27239-6385-4c28-86b1-a5a9f657999b",
