@@ -252,7 +252,9 @@
     }
   },
   "libraries": {
-    "pinned_footprint_libs": [],
+    "pinned_footprint_libs": [
+      "RadioWecker"
+    ],
     "pinned_symbol_libs": []
   },
   "meta": {
@@ -279,13 +281,32 @@
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
+      },
+      {
+        "line_style": 0,
+        "name": "PWR",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 0,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "tuning_profile": "",
+        "wire_width": 20
       }
     ],
     "meta": {
       "version": 5
     },
     "net_colors": null,
-    "netclass_assignments": null,
+    "netclass_assignments": {
+      "+3V3": [
+        "PWR"
+      ],
+      "+5V": [
+        "PWR"
+      ],
+      "GND": [
+        "PWR"
+      ]
+    },
     "netclass_patterns": []
   },
   "pcbnew": {
@@ -416,7 +437,7 @@
         "uuid": "79975d02-cfea-4cc3-8869-9743c86248b2"
       }
     ],
-    "used_designators": "#FLG1-2,R1-19,J1-9,#PWR1-65,C1-24,A1,SW1-2,U1-4,RV1,Q1,BOOT1-2",
+    "used_designators": "#FLG1-2,R1-19,J1-10,#PWR1-65,C1-24,A1,SW1-2,U1-4,RV1,Q1,BOOT1-2",
     "variants": []
   },
   "sheets": [

@@ -702,7 +702,7 @@
 		)
 		(uuid "56b6f9a8-8017-4b52-a3a7-c14c672435c0")
 	)
-	(hierarchical_label "3V3"
+	(hierarchical_label "+3V3"
 		(shape bidirectional)
 		(at 78.74 38.1 0)
 		(effects
@@ -1023,7 +1023,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical"
 			(at 109.22 46.99 0)
 			(hide yes)
 			(show_name no)

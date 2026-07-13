@@ -1190,7 +1190,7 @@
 		)
 		(uuid "a1900f29-3e4a-4764-98f2-32587a3203e6")
 	)
-	(hierarchical_label "3V3"
+	(hierarchical_label "+3V3"
 		(shape bidirectional)
 		(at 166.37 67.31 0)
 		(effects

@@ -54,6 +54,14 @@
 		(color 0 0 0 0)
 		(uuid "c0342500-d125-4004-933c-cd8f184d7f0e")
 	)
+	(no_connect
+		(at 171.45 130.81)
+		(uuid "06e48f49-56a7-4987-abdf-3d07b48fdef5")
+	)
+	(no_connect
+		(at 171.45 71.12)
+		(uuid "7f50987c-a705-40f4-b72f-f427dbeb34c4")
+	)
 	(wire
 		(pts
 			(xy 162.56 68.58) (xy 162.56 125.73)
@@ -602,9 +610,9 @@
 				(justify left)
 			)
 		)
-		(pin "3V3" bidirectional
+		(pin "+3V3" bidirectional
 			(at 171.45 138.43 180)
-			(uuid "fae54c3d-7e1b-41a4-9dfc-5b7d1ecbc4d3")
+			(uuid "e48ed7fa-3fe0-4c11-8e72-27a0adea9bc8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -658,29 +666,9 @@
 				(justify left top)
 			)
 		)
-		(pin "POT_VOLUME" output
-			(at 171.45 97.79 180)
-			(uuid "ee4674fe-a2f9-45a2-bd3a-4e29d720f0ce")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(pin "GND" bidirectional
 			(at 171.45 55.88 180)
 			(uuid "ed93f9dd-2711-45d6-943c-f9567886a523")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(pin "3V3" bidirectional
-			(at 171.45 53.34 180)
-			(uuid "e97e68fb-e008-497f-a0bd-fe4a7105bb42")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -721,6 +709,26 @@
 		(pin "SCL" output
 			(at 171.45 68.58 180)
 			(uuid "e49d9f7a-32cb-4d83-bb7e-d40cc1e2592c")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "+3V3" bidirectional
+			(at 171.45 53.34 180)
+			(uuid "d7debb5b-b53a-4688-aaa1-c1f4112c8af7")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "VOLUME_POT" output
+			(at 171.45 97.79 180)
+			(uuid "093af2d9-9dd9-4bd2-b8eb-259843e67c10")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -784,16 +792,6 @@
 				(justify left)
 			)
 		)
-		(pin "3V3" bidirectional
-			(at 135.89 44.45 270)
-			(uuid "1ee17005-0cbf-460c-ab23-0dc7f17dd506")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(pin "MISO" output
 			(at 120.65 44.45 270)
 			(uuid "bd0a791d-ade7-4191-a5e2-947d33d27ed4")
@@ -827,6 +825,16 @@
 		(pin "CLK" input
 			(at 125.73 44.45 270)
 			(uuid "9aecf52a-d98f-4a49-9c5b-35ce29a9b748")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "+3V3" bidirectional
+			(at 135.89 44.45 270)
+			(uuid "d6d21942-a97d-4d6d-b24c-d445a2c19fcf")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1086,26 +1094,6 @@
 				(justify left)
 			)
 		)
-		(pin "3V3" output
-			(at 104.14 83.82 180)
-			(uuid "d8574b1d-164c-4013-8df8-6be4a297d630")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(pin "5V" output
-			(at 104.14 81.28 180)
-			(uuid "ffa3bcbb-89e2-4359-8bec-64ab0ba19372")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(pin "GND" output
 			(at 104.14 86.36 180)
 			(uuid "ca4ec8aa-5764-4fc7-8ee8-5001dd684c63")
@@ -1186,16 +1174,6 @@
 				(justify left)
 			)
 		)
-		(pin "DISPLAY_LED" output
-			(at 144.78 102.87 0)
-			(uuid "df0aacb6-385b-4a9e-a30f-551057d80b33")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
 		(pin "AUDIO_GAIN_MUX_S2" output
 			(at 104.14 128.27 180)
 			(uuid "bde4bea2-f9f9-4ad1-aced-967f0a641b95")
@@ -1224,6 +1202,36 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+			)
+		)
+		(pin "+3V3" output
+			(at 104.14 83.82 180)
+			(uuid "47cefaaf-7b35-40f7-84c3-0ccf860c3078")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "+5V" output
+			(at 104.14 81.28 180)
+			(uuid "480f5011-29c7-41b1-9e4f-934c2c329f9e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "RADIO_LIGHT" output
+			(at 144.78 102.87 0)
+			(uuid "a2400547-93c3-432b-8481-3011d3b10154")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 			)
 		)
 		(instances
