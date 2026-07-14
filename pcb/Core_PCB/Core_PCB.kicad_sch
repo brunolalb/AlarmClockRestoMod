@@ -43,6 +43,12 @@
 		(uuid "31e48f2b-158f-48bc-a867-cde85e8f74e8")
 	)
 	(junction
+		(at 92.71 81.28)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "507df802-d8f6-4a1b-a519-18ef1060b485")
+	)
+	(junction
 		(at 138.43 55.88)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -124,7 +130,7 @@
 	)
 	(wire
 		(pts
-			(xy 71.12 81.28) (xy 104.14 81.28)
+			(xy 71.12 81.28) (xy 92.71 81.28)
 		)
 		(stroke
 			(width 0)
@@ -344,6 +350,16 @@
 	)
 	(wire
 		(pts
+			(xy 92.71 81.28) (xy 104.14 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "962f3c54-16eb-45aa-8faa-34f08b9d91fe")
+	)
+	(wire
+		(pts
 			(xy 144.78 97.79) (xy 171.45 97.79)
 		)
 		(stroke
@@ -434,6 +450,16 @@
 	)
 	(wire
 		(pts
+			(xy 92.71 50.8) (xy 92.71 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d96e1a3c-b603-4767-be2f-a8e14978db56")
+	)
+	(wire
+		(pts
 			(xy 165.1 66.04) (xy 171.45 66.04)
 		)
 		(stroke
@@ -441,6 +467,16 @@
 			(type default)
 		)
 		(uuid "db28b6de-a06e-4ab4-acdc-38beb5b12814")
+	)
+	(wire
+		(pts
+			(xy 171.45 50.8) (xy 92.71 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dbcf4adb-6f6a-4885-950a-6fb058b54f28")
 	)
 	(wire
 		(pts
@@ -729,6 +765,16 @@
 		(pin "VOLUME_POT" output
 			(at 171.45 97.79 180)
 			(uuid "093af2d9-9dd9-4bd2-b8eb-259843e67c10")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "+5V" bidirectional
+			(at 171.45 50.8 180)
+			(uuid "5dcd069c-d6a6-43d0-8271-926a8f59b36b")
 			(effects
 				(font
 					(size 1.27 1.27)

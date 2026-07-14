@@ -3778,6 +3778,16 @@
 	)
 	(wire
 		(pts
+			(xy 30.48 24.13) (xy 33.02 24.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "530590c4-6e30-49a9-a054-b79e21dcf253")
+	)
+	(wire
+		(pts
 			(xy 118.11 49.53) (xy 134.62 49.53)
 		)
 		(stroke
@@ -4916,6 +4926,17 @@
 		)
 		(uuid "fc0aefc9-20f1-4389-a9f8-7eb207b07afc")
 	)
+	(hierarchical_label "+5V"
+		(shape bidirectional)
+		(at 33.02 24.13 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "31706745-eeb3-4709-be96-d2fef823cb9f")
+	)
 	(hierarchical_label "VOLUME_POT"
 		(shape output)
 		(at 34.29 77.47 0)
@@ -5975,7 +5996,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical"
 			(at 179.07 43.18 0)
 			(hide yes)
 			(show_name no)
@@ -6487,6 +6508,84 @@
 			(project "Core_PCB"
 				(path "/79975d02-cfea-4cc3-8869-9743c86248b2/07ad0869-cb54-450a-945b-05c9495cd42c"
 					(reference "U4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+5V")
+		(at 30.48 24.13 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "3282bcaa-5fbb-42b7-83f8-0d4f624f4a24")
+		(property "Reference" "#PWR068"
+			(at 30.48 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+5V"
+			(at 30.48 19.05 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 30.48 24.13 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 30.48 24.13 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 30.48 24.13 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "4d1821fd-a39e-4d93-ae3b-15b4e41acd60")
+		)
+		(instances
+			(project "Core_PCB"
+				(path "/79975d02-cfea-4cc3-8869-9743c86248b2/07ad0869-cb54-450a-945b-05c9495cd42c"
+					(reference "#PWR068")
 					(unit 1)
 				)
 			)
