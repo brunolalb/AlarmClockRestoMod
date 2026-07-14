@@ -2112,12 +2112,12 @@
 		(uuid "2d857e27-7541-494a-9431-cb408ad5d118")
 	)
 	(no_connect
-		(at 180.34 71.12)
-		(uuid "a223ee65-e6b0-4855-90cf-fbb055bc1949")
-	)
-	(no_connect
 		(at 180.34 81.28)
 		(uuid "ac4bfca0-e8fb-4d22-8beb-2df0863f3d76")
+	)
+	(no_connect
+		(at 129.54 78.74)
+		(uuid "cd3f0aef-b939-403e-a893-1c946a9f925b")
 	)
 	(wire
 		(pts
@@ -2228,16 +2228,6 @@
 			(type default)
 		)
 		(uuid "1f4a4c7d-9728-431a-9bde-02e825e3a16f")
-	)
-	(wire
-		(pts
-			(xy 116.84 78.74) (xy 129.54 78.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "20b1731c-fb57-4ebb-9a43-40a918445f4e")
 	)
 	(wire
 		(pts
@@ -2659,6 +2649,16 @@
 		)
 		(uuid "1c766b5f-6a28-472d-bbb3-7b687d3922f3")
 	)
+	(label "DISPLAY_CLK"
+		(at 180.34 71.12 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "1df39a38-e1c6-4d47-b397-b27f08740629")
+	)
 	(label "BOOT0"
 		(at 215.9 72.39 0)
 		(effects
@@ -2678,16 +2678,6 @@
 			(justify left bottom)
 		)
 		(uuid "2f31ed11-9e4f-48d0-a802-9de3f79f9a58")
-	)
-	(label "DISPLAY_DIO"
-		(at 180.34 68.58 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "35271933-8349-458a-a975-416469da0534")
 	)
 	(label "I2C_SDA"
 		(at 44.45 86.36 0)
@@ -2809,6 +2799,16 @@
 		)
 		(uuid "9908bc82-899c-4103-9465-0ac295fcfd69")
 	)
+	(label "RTC_SQW"
+		(at 180.34 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "9daf7e06-d0a9-4043-b83e-17c8d91f7c19")
+	)
 	(label "AUDIO_SD"
 		(at 44.45 115.57 0)
 		(effects
@@ -2848,16 +2848,6 @@
 			(justify left bottom)
 		)
 		(uuid "a48cead2-6b67-447e-96dd-ce45887e1ca0")
-	)
-	(label "DISPLAY_CLK"
-		(at 180.34 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "b1edd9d9-bdb0-425d-b346-8b6b7edf0678")
 	)
 	(label "VOLUME"
 		(at 49.53 156.21 0)
@@ -2949,6 +2939,16 @@
 		)
 		(uuid "df2fdc6d-27e5-4dc7-98cc-f62321430ea0")
 	)
+	(label "DISPLAY_DIO"
+		(at 180.34 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "dfb9dbbc-0d9f-455b-bb4b-5542b81a89c2")
+	)
 	(label "I2C_SCL"
 		(at 44.45 88.9 0)
 		(effects
@@ -3008,16 +3008,6 @@
 			(justify left bottom)
 		)
 		(uuid "ec38709a-74af-4cfe-9476-dbf1642b81c1")
-	)
-	(label "RTC_SQW"
-		(at 116.84 78.74 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "f3b9b5ff-4d30-4da7-ac19-12a786605872")
 	)
 	(label "I2S_DATA"
 		(at 44.45 106.68 0)

@@ -2646,6 +2646,60 @@
 		)
 		(uuid "f39da0be-b535-4cd8-b715-0149ad9ce8dc")
 	)
+	(rule_area
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(polyline
+			(pts
+				(xy 165.1 72.39) (xy 207.01 72.39) (xy 207.01 86.36) (xy 165.1 86.36)
+			)
+			(stroke
+				(width 0)
+				(type dash)
+			)
+			(fill
+				(type none)
+			)
+			(uuid "833a20b2-c2cd-40ad-a9bc-b7eab6cb44fb")
+		)
+	)
+	(netclass_flag ""
+		(length 2.54)
+		(shape round)
+		(at 172.72 72.39 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fd20d796-10d3-4fff-a17d-dd7ec4cf28cf")
+		(property "Netclass" "PWR"
+			(at 173.4185 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Component Class" ""
+			(at 110.49 58.42 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 97.79 114.3 0)
