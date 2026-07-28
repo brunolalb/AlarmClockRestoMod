@@ -6,7 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "Alarm Clock Resto Mod - Core PCB")
-		(date "2026-07-08")
+		(date "2026-07-28")
 		(rev "1.0")
 		(company "brunolalb@gmail.com")
 		(comment 1 "Bruno Landau Albrecht")
@@ -353,6 +353,12 @@
 		(uuid "563a72ff-a2e4-46ec-8bc6-1e4436a48c6f")
 	)
 	(junction
+		(at 99.06 83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "78f62b84-d546-4a5d-84a3-5a4faada3f95")
+	)
+	(junction
 		(at 162.56 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -428,7 +434,7 @@
 	)
 	(wire
 		(pts
-			(xy 71.12 81.28) (xy 92.71 81.28)
+			(xy 68.58 81.28) (xy 92.71 81.28)
 		)
 		(stroke
 			(width 0)
@@ -565,6 +571,16 @@
 			(type default)
 		)
 		(uuid "5c13370c-b950-4d32-a64c-71e55ac12038")
+	)
+	(wire
+		(pts
+			(xy 99.06 83.82) (xy 71.12 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "63074992-fc45-4397-b817-9576bd24c668")
 	)
 	(wire
 		(pts
@@ -728,6 +744,16 @@
 	)
 	(wire
 		(pts
+			(xy 71.12 83.82) (xy 71.12 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d15c9153-9bf2-4ac8-88ad-564306eae8ec")
+	)
+	(wire
+		(pts
 			(xy 135.89 44.45) (xy 135.89 53.34)
 		)
 		(stroke
@@ -798,7 +824,7 @@
 	)
 	(wire
 		(pts
-			(xy 71.12 99.06) (xy 71.12 81.28)
+			(xy 68.58 99.06) (xy 68.58 81.28)
 		)
 		(stroke
 			(width 0)
@@ -1602,16 +1628,6 @@
 				(justify left top)
 			)
 		)
-		(pin "GND" bidirectional
-			(at 73.66 99.06 90)
-			(uuid "c6eee7cc-2944-475d-813f-bddb55c33fc5")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
 		(pin "LRCLK" input
 			(at 81.28 113.03 0)
 			(uuid "67e6fc46-3dfd-4bc5-9851-fc9d60d26a53")
@@ -1625,16 +1641,6 @@
 		(pin "DIN" input
 			(at 81.28 118.11 0)
 			(uuid "43abd69d-fef1-45de-a91b-ff73c04eecce")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(pin "VCC" bidirectional
-			(at 71.12 99.06 90)
-			(uuid "6d632c8c-488d-4a29-a317-079dce37c956")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1695,6 +1701,36 @@
 		(pin "VOLUME_POT" output
 			(at 81.28 109.22 0)
 			(uuid "6a4e3e74-bd3c-4095-bc90-87ca1ec96913")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "+5V" bidirectional
+			(at 68.58 99.06 90)
+			(uuid "cd18d38b-5c30-41c7-952c-50c4cf5235b2")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "GND" bidirectional
+			(at 73.66 99.06 90)
+			(uuid "0121d063-0915-41c8-a6de-6a35eccd5ab2")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "+3V3" bidirectional
+			(at 71.12 99.06 90)
+			(uuid "ea8f487a-94db-480f-b3c8-50a5c07947a6")
 			(effects
 				(font
 					(size 1.27 1.27)
