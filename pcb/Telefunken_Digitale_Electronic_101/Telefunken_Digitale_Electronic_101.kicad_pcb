@@ -9,7 +9,7 @@
 	(paper "A4")
 	(title_block
 		(title "Telefunken_Digitale_Electronic_101 - Display")
-		(date "2026-06-19")
+		(date "2026-07-30")
 		(rev "1.0")
 		(company "brunolalb@gmail.com")
 		(comment 1 "Bruno Landau Albrecht")
@@ -9899,7 +9899,7 @@
 			(justify left bottom)
 		)
 	)
-	(gr_text "${PROJECTNAME}\nVersion ${REVISION}\n${COMMENT1}\n${COMPANY}"
+	(gr_text "${PROJECTNAME}\nVersion ${REVISION}\n${ISSUE_DATE}\n${COMPANY}"
 		(at 131.25 73.75 0)
 		(layer "F.SilkS")
 		(uuid "b9da7e8e-df5b-476c-9086-3b6cd5d5951b")
