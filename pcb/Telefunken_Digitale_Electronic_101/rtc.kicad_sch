@@ -1469,7 +1469,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "950459ec-d91a-4d36-839a-deb625a6203e")
 		(property "Reference" "R2"
@@ -1883,7 +1883,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "f03c189d-bd4f-4322-bfa5-0026608490fd")
 		(property "Reference" "R1"
 			(at 130.302 79.502 0)
