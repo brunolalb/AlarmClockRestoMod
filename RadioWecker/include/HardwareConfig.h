@@ -28,7 +28,7 @@ static constexpr uint8_t ONBOARD_LED_PIN = LED_RED;//46;
 // shared I2C
 static constexpr uint8_t I2C_SDA_PIN = A4;
 static constexpr uint8_t I2C_SCL_PIN = A5;
-static constexpr uint8_t I2C_FREQ_HZ = 100000;
+static constexpr uint32_t I2C_FREQ_HZ = 100000;
 
 // Display
 static constexpr uint8_t DISPLAY_CLK_PIN = D4;
@@ -59,7 +59,7 @@ static constexpr uint8_t AUDIO_VOLUME_POT = A7; // volume potentiometer is 100k
 
 // Light
 static constexpr uint8_t LIGHT_PWM_PIN = D9;
-static constexpr uint8_t LIGHT_PWM_FREQUENCY = 10000; // Hz
+static constexpr uint16_t LIGHT_PWM_FREQUENCY = 10000; // Hz
 
 // Radio Dial - MPR121
 static constexpr uint8_t RADIO_DIAL_I2C_SDA_PIN = I2C_SDA_PIN;
