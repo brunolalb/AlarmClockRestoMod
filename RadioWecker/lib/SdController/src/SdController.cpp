@@ -100,14 +100,14 @@ bool removeDirectoryRecursive(SdController& sdController, const String& path) {
   dir.close();
   return sdController.rmdir(path);
 }
-}
+} // namespace SdController
 
-SdController::SdController(uint8_t csPin,
-                           uint8_t spiSckPin,
-                           uint8_t spiMisoPin,
-                           uint8_t spiMosiPin,
-                           uint32_t spiFrequencyHz,
-                           SPIClass& spiBus)
+SdController::SdController( uint8_t csPin,
+                            uint8_t spiSckPin,
+                            uint8_t spiMisoPin,
+                            uint8_t spiMosiPin,
+                            uint32_t spiFrequencyHz,
+                            SPIClass& spiBus)
     : csPin_(csPin),
       spiSckPin_(spiSckPin),
       spiMisoPin_(spiMisoPin),
@@ -142,25 +142,26 @@ bool SdController::runSelfTest() {
   return line == kMarker;
 }
 
-SdController::InitResult SdController::initialize() {
+bool SdController::initialize() {
   spiBus_->begin(spiSckPin_, spiMisoPin_, spiMosiPin_, csPin_);
   ready_ = SD.begin(csPin_, *spiBus_, spiFrequencyHz_);
-  selfTestPassed_ = false;
 
   if (!ready_) {
-    return {ready_, selfTestPassed_};
+    Serial.println("SD Card: initialization failed");
+    return false;
   }
 
-  selfTestPassed_ = runSelfTest();
-  return {ready_, selfTestPassed_};
+  ready_ = runSelfTest();
+  if (!ready_) {
+    Serial.println("SD Card: self-test failed");
+  } else {
+    Serial.println("SD Card: initialized");
+  }
+  return ready_;
 }
 
 bool SdController::isReady() const {
   return ready_;
-}
-
-bool SdController::selfTestPassed() const {
-  return selfTestPassed_;
 }
 
 uint64_t SdController::totalBytes() const {

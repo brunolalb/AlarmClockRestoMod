@@ -87,7 +87,9 @@ void create_modules() {
 
 
 void initialize_modules() {
-  modules.sd_card->initialize();
+  if (!modules.sd_card->initialize()) {
+    Serial.println("main: SD Card initialization failed");
+  }
 
   modules.config->loadFromStorage();
 
@@ -113,9 +115,7 @@ void initialize_modules() {
 
   modules.clock->begin();
 
-  if (modules.sd_card->isReady()) {
-    modules.display->showSdSelfTestResult(modules.sd_card->selfTestPassed());
-  } else {
+  if (!modules.sd_card->isReady()) {
     modules.display->showSdFailure();
   }
 
@@ -180,12 +180,10 @@ void loop() {
       } else {
         modules.display->showRtcFailure();
       }
-    } else if (modules.sd_card->isReady() && modules.sd_card->selfTestPassed()) {
+    } else if (modules.sd_card->isReady()) {
       modules.display->showRtcFailure();
-    } else if (!modules.sd_card->isReady()) {
-      modules.display->showSdFailure();
     } else {
-      modules.display->showSdSelfTestResult(false);
+      modules.display->showSdFailure();
     }
   }
 

@@ -8,10 +8,6 @@ class WebServer;
 
 class SdController {
  public:
-  struct InitResult {
-    bool ready;
-    bool selfTestPassed;
-  };
   SdController(uint8_t csPin,
                uint8_t spiSckPin,
                uint8_t spiMisoPin,
@@ -19,9 +15,8 @@ class SdController {
                uint32_t spiFrequencyHz = 10000000,
                SPIClass& spiBus = SPI);
 
-  InitResult initialize();
+  bool initialize();
   bool isReady() const;
-  bool selfTestPassed() const;
   uint64_t totalBytes() const;
   uint64_t usedBytes() const;
   uint64_t availableBytes() const;
@@ -50,5 +45,4 @@ class SdController {
   uint32_t spiFrequencyHz_;
   SPIClass* spiBus_;
   bool ready_ = false;
-  bool selfTestPassed_ = false;
 };
