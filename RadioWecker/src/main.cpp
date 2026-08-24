@@ -10,56 +10,98 @@
 #include <DisplayManager.h>
 #include <GeneralConfigController.h>
 #include <OnboardLedController.h>
-#include <SerialController.h>
+#include <CLIController.h>
 #include <SdController.h>
 #include <SoundController.h>
 #include <WebServerController.h>
 
-DisplayManager displayManager(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN, DISPLAY_SEPARATOR_MODE_DEFAULT);
-OnboardLedController onboardLed(ONBOARD_LED_PIN);
-ClockController clockController(RTC_SQW_PIN,
-                                RTC_I2C_SDA_PIN,
-                                RTC_I2C_SCL_PIN,
-                                RTC_I2C_FREQUENCY_HZ,
-                                RTC_NTP_SERVER,
-                                RTC_NTP_GMT_OFFSET_SECONDS,
-                                RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
-                                RTC_NTP_SYNC_INTERVAL_MS,
-                                RTC_NTP_RETRY_INTERVAL_MS);
-SdController sdController(SD_SPI_CS_PIN, SD_SPI_SCK_PIN, SD_SPI_MISO_PIN, SD_SPI_MOSI_PIN, SD_SPI_FREQUENCY_HZ);
-AlarmController alarmController(sdController);
-SoundController soundController(sdController, I2S_BCLK_PIN, I2S_LRCLK_PIN, I2S_DATA_PIN);
-GeneralConfigController generalConfigController(clockController,
-                                                sdController,
-                                                displayManager,
-                                                RTC_TIMEZONE_POSIX_DEFAULT,
-                                                RTC_TIME_OFFSET_MINUTES_DEFAULT,
-                                                DISPLAY_BRIGHTNESS_DEFAULT);
-WebServerController webServerController(
-  alarmController, clockController, sdController, soundController, generalConfigController);
-WiFiManager tzapuWifiManager;
-SerialController serialController(clockController, sdController, alarmController, webServerController);
+
+typedef struct modules_ {
+  DisplayManager *display;
+  OnboardLedController *led;
+  ClockController *clock;
+  SdController *sd_card;
+  AlarmController *alarm;
+  SoundController *sound;
+  GeneralConfigController *config;
+  WebServerController *webserver;
+  WiFiManager *wifi;
+  CLIController *cli;
+} Modules;
+
+Modules modules;
+
 bool wifiServicesStarted = false;
 bool wifiWasConnected = false;
 unsigned long nextWifiReconnectAttemptMs = 0;
 
-void setup() {
-  Serial.begin(115200);
+void create_modules() {
+  modules.led = new OnboardLedController(ONBOARD_LED_PIN);
+  modules.wifi = new WiFiManager();
 
-  sdController.initialize();
-  generalConfigController.loadFromStorage();
+  modules.sd_card = new SdController( SD_SPI_CS_PIN,
+                                      SD_SPI_SCK_PIN,
+                                      SD_SPI_MISO_PIN,
+                                      SD_SPI_MOSI_PIN,
+                                      SD_SPI_FREQUENCY_HZ);
 
-  displayManager.begin(generalConfigController.brightness());
-  onboardLed.begin();
+  modules.display = new DisplayManager( DISPLAY_CLK_PIN,
+                                        DISPLAY_DIO_PIN,
+                                        DISPLAY_SEPARATOR_MODE_DEFAULT);
 
-  generalConfigController.applyToClock();
+  modules.clock = new ClockController(RTC_SQW_PIN,
+                                      RTC_I2C_SDA_PIN,
+                                      RTC_I2C_SCL_PIN,
+                                      RTC_I2C_FREQUENCY_HZ,
+                                      RTC_NTP_SERVER,
+                                      RTC_NTP_GMT_OFFSET_SECONDS,
+                                      RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
+                                      RTC_NTP_SYNC_INTERVAL_MS,
+                                      RTC_NTP_RETRY_INTERVAL_MS);
+
+  modules.alarm = new AlarmController(*modules.sd_card);
+
+  modules.sound = new SoundController(*modules.sd_card,
+                                      I2S_BCLK_PIN,
+                                      I2S_LRCLK_PIN,
+                                      I2S_DATA_PIN);
+
+  modules.config = new GeneralConfigController( *modules.clock,
+                                                *modules.sd_card,
+                                                *modules.display,
+                                                RTC_TIMEZONE_POSIX_DEFAULT,
+                                                RTC_TIME_OFFSET_MINUTES_DEFAULT,
+                                                DISPLAY_BRIGHTNESS_DEFAULT);
+
+  modules.webserver = new WebServerController(*modules.alarm,
+                                              *modules.clock,
+                                              *modules.sd_card,
+                                              *modules.sound,
+                                              *modules.config);
+
+  modules.cli = new CLIController(*modules.clock,
+                                  *modules.sd_card,
+                                  *modules.alarm,
+                                  *modules.webserver);
+}
+
+
+void initialize_modules() {
+  modules.sd_card->initialize();
+
+  modules.config->loadFromStorage();
+
+  modules.display->begin(modules.config->brightness());
+  modules.led->begin();
+
+  modules.config->applyToClock();
 
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
-  tzapuWifiManager.setConfigPortalBlocking(false);
-  tzapuWifiManager.setConfigPortalTimeout(300);
-  tzapuWifiManager.setHostname("RadioWecker");
-  const bool wifiConnected = tzapuWifiManager.autoConnect("RadioWecker-Setup");
+  modules.wifi->setConfigPortalBlocking(false);
+  modules.wifi->setConfigPortalTimeout(300);
+  modules.wifi->setHostname("RadioWecker");
+  const bool wifiConnected = modules.wifi->autoConnect("RadioWecker-Setup");
   if (wifiConnected) {
     Serial.println("WiFi connected via tzapu WiFiManager");
     Serial.println(WiFi.localIP());
@@ -69,34 +111,44 @@ void setup() {
   }
   wifiWasConnected = wifiConnected;
 
-  clockController.begin();
+  modules.clock->begin();
 
-  if (sdController.isReady()) {
-    displayManager.showSdSelfTestResult(sdController.selfTestPassed());
+  if (modules.sd_card->isReady()) {
+    modules.display->showSdSelfTestResult(modules.sd_card->selfTestPassed());
   } else {
-    displayManager.showSdFailure();
+    modules.display->showSdFailure();
   }
 
-  alarmController.begin();
-  soundController.begin();
+  modules.alarm->begin();
+  modules.sound->begin();
 
-  webServerController.begin(wifiServicesStarted);
+  modules.webserver->begin(wifiServicesStarted);
 
-  serialController.begin();
+  modules.cli->begin();
+}
+
+
+void setup() {
+  Serial.begin(115200);
+
+  create_modules();
+
+  initialize_modules();
 
   delay(800);
 }
 
+
 void loop() {
   static uint32_t lastDisplayUpdateMs = 0;
 
-  tzapuWifiManager.process();
+  modules.wifi->process();
   const bool wifiConnected = WiFi.status() == WL_CONNECTED;
 
   if (wifiConnected && !wifiWasConnected) {
     Serial.println("WiFi connected");
     Serial.println(WiFi.localIP());
-    webServerController.begin(true);
+    modules.webserver->begin(true);
     wifiServicesStarted = true;
   } else if (!wifiConnected && wifiWasConnected) {
     Serial.println("WiFi disconnected");
@@ -111,31 +163,31 @@ void loop() {
   }
   wifiWasConnected = wifiConnected;
 
-  serialController.update();
+  modules.cli->update();
 
-  webServerController.update();
-  soundController.update();
+  modules.webserver->update();
+  modules.sound->update();
 
   const uint32_t now = millis();
   if (now - lastDisplayUpdateMs >= 200) {
     lastDisplayUpdateMs = now;
 
-    if (clockController.isReady()) {
-      clockController.update();
+    if (modules.clock->isReady()) {
+      modules.clock->update();
 
-      if (clockController.isTimeValid()) {
-        displayManager.showTimeHHMM(clockController.displayValueHHMM());
+      if (modules.clock->isTimeValid()) {
+        modules.display->showTimeHHMM(modules.clock->displayValueHHMM());
       } else {
-        displayManager.showRtcFailure();
+        modules.display->showRtcFailure();
       }
-    } else if (sdController.isReady() && sdController.selfTestPassed()) {
-      displayManager.showRtcFailure();
-    } else if (!sdController.isReady()) {
-      displayManager.showSdFailure();
+    } else if (modules.sd_card->isReady() && modules.sd_card->selfTestPassed()) {
+      modules.display->showRtcFailure();
+    } else if (!modules.sd_card->isReady()) {
+      modules.display->showSdFailure();
     } else {
-      displayManager.showSdSelfTestResult(false);
+      modules.display->showSdSelfTestResult(false);
     }
   }
 
-  onboardLed.update();
+  modules.led->update();
 }
