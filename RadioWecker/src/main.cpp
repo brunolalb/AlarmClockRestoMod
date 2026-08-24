@@ -107,16 +107,19 @@ void initialize_modules() {
     Serial.println("main: clock initialization failed");
   }
 
-  if (!modules.sd_card->isReady()) {
-    modules.display->showSdFailure();
+  if (!modules.alarm->initialize()) {
+    Serial.println("main: alarm initialization failed");
   }
 
-  modules.alarm->begin();
   modules.sound->begin();
 
   modules.webserver->begin(modules.wifi->connected());
 
   modules.cli->begin();
+
+  if (!modules.sd_card->isReady()) {
+    modules.display->showSdFailure();
+  }
 }
 
 

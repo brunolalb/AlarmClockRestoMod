@@ -9,7 +9,7 @@ const char* AlarmController::ALARM_FILE = "/alarm_config.json";
 AlarmController::AlarmController(SdController& sdController)
     : sdController_(sdController) {}
 
-void AlarmController::begin() {
+bool AlarmController::initialize() {
   initialized_ = false;
 
   if (!loadAlarmSettings(alarmSettings_, alarmCount_)) {
@@ -19,6 +19,8 @@ void AlarmController::begin() {
   }
 
   initialized_ = true;
+
+  return true;
 }
 
 bool AlarmController::isInitialized() const {
@@ -30,6 +32,7 @@ uint8_t AlarmController::alarmCount() const {
 }
 
 void AlarmController::setDefaultAlarmSettings(AlarmSettings& settings) {
+  settings.enabled = false;
   settings.time = "07:00";
   for (uint8_t i = 0; i < 7; ++i) {
     settings.days[i] = (i >= 1 && i <= 5);
@@ -58,17 +61,20 @@ bool AlarmController::isValidTimeString(const String& timeValue) const {
 }
 
 bool AlarmController::parseAlarmFromJson(JsonVariantConst alarmVariant, AlarmSettings& outSettings) const {
+  // read one alarm settings from the json, validate and save the data to outSettings
   JsonObjectConst alarmObj = alarmVariant.as<JsonObjectConst>();
   if (alarmObj.isNull()) {
     return false;
   }
 
+  const bool enabled = alarmObj["enabled"] | false;
   const String timeValue = alarmObj["time"] | "";
   const String soundType = alarmObj["soundType"] | "";
   const String musicPath = alarmObj["musicPath"] | "";
   const uint16_t snoozeMin = alarmObj["snoozeMin"] | 0;
   JsonArrayConst days = alarmObj["days"].as<JsonArrayConst>();
 
+  // make sure the settings are valid
   if (!isValidTimeString(timeValue) ||
       !(soundType == "buzzer" || soundType == "music") ||
       snoozeMin < 1 || snoozeMin > 120 ||
@@ -76,20 +82,22 @@ bool AlarmController::parseAlarmFromJson(JsonVariantConst alarmVariant, AlarmSet
     return false;
   }
 
+  // at least one day must be selected
   bool hasAtLeastOneDay = false;
   for (uint8_t i = 0; i < 7; ++i) {
     outSettings.days[i] = days[i] | false;
     hasAtLeastOneDay = hasAtLeastOneDay || outSettings.days[i];
   }
-
   if (!hasAtLeastOneDay) {
     return false;
   }
 
-  if (soundType == "music" && musicPath.length() == 0) {
+  // if the sound type is music, a music path must be provided
+  if (soundType == "music" && musicPath.isEmpty()) {
     return false;
   }
 
+  outSettings.enabled = enabled;
   outSettings.time = timeValue;
   outSettings.snoozeMin = snoozeMin;
   outSettings.soundType = soundType;
@@ -97,21 +105,18 @@ bool AlarmController::parseAlarmFromJson(JsonVariantConst alarmVariant, AlarmSet
   return true;
 }
 
-void AlarmController::appendAlarmToJsonArray(const AlarmSettings& settings, JsonArray& alarms) const {
-  JsonObject alarmObj = alarms.createNestedObject();
-  alarmObj["time"] = settings.time;
-  JsonArray days = alarmObj.createNestedArray("days");
-  for (uint8_t i = 0; i < 7; ++i) {
-    days.add(settings.days[i]);
+bool AlarmController::parseAlarmSettingsDocument( File file,
+                                                  AlarmSettings* settings,
+                                                  uint8_t& count) const {
+  StaticJsonDocument<4096> doc;
+  const DeserializationError err = deserializeJson(doc, file);
+  file.close();
+  if (err) {
+    return false;
   }
-  alarmObj["snoozeMin"] = settings.snoozeMin;
-  alarmObj["soundType"] = settings.soundType;
-  alarmObj["musicPath"] = settings.musicPath;
-}
 
-bool AlarmController::parseAlarmSettingsDocument(JsonVariantConst root,
-                                                 AlarmSettings* settings,
-                                                 uint8_t& count) const {
+  JsonVariantConst root = doc.as<JsonVariantConst>();
+
   JsonArrayConst alarms = root["alarms"].as<JsonArrayConst>();
   if (alarms.isNull() || alarms.size() > MAX_ALARMS) {
     return false;
@@ -129,6 +134,28 @@ bool AlarmController::parseAlarmSettingsDocument(JsonVariantConst root,
   return true;
 }
 
+void AlarmController::appendAlarmToJsonArray(const AlarmSettings& settings, JsonArray& alarms) const {
+  JsonObject alarmObj = alarms.createNestedObject();
+  alarmObj["enabled"] = settings.enabled;
+  alarmObj["time"] = settings.time;
+  JsonArray days = alarmObj.createNestedArray("days");
+  for (uint8_t i = 0; i < 7; ++i) {
+    days.add(settings.days[i]);
+  }
+  alarmObj["snoozeMin"] = settings.snoozeMin;
+  alarmObj["soundType"] = settings.soundType;
+  alarmObj["musicPath"] = settings.musicPath;
+}
+
+StaticJsonDocument<4096> AlarmController::makeJSON(const AlarmSettings* settings, uint8_t count) {
+  StaticJsonDocument<4096> doc;
+  JsonArray alarms = doc.createNestedArray("alarms");
+  for (uint8_t i = 0; i < count; ++i) {
+    appendAlarmToJsonArray(settings[i], alarms);
+  }
+  return doc;
+}
+
 bool AlarmController::saveAlarmSettingsToSd(const AlarmSettings* settings, uint8_t count) {
   if (!sdController_.isReady()) {
     return false;
@@ -138,11 +165,7 @@ bool AlarmController::saveAlarmSettingsToSd(const AlarmSettings* settings, uint8
     return false;
   }
 
-  StaticJsonDocument<4096> doc;
-  JsonArray alarms = doc.createNestedArray("alarms");
-  for (uint8_t i = 0; i < count; ++i) {
-    appendAlarmToJsonArray(settings[i], alarms);
-  }
+  StaticJsonDocument<4096> doc = makeJSON(settings, count);
 
   File file = sdController_.open(ALARM_FILE, FILE_WRITE);
   if (!file) {
@@ -163,11 +186,7 @@ bool AlarmController::saveAlarmSettingsToLittleFs(const AlarmSettings* settings,
     return false;
   }
 
-  StaticJsonDocument<4096> doc;
-  JsonArray alarms = doc.createNestedArray("alarms");
-  for (uint8_t i = 0; i < count; ++i) {
-    appendAlarmToJsonArray(settings[i], alarms);
-  }
+  StaticJsonDocument<4096> doc = makeJSON(settings, count);
 
   File file = LittleFS.open(ALARM_FILE, FILE_WRITE);
   if (!file) {
@@ -181,8 +200,8 @@ bool AlarmController::saveAlarmSettingsToLittleFs(const AlarmSettings* settings,
 
 bool AlarmController::saveAlarmSettingsToAll(const AlarmSettings* settings, uint8_t count) {
   const bool littleFsOk = saveAlarmSettingsToLittleFs(settings, count);
-  const bool sdOk = sdController_.isReady() ? saveAlarmSettingsToSd(settings, count) : true;
-  return littleFsOk && sdOk;
+  const bool sdOk = saveAlarmSettingsToSd(settings, count);
+  return littleFsOk || sdOk; //save in at least one media
 }
 
 bool AlarmController::loadAlarmSettingsFromSd(AlarmSettings* settings, uint8_t& count) {
@@ -199,14 +218,7 @@ bool AlarmController::loadAlarmSettingsFromSd(AlarmSettings* settings, uint8_t& 
     return false;
   }
 
-  StaticJsonDocument<4096> doc;
-  const DeserializationError err = deserializeJson(doc, file);
-  file.close();
-  if (err) {
-    return false;
-  }
-
-  return parseAlarmSettingsDocument(doc.as<JsonVariantConst>(), settings, count);
+  return parseAlarmSettingsDocument(file, settings, count);
 }
 
 bool AlarmController::loadAlarmSettingsFromLittleFs(AlarmSettings* settings, uint8_t& count) {
@@ -223,14 +235,7 @@ bool AlarmController::loadAlarmSettingsFromLittleFs(AlarmSettings* settings, uin
     return false;
   }
 
-  StaticJsonDocument<4096> doc;
-  const DeserializationError err = deserializeJson(doc, file);
-  file.close();
-  if (err) {
-    return false;
-  }
-
-  return parseAlarmSettingsDocument(doc.as<JsonVariantConst>(), settings, count);
+  return parseAlarmSettingsDocument(file, settings, count);
 }
 
 bool AlarmController::loadAlarmSettings(AlarmSettings* settings, uint8_t& count) {
@@ -240,12 +245,11 @@ bool AlarmController::loadAlarmSettings(AlarmSettings* settings, uint8_t& count)
   }
 
   if (loadAlarmSettingsFromLittleFs(settings, count)) {
-    if (sdController_.isReady()) {
-      saveAlarmSettingsToSd(settings, count);
-    }
+    saveAlarmSettingsToSd(settings, count);
     return true;
   }
 
+  Serial.println("alarms: failed to load settings from both SD and LittleFS");
   return false;
 }
 

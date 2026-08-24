@@ -11,7 +11,7 @@ class AlarmController {
  public:
   explicit AlarmController(SdController& sdController);
 
-  void begin();
+  bool initialize();
   void handleGetAlarmConfig(WebServer& webServer);
   void handleSaveAlarmConfig(WebServer& webServer);
   void handleListMusicFiles(WebServer& webServer);
@@ -23,6 +23,7 @@ class AlarmController {
   static const char* ALARM_FILE;
 
   struct AlarmSettings {
+    bool enabled;
     String time;
     bool days[7];
     uint16_t snoozeMin;
@@ -34,7 +35,8 @@ class AlarmController {
   bool isValidTimeString(const String& timeValue) const;
   bool parseAlarmFromJson(JsonVariantConst alarmVariant, AlarmSettings& outSettings) const;
   void appendAlarmToJsonArray(const AlarmSettings& settings, JsonArray& alarms) const;
-  bool parseAlarmSettingsDocument(JsonVariantConst root, AlarmSettings* settings, uint8_t& count) const;
+  StaticJsonDocument<4096> makeJSON(const AlarmSettings* settings, uint8_t count);
+  bool parseAlarmSettingsDocument(File file, AlarmSettings* settings, uint8_t& count) const;
 
   bool saveAlarmSettingsToSd(const AlarmSettings* settings, uint8_t count);
   bool saveAlarmSettingsToLittleFs(const AlarmSettings* settings, uint8_t count);
