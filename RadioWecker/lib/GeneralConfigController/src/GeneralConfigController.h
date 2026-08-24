@@ -2,22 +2,19 @@
 
 #include <Arduino.h>
 
-class ClockController;
 class DisplayManager;
 class SdController;
 class WebServer;
 
 class GeneralConfigController {
  public:
-  explicit GeneralConfigController( ClockController& clockController,
-                                    SdController& sdController,
+  explicit GeneralConfigController( SdController& sdController,
                                     DisplayManager& displayManager,
                                     const char* defaultTimezonePosix,
                                     int16_t defaultTimeOffsetMinutes,
                                     uint8_t defaultBrightness);
 
   bool initialize();
-  void applyToClock();
   void applyToDisplay();
 
   void handleGetConfig(WebServer& webServer);
@@ -25,6 +22,8 @@ class GeneralConfigController {
 
   uint8_t brightness() const;
   const String& hostname() const;
+  const String& timezonePosix() const;
+  int16_t timeOffsetMinutes() const;
   const String& ftpUsername() const;
   const String& ftpPassword() const;
 
@@ -56,7 +55,6 @@ class GeneralConfigController {
 
   static constexpr const char* GENERAL_CONFIG_FILE = "/general_config.json";
 
-  ClockController& clockController_;
   SdController& sdController_;
   DisplayManager& displayManager_;
 

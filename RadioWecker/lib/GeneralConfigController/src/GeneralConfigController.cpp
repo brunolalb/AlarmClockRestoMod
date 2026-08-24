@@ -1,7 +1,6 @@
 #include "GeneralConfigController.h"
 
 #include <ArduinoJson.h>
-#include <ClockController.h>
 #include <DisplayManager.h>
 #include <LittleFS.h>
 #include <SdController.h>
@@ -62,14 +61,12 @@ String decryptHexXor(const String& cipherHex, const String& key) {
 }
 }
 
-GeneralConfigController::GeneralConfigController(ClockController& clockController,
-                                                 SdController& sdController,
+GeneralConfigController::GeneralConfigController(SdController& sdController,
                                                  DisplayManager& displayManager,
                                                  const char* defaultTimezonePosix,
                                                  int16_t defaultTimeOffsetMinutes,
                                                  uint8_t defaultBrightness)
-    : clockController_(clockController),
-      sdController_(sdController),
+    : sdController_(sdController),
       displayManager_(displayManager),
       timezonePosix_(defaultTimezonePosix),
       timeOffsetMinutes_(defaultTimeOffsetMinutes),
@@ -227,10 +224,6 @@ bool GeneralConfigController::initialize() {
   return saveToAllStorages();
 }
 
-void GeneralConfigController::applyToClock() {
-  clockController_.applyTimeConfig(timezonePosix_, timeOffsetMinutes_);
-}
-
 void GeneralConfigController::applyToDisplay() {
   displayManager_.setBrightness(brightness_);
 }
@@ -352,7 +345,6 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   ftpUsername_ = ftpUsername;
   ftpPassword_ = ftpPassword;
 
-  applyToClock();
   applyToDisplay();
 
   if (!saveToAllStorages()) {
@@ -373,6 +365,14 @@ const String& GeneralConfigController::hostname() const {
 
 uint8_t GeneralConfigController::brightness() const {
   return brightness_;
+}
+
+const String& GeneralConfigController::timezonePosix() const {
+  return timezonePosix_;
+}
+
+int16_t GeneralConfigController::timeOffsetMinutes() const {
+  return timeOffsetMinutes_;
 }
 
 const String& GeneralConfigController::ftpUsername() const {

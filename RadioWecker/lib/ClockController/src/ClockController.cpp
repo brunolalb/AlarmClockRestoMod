@@ -31,7 +31,15 @@ ClockController::ClockController(uint8_t rtcSqwPin,
       ntpRetryIntervalMs_(ntpRetryIntervalMs),
       timezonePosix_("UTC0") {}
 
-bool ClockController::begin() {
+bool ClockController::initialize( const String& timezonePosix,
+                                  int16_t timeOffsetMinutes) {
+  if (!timezonePosix.isEmpty()) {
+    timezonePosix_ = timezonePosix;
+  }
+  if (timeOffsetMinutes != -32768) { // smallest int16 means not set, use default
+    timeOffsetMinutes_ = timeOffsetMinutes;
+  }
+
   Wire.begin(i2cSdaPin_, i2cSclPin_, i2cFrequencyHz_);
 
   ready_ = rtc.begin();

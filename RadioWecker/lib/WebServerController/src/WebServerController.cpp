@@ -200,6 +200,13 @@ void WebServerController::handleReboot() {
   ESP.restart();
 }
 
+void WebServerController::handleSaveConfig() {
+  generalConfigController_.handleSaveConfig(webServer_);
+
+  clockController_.applyTimeConfig( generalConfigController_.timezonePosix(),
+                                    generalConfigController_.timeOffsetMinutes());
+}
+
 void WebServerController::setupRoutes() {
   webServer_.on("/", HTTP_GET, [this]() { handleIndexPage(); });
   webServer_.on("/alarm", HTTP_GET, [this]() { handleAlarmPage(); });
@@ -212,12 +219,12 @@ void WebServerController::setupRoutes() {
   webServer_.on("/api/status", HTTP_GET, [this]() { handleGetStatus(); });
   webServer_.on("/api/reboot", HTTP_POST, [this]() { handleReboot(); });
   webServer_.on("/api/config", HTTP_GET, [this]() { generalConfigController_.handleGetConfig(webServer_); });
-  webServer_.on("/api/config", HTTP_POST, [this]() { generalConfigController_.handleSaveConfig(webServer_); });
+  webServer_.on("/api/config", HTTP_POST, [this]() { handleSaveConfig(); });
 
   // Alarms related
   webServer_.on("/api/alarm", HTTP_GET, [this]() { alarmController_.handleGetAlarmConfig(webServer_); });
   webServer_.on("/api/alarm", HTTP_POST, [this]() { alarmController_.handleSaveAlarmConfig(webServer_); });
-  
+
   // sound controller related
   webServer_.on("/api/sound/status", HTTP_GET, [this]() {
     soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::GetStatus);

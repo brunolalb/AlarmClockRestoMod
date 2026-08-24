@@ -14,7 +14,8 @@ class ClockController {
                   int daylightOffsetSeconds = 0,
                   uint32_t ntpSyncIntervalMs = 6UL * 60UL * 60UL * 1000UL,
                   uint32_t ntpRetryIntervalMs = 60UL * 1000UL);
-  bool begin();
+  bool initialize(const String& timezonePosix,
+                  int16_t timeOffsetMinutes = -32768); // smallest int16 means not set, use default
   void update();
 
   bool isReady() const;
@@ -26,7 +27,7 @@ class ClockController {
   int16_t timeOffsetMinutes() const;
 
  private:
-    bool initializeClockFromDateTime(const DateTime& now);
+  bool initializeClockFromDateTime(const DateTime& now);
   bool initializeRtcTimeFromChip();
   void updateDisplayedValue();
   void advanceSoftwareClockOneSecond();

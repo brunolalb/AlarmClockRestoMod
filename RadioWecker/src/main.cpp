@@ -60,8 +60,7 @@ void create_modules() {
                                       I2S_LRCLK_PIN,
                                       I2S_DATA_PIN);
 
-  modules.config = new GeneralConfigController( *modules.clock,
-                                                *modules.sd_card,
+  modules.config = new GeneralConfigController( *modules.sd_card,
                                                 *modules.display,
                                                 RTC_TIMEZONE_POSIX_DEFAULT,
                                                 RTC_TIME_OFFSET_MINUTES_DEFAULT,
@@ -104,8 +103,9 @@ void initialize_modules() {
     Serial.println("main: WiFi initialization failed");
   }
 
-  modules.config->applyToClock();
-  modules.clock->begin();
+  if (!modules.clock->initialize(modules.config->timezonePosix(), modules.config->timeOffsetMinutes())) {
+    Serial.println("main: clock initialization failed");
+  }
 
   if (!modules.sd_card->isReady()) {
     modules.display->showSdFailure();
