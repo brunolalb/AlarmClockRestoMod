@@ -9,7 +9,7 @@ class WiFiController {
   explicit WiFiController(const uint16_t configPortalTimeoutS,
                           const char *hostname);
 
-  bool initialize(const char *hostname = nullptr);
+  bool initialize(String hostname = "");
   bool update();
   bool connected() const;
 

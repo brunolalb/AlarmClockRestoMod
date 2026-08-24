@@ -24,11 +24,13 @@ class GeneralConfigController {
   void handleSaveConfig(WebServer& webServer);
 
   uint8_t brightness() const;
+  const String& hostname() const;
   const String& ftpUsername() const;
   const String& ftpPassword() const;
 
  private:
   struct ConfigData {
+    String hostname;
     String timezonePosix;
     int16_t timeOffsetMinutes;
     uint8_t brightness;
@@ -58,6 +60,7 @@ class GeneralConfigController {
   SdController& sdController_;
   DisplayManager& displayManager_;
 
+  String hostname_;
   String timezonePosix_;
   int16_t timeOffsetMinutes_;
   uint8_t brightness_;

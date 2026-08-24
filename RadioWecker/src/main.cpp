@@ -100,7 +100,7 @@ void initialize_modules() {
     Serial.println("main: display initialization failed");
   }
 
-  if (!modules.wifi->initialize()) {
+  if (!modules.wifi->initialize(modules.config->hostname())) {
     Serial.println("main: WiFi initialization failed");
   }
 

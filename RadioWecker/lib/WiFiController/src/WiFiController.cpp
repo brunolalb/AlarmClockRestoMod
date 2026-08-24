@@ -8,9 +8,9 @@ WiFiController::WiFiController( const uint16_t configPortalTimeoutS,
     : configPortalTimeoutS_(configPortalTimeoutS),
       hostname_(hostname) {}
 
-bool WiFiController::initialize(const char *hostname) {
-  if (hostname != nullptr) {
-    hostname_ = hostname;
+bool WiFiController::initialize(String hostname) {
+  if (!hostname.isEmpty()) {
+    hostname_ = hostname.c_str();
   }
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);

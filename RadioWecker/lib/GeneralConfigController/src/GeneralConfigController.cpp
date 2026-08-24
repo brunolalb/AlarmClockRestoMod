@@ -130,6 +130,7 @@ bool GeneralConfigController::readConfigFromJsonFile(const String& jsonPayload, 
     return false;
   }
 
+  const String hostname = doc["hostname"] | "";
   const String timezone = doc["timezone"] | defaultTimezonePosix_;
   const int offsetMinutes = doc["timeOffsetMinutes"] | defaultTimeOffsetMinutes_;
   const int brightness = doc["brightness"] | defaultBrightness_;
@@ -144,6 +145,7 @@ bool GeneralConfigController::readConfigFromJsonFile(const String& jsonPayload, 
     return false;
   }
 
+  outConfig.hostname = hostname;
   outConfig.timezonePosix = timezone;
   outConfig.timeOffsetMinutes = static_cast<int16_t>(offsetMinutes);
   outConfig.brightness = static_cast<uint8_t>(brightness);
@@ -199,6 +201,7 @@ bool GeneralConfigController::initialize() {
 
   ConfigData config;
   if (readFromSdCard(config)) {
+    hostname_ = config.hostname;
     timezonePosix_ = config.timezonePosix;
     timeOffsetMinutes_ = config.timeOffsetMinutes;
     brightness_ = config.brightness;
@@ -209,6 +212,7 @@ bool GeneralConfigController::initialize() {
   }
 
   if (readFromLittleFs(config)) {
+    hostname_ = config.hostname;
     timezonePosix_ = config.timezonePosix;
     timeOffsetMinutes_ = config.timeOffsetMinutes;
     brightness_ = config.brightness;
@@ -243,6 +247,7 @@ bool GeneralConfigController::saveToLittleFs() {
   }
 
   StaticJsonDocument<512> doc;
+  doc["hostname"] = hostname_;
   doc["timezone"] = timezonePosix_;
   doc["timeOffsetMinutes"] = timeOffsetMinutes_;
   doc["brightness"] = brightness_;
@@ -272,6 +277,7 @@ bool GeneralConfigController::saveToSdCard() {
   }
 
   StaticJsonDocument<512> doc;
+  doc["hostname"] = hostname_;
   doc["timezone"] = timezonePosix_;
   doc["timeOffsetMinutes"] = timeOffsetMinutes_;
   doc["brightness"] = brightness_;
@@ -297,6 +303,7 @@ bool GeneralConfigController::saveToAllStorages() {
 
 void GeneralConfigController::handleGetConfig(WebServer& webServer) {
   StaticJsonDocument<512> doc;
+  doc["hostname"] = hostname_;
   doc["timezone"] = timezonePosix_;
   doc["timeOffsetMinutes"] = timeOffsetMinutes_;
   doc["brightness"] = brightness_;
@@ -329,6 +336,7 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   const String timezone = doc["timezone"] | "";
   const int offsetMinutes = doc["timeOffsetMinutes"] | 0;
   const int brightness = doc["brightness"] | -1;
+  const String hostname = doc["hostname"] | "";
   const String ftpUsername = doc["ftpUsername"] | DEFAULT_FTP_USERNAME;
   const String ftpPassword = doc["ftpPassword"] | "";
 
@@ -340,6 +348,7 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   timezonePosix_ = timezone;
   timeOffsetMinutes_ = static_cast<int16_t>(offsetMinutes);
   brightness_ = static_cast<uint8_t>(brightness);
+  hostname_ = hostname;
   ftpUsername_ = ftpUsername;
   ftpPassword_ = ftpPassword;
 
@@ -356,6 +365,10 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   String payload;
   serializeJson(response, payload);
   webServer.send(200, "application/json", payload);
+}
+
+const String& GeneralConfigController::hostname() const {
+  return hostname_;
 }
 
 uint8_t GeneralConfigController::brightness() const {
