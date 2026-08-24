@@ -1,19 +1,21 @@
 #include "DisplayManager.h"
 
-DisplayManager::DisplayManager(uint8_t clkPin, uint8_t dioPin, SeparatorMode separatorMode)
-    : display_(clkPin, dioPin),
+DisplayManager::DisplayManager( uint8_t clkPin,
+                                uint8_t dioPin,
+                                SeparatorMode separatorMode)
+    : display_(dioPin, clkPin),
       separatorMode_(separatorMode) {}
 
-void DisplayManager::begin(uint8_t brightness) {
-  display_.init();
+bool DisplayManager::initialize(uint8_t brightness) {
+  display_.begin();
   setBrightness(brightness);
-  display_.clearScreen();
-  applySeparatorMode(separatorMode_);
+  display_.clearDisplay();
+  return true;
 }
 
 void DisplayManager::setBrightness(uint8_t brightness) {
   brightness_ = brightness > 7 ? 7 : brightness;
-  display_.setBrightness(brightness_);
+  display_.setupDisplay(true, brightness_);
 }
 
 uint8_t DisplayManager::brightness() const {
@@ -21,44 +23,23 @@ uint8_t DisplayManager::brightness() const {
 }
 
 void DisplayManager::showTimeHHMM(int timeValue) {
-  applySeparatorMode(separatorMode_);
-  char hhmm[5];
-  snprintf(hhmm, sizeof(hhmm), "%04d", timeValue);
-  String text(hhmm);
-  if (text.length() == 4 && text.charAt(0) == '0') {
-    text.setCharAt(0, ' ');
+  char hhmm[9];
+  snprintf(hhmm, sizeof(hhmm), "%04d    ", timeValue);
+  if (hhmm[0] == '0') {
+    hhmm[0] = ' ';
   }
-  display_.display(text, false, false);
+  displayText(hhmm, separatorMode_);
 }
 
 void DisplayManager::showRtcFailure() {
-  applySeparatorMode(SeparatorMode::None);
-  display_.display("RTCF");
+  displayText("RTCF    ", SeparatorMode::None);
 }
 
 void DisplayManager::showSdFailure() {
-  applySeparatorMode(SeparatorMode::None);
-  display_.display("SDFL");
+  displayText("SDFL    ", SeparatorMode::None);
 }
 
-void DisplayManager::showSdSelfTestResult(bool passed) {
-  applySeparatorMode(SeparatorMode::None);
-  display_.display(passed ? "TSTP" : "TSTF");
-}
-
-void DisplayManager::applySeparatorMode(SeparatorMode separatorMode) {
-  switch (separatorMode) {
-    case SeparatorMode::Dots:
-      display_.setDp(0x02);
-      break;
-    case SeparatorMode::Colon:
-      display_.setDp(0x00);
-      display_.colonOn();
-      break;
-    case SeparatorMode::None:
-    default:
-      display_.setDp(0x00);
-      display_.colonOff();
-      break;
-  }
+void DisplayManager::displayText(const char* text, SeparatorMode separatorMode) {
+  const word dots = separatorMode == SeparatorMode::None ? 0 : (1 << 1);
+  display_.setDisplayToString(text, dots);
 }

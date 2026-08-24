@@ -11,18 +11,19 @@ class DisplayManager {
     Dots,
   };
 
-  DisplayManager(uint8_t clkPin, uint8_t dioPin, SeparatorMode separatorMode = SeparatorMode::Colon);
+  DisplayManager(uint8_t clkPin,
+                 uint8_t dioPin,
+                 SeparatorMode separatorMode = SeparatorMode::Colon);
 
-  void begin(uint8_t brightness = 7);
+  bool initialize(uint8_t brightness = 7);
   void setBrightness(uint8_t brightness);
   uint8_t brightness() const;
   void showTimeHHMM(int timeValue);
   void showRtcFailure();
   void showSdFailure();
-  void showSdSelfTestResult(bool passed);
 
  private:
-  void applySeparatorMode(SeparatorMode separatorMode);
+  void displayText(const char* text, SeparatorMode separatorMode);
 
   TM1637 display_;
   uint8_t brightness_ = 7;

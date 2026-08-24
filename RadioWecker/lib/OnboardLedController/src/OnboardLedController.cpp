@@ -24,9 +24,10 @@ bool ActivityPulseController::isActive(unsigned long nowMs) const {
 OnboardLedController::OnboardLedController(uint8_t pin, unsigned long heartbeatIntervalMs)
     : pin_(pin), heartbeat_(heartbeatIntervalMs), activity_() {}
 
-void OnboardLedController::begin() {
+bool OnboardLedController::initialize() {
   pinMode(pin_, OUTPUT);
   digitalWrite(pin_, LOW);
+  return true;
 }
 
 void OnboardLedController::pulseActivity(unsigned long durationMs) {

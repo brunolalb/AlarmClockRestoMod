@@ -87,6 +87,10 @@ void create_modules() {
 
 
 void initialize_modules() {
+  if (!modules.led->initialize()) {
+    Serial.println("main: onboard LED initialization failed");
+  }
+
   if (!modules.sd_card->initialize()) {
     Serial.println("main: SD Card initialization failed");
   }
@@ -95,8 +99,9 @@ void initialize_modules() {
     Serial.println("main: general configuration initialization failed");
   }
 
-  modules.display->begin(modules.config->brightness());
-  modules.led->begin();
+  if (!modules.display->initialize(modules.config->brightness())) {
+    Serial.println("main: display initialization failed");
+  }
 
   modules.config->applyToClock();
 

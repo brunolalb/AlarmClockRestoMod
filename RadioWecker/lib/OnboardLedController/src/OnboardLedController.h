@@ -29,7 +29,7 @@ class OnboardLedController {
  public:
   explicit OnboardLedController(uint8_t pin, unsigned long heartbeatIntervalMs = 500);
 
-  void begin();
+  bool initialize();
   void pulseActivity(unsigned long durationMs = 120);
   void update();
 
