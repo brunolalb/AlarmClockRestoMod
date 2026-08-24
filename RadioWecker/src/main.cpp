@@ -91,7 +91,9 @@ void initialize_modules() {
     Serial.println("main: SD Card initialization failed");
   }
 
-  modules.config->loadFromStorage();
+  if (!modules.config->initialize()) {
+    Serial.println("main: general configuration initialization failed");
+  }
 
   modules.display->begin(modules.config->brightness());
   modules.led->begin();

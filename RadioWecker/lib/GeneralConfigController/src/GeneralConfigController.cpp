@@ -190,7 +190,7 @@ bool GeneralConfigController::readFromSdCard(ConfigData& outConfig) {
   return readConfigFromJsonFile(payload, outConfig);
 }
 
-void GeneralConfigController::loadFromStorage() {
+bool GeneralConfigController::initialize() {
   timezonePosix_ = defaultTimezonePosix_;
   timeOffsetMinutes_ = defaultTimeOffsetMinutes_;
   brightness_ = defaultBrightness_;
@@ -204,8 +204,8 @@ void GeneralConfigController::loadFromStorage() {
     brightness_ = config.brightness;
     ftpUsername_ = config.ftpUsername;
     ftpPassword_ = config.ftpPassword;
-    saveToLittleFs();
-    return;
+
+    return saveToLittleFs(); // internal storage must not fail
   }
 
   if (readFromLittleFs(config)) {
@@ -214,11 +214,13 @@ void GeneralConfigController::loadFromStorage() {
     brightness_ = config.brightness;
     ftpUsername_ = config.ftpUsername;
     ftpPassword_ = config.ftpPassword;
+
     saveToSdCard();
-    return;
+
+    return true; // it doesn't matter if saving to SD card fails, we still have a valid config in LittleFS
   }
 
-  saveToAllStorages();
+  return saveToAllStorages();
 }
 
 void GeneralConfigController::applyToClock() {
@@ -231,10 +233,12 @@ void GeneralConfigController::applyToDisplay() {
 
 bool GeneralConfigController::saveToLittleFs() {
   if (!ensureInternalFsMounted()) {
+    Serial.println("general config: failed to mount LittleFS");
     return false;
   }
 
   if (LittleFS.exists(GENERAL_CONFIG_FILE) && !LittleFS.remove(GENERAL_CONFIG_FILE)) {
+    Serial.println("general config: failed to remove existing config file from LittleFS");
     return false;
   }
 
@@ -247,6 +251,7 @@ bool GeneralConfigController::saveToLittleFs() {
 
   File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
+    Serial.println("general config: failed to open config file for writing to LittleFS");
     return false;
   }
 
@@ -257,10 +262,12 @@ bool GeneralConfigController::saveToLittleFs() {
 
 bool GeneralConfigController::saveToSdCard() {
   if (!sdController_.isReady()) {
+    Serial.println("general config: SD card not ready, cannot save config");
     return false;
   }
 
   if (sdController_.exists(GENERAL_CONFIG_FILE) && !sdController_.remove(GENERAL_CONFIG_FILE)) {
+    Serial.println("general config: failed to remove existing config file from SD card");
     return false;
   }
 
@@ -273,6 +280,7 @@ bool GeneralConfigController::saveToSdCard() {
 
   File file = sdController_.open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
+    Serial.println("general config: failed to open config file for writing to SD card");
     return false;
   }
 
@@ -284,7 +292,7 @@ bool GeneralConfigController::saveToSdCard() {
 bool GeneralConfigController::saveToAllStorages() {
   const bool littleFsOk = saveToLittleFs();
   const bool sdOk = sdController_.isReady() ? saveToSdCard() : true;
-  return littleFsOk && sdOk;
+  return littleFsOk || sdOk; // at least one storage must succeed, otherwise we have no valid config anywhere
 }
 
 void GeneralConfigController::handleGetConfig(WebServer& webServer) {

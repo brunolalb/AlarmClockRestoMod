@@ -9,14 +9,14 @@ class WebServer;
 
 class GeneralConfigController {
  public:
-  explicit GeneralConfigController(ClockController& clockController,
-                                   SdController& sdController,
-                                   DisplayManager& displayManager,
-                                   const char* defaultTimezonePosix,
-                                   int16_t defaultTimeOffsetMinutes,
-                                   uint8_t defaultBrightness);
+  explicit GeneralConfigController( ClockController& clockController,
+                                    SdController& sdController,
+                                    DisplayManager& displayManager,
+                                    const char* defaultTimezonePosix,
+                                    int16_t defaultTimeOffsetMinutes,
+                                    uint8_t defaultBrightness);
 
-  void loadFromStorage();
+  bool initialize();
   void applyToClock();
   void applyToDisplay();
 
