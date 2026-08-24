@@ -119,7 +119,9 @@ void initialize_modules() {
     Serial.println("main: web server initialization failed");
   }
 
-  modules.cli->begin();
+  if (!modules.cli->initialize()) {
+    Serial.println("main: CLI initialization failed");
+  }
 
   if (!modules.sd_card->isReady()) {
     modules.display->showSdFailure();

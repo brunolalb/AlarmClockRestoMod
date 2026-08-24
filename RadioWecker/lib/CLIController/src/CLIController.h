@@ -15,7 +15,7 @@ class CLIController {
                 AlarmController& alarmController,
                 WebServerController& webServerController);
 
-  void begin();
+  bool initialize();
   void update();
 
  private:

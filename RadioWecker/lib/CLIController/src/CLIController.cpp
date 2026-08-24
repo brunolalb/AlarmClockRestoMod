@@ -33,18 +33,18 @@ String formatBytes(uint64_t bytes) {
 }
 }
 
-CLIController::CLIController(ClockController& clockController,
-                             SdController& sdController,
-                             AlarmController& alarmController,
-                             WebServerController& webServerController)
+CLIController::CLIController( ClockController& clockController,
+                              SdController& sdController,
+                              AlarmController& alarmController,
+                              WebServerController& webServerController)
     : clockController_(clockController),
       sdController_(sdController),
       alarmController_(alarmController),
       webServerController_(webServerController) {}
 
-void CLIController::begin() {
-  const String output = "Serial controller ready. Type 'help' for commands.\n";
-  Serial.print(output);
+bool CLIController::initialize() {
+  Serial.println("\n\nCommand Line Interface ready. Type 'help' for commands.\n");
+  return true;
 }
 
 void CLIController::update() {
