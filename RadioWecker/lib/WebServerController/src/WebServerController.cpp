@@ -26,12 +26,12 @@ String formatBytes(uint64_t bytes) {
 }
 }
 
-WebServerController::WebServerController(AlarmController& alarmController,
-                                         ClockController& clockController,
-                                         SdController& sdController,
-                                         SoundController& soundController,
-                                         GeneralConfigController& generalConfigController,
-                                         uint16_t port)
+WebServerController::WebServerController( AlarmController& alarmController,
+                                          ClockController& clockController,
+                                          SdController& sdController,
+                                          SoundController& soundController,
+                                          GeneralConfigController& generalConfigController,
+                                          uint16_t port)
     : alarmController_(alarmController),
       clockController_(clockController),
       sdController_(sdController),
@@ -40,39 +40,42 @@ WebServerController::WebServerController(AlarmController& alarmController,
       webServer_(port),
       port_(port) {}
 
-void WebServerController::beginFtpServer() {
+bool WebServerController::beginFtpServer() {
   if (ftpStarted_) {
-    return;
+    return true;
   }
 
   if (!sdController_.isReady()) {
-    Serial.println("FTP server not started: SD is not ready");
-    return;
+    Serial.println("webserver: FTP not started (SD is not ready)");
+    return false;
   }
 
   ftpServer_.begin(generalConfigController_.ftpUsername().c_str(), generalConfigController_.ftpPassword().c_str());
   ftpStarted_ = true;
-  if (ftpStarted_) {
-    Serial.print("FTP server running on port 21 (user: ");
-    Serial.print(generalConfigController_.ftpUsername());
-    Serial.println(")");
-  } else {
-    Serial.println("FTP server failed to start");
-  }
+  Serial.print("webserver: FTP on port 21 (user: ");
+  Serial.print(generalConfigController_.ftpUsername());
+  Serial.println(")");
+
+  return true;
 }
 
-void WebServerController::begin(bool enableWebServer) {
-  if (!enableWebServer || started_) {
-    return;
+bool WebServerController::initialize(bool wifi_is_connected) {
+  if (!wifi_is_connected) {
+    Serial.println("web server: not started: WiFi is not connected");
+    return false;
   }
 
-  setupRoutes();
-  webServer_.begin();
-  beginFtpServer();
-  started_ = true;
+  if (!started_) {
+    setupRoutes();
+    webServer_.begin();
+    started_ = true;
+  }
 
-  Serial.print("Web server running on port ");
+  beginFtpServer();
+
+  Serial.print("web server: running on port ");
   Serial.println(port_);
+  return true;
 }
 
 void WebServerController::update() {

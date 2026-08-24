@@ -115,7 +115,9 @@ void initialize_modules() {
     Serial.println("main: sound initialization failed");
   }
 
-  modules.webserver->begin(modules.wifi->connected());
+  if (!modules.webserver->initialize(modules.wifi->connected())) {
+    Serial.println("main: web server initialization failed");
+  }
 
   modules.cli->begin();
 
@@ -142,7 +144,7 @@ void loop() {
 
   bool wifi_connected = modules.wifi->update();
   if (wifi_connected && !wifi_was_connected) {
-    modules.webserver->begin(true);
+    modules.webserver->initialize(true);
   }
   wifi_was_connected = wifi_connected;
 

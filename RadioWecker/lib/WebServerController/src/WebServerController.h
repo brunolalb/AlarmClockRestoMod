@@ -19,7 +19,7 @@ class WebServerController {
                                GeneralConfigController& generalConfigController,
                                uint16_t port = 80);
 
-  void begin(bool enableWebServer);
+  bool initialize(bool wifi_is_connected);
   void update();
   bool isStarted() const;
   WebServer& server();
@@ -37,7 +37,7 @@ class WebServerController {
   void handleReboot();
   void handleSaveConfig();
   void setupRoutes();
-  void beginFtpServer();
+  bool beginFtpServer();
 
   AlarmController& alarmController_;
   ClockController& clockController_;
