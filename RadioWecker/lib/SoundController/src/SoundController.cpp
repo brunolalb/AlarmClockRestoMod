@@ -96,9 +96,9 @@ SoundController::SoundController(SdController& sdController,
       i2sDataPin_(i2sDataPin),
       volume_(volume > 21 ? 21 : volume) {}
 
-void SoundController::begin() {
-  ensureAudioReady();
+bool SoundController::initialize() {
   //audio_.connecttohost("0n-80s.radionetz.de:8000/0n-70s.mp3");
+  return ensureAudioReady();
 }
 
 void SoundController::update() {

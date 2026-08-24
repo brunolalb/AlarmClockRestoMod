@@ -111,7 +111,9 @@ void initialize_modules() {
     Serial.println("main: alarm initialization failed");
   }
 
-  modules.sound->begin();
+  if (!modules.sound->initialize()) {
+    Serial.println("main: sound initialization failed");
+  }
 
   modules.webserver->begin(modules.wifi->connected());
 

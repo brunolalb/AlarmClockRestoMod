@@ -30,7 +30,7 @@ class SoundController {
   static const char* const kSupportedFileExtensions[];
   static constexpr size_t kSupportedFileExtensionCount = 3;
 
-  void begin();
+  bool initialize();
   void update();
 
   void handleWebServerCommand(WebServer& webServer, WebServerCommand command);
