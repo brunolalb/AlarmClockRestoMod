@@ -4,6 +4,10 @@
 #include <HardwareConfig.h>
 #include <DisplayManager.h>
 
+// Wifi
+static constexpr uint16_t WIFI_CONFIG_PORTAL_TIMEOUT_S = 300;
+static constexpr const char* WIFI_DEFAULT_HOSTNAME = "RadioWecker";
+
 
 // Display - TM1637
 static constexpr uint8_t DISPLAY_BRIGHTNESS_DEFAULT = 1;

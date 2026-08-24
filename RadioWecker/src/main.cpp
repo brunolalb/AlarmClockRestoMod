@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiManager.h>
 
 #include <HardwareConfig.h>
 #include <SoftwareConfig.h>
@@ -13,6 +11,7 @@
 #include <CLIController.h>
 #include <SdController.h>
 #include <SoundController.h>
+#include <WiFiController.h>
 #include <WebServerController.h>
 
 
@@ -25,19 +24,14 @@ typedef struct modules_ {
   SoundController *sound;
   GeneralConfigController *config;
   WebServerController *webserver;
-  WiFiManager *wifi;
+  WiFiController *wifi;
   CLIController *cli;
 } Modules;
 
 Modules modules;
 
-bool wifiServicesStarted = false;
-bool wifiWasConnected = false;
-unsigned long nextWifiReconnectAttemptMs = 0;
-
 void create_modules() {
   modules.led = new OnboardLedController(ONBOARD_LED_PIN);
-  modules.wifi = new WiFiManager();
 
   modules.sd_card = new SdController( SD_SPI_CS_PIN,
                                       SD_SPI_SCK_PIN,
@@ -79,6 +73,9 @@ void create_modules() {
                                               *modules.sound,
                                               *modules.config);
 
+  modules.wifi = new WiFiController(WIFI_CONFIG_PORTAL_TIMEOUT_S,
+                                    WIFI_DEFAULT_HOSTNAME);
+
   modules.cli = new CLIController(*modules.clock,
                                   *modules.sd_card,
                                   *modules.alarm,
@@ -103,23 +100,11 @@ void initialize_modules() {
     Serial.println("main: display initialization failed");
   }
 
-  modules.config->applyToClock();
-
-  WiFi.mode(WIFI_STA);
-  WiFi.setAutoReconnect(true);
-  modules.wifi->setConfigPortalBlocking(false);
-  modules.wifi->setConfigPortalTimeout(300);
-  modules.wifi->setHostname("RadioWecker");
-  const bool wifiConnected = modules.wifi->autoConnect("RadioWecker-Setup");
-  if (wifiConnected) {
-    Serial.println("WiFi connected via tzapu WiFiManager");
-    Serial.println(WiFi.localIP());
-    wifiServicesStarted = true;
-  } else {
-    Serial.println("WiFi setup started in non-blocking mode");
+  if (!modules.wifi->initialize()) {
+    Serial.println("main: WiFi initialization failed");
   }
-  wifiWasConnected = wifiConnected;
 
+  modules.config->applyToClock();
   modules.clock->begin();
 
   if (!modules.sd_card->isReady()) {
@@ -129,7 +114,7 @@ void initialize_modules() {
   modules.alarm->begin();
   modules.sound->begin();
 
-  modules.webserver->begin(wifiServicesStarted);
+  modules.webserver->begin(modules.wifi->connected());
 
   modules.cli->begin();
 }
@@ -148,27 +133,13 @@ void setup() {
 
 void loop() {
   static uint32_t lastDisplayUpdateMs = 0;
+  static bool wifi_was_connected = modules.wifi->connected();
 
-  modules.wifi->process();
-  const bool wifiConnected = WiFi.status() == WL_CONNECTED;
-
-  if (wifiConnected && !wifiWasConnected) {
-    Serial.println("WiFi connected");
-    Serial.println(WiFi.localIP());
+  bool wifi_connected = modules.wifi->update();
+  if (wifi_connected && !wifi_was_connected) {
     modules.webserver->begin(true);
-    wifiServicesStarted = true;
-  } else if (!wifiConnected && wifiWasConnected) {
-    Serial.println("WiFi disconnected");
   }
-
-  if (!wifiConnected) {
-    const unsigned long nowMs = millis();
-    if (static_cast<long>(nowMs - nextWifiReconnectAttemptMs) >= 0) {
-      WiFi.reconnect();
-      nextWifiReconnectAttemptMs = nowMs + 10000UL;
-    }
-  }
-  wifiWasConnected = wifiConnected;
+  wifi_was_connected = wifi_connected;
 
   modules.cli->update();
 
