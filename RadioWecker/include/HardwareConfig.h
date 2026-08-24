@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include <DisplayManager.h>
 
 /* Arduino Nano S3
                  ___
@@ -26,11 +25,14 @@ VIN          ---|___|--- D1 - GPIO43
 // on board LED
 static constexpr uint8_t ONBOARD_LED_PIN = LED_RED;//46;
 
+// shared I2C
+static constexpr uint8_t I2C_SDA_PIN = A4;
+static constexpr uint8_t I2C_SCL_PIN = A5;
+static constexpr uint8_t I2C_FREQ_HZ = 100000;
+
 // Display
-static constexpr uint8_t DISPLAY_CLK_PIN = D2;
+static constexpr uint8_t DISPLAY_CLK_PIN = D4;
 static constexpr uint8_t DISPLAY_DIO_PIN = D3;
-static constexpr uint8_t DISPLAY_BRIGHTNESS_DEFAULT = 1;
-static constexpr DisplayManager::SeparatorMode DISPLAY_SEPARATOR_MODE_DEFAULT = DisplayManager::SeparatorMode::Dots;
 
 // SD Card
 static constexpr uint8_t SD_SPI_CS_PIN = D10;
@@ -40,19 +42,31 @@ static constexpr uint8_t SD_SPI_MOSI_PIN = D11;
 static constexpr uint32_t SD_SPI_FREQUENCY_HZ = 10000000;
 
 // RTC
-static constexpr uint8_t RTC_I2C_SDA_PIN = A4;
-static constexpr uint8_t RTC_I2C_SCL_PIN = A5;
-static constexpr uint8_t RTC_SQW_PIN = A6;
-static constexpr uint32_t RTC_I2C_FREQUENCY_HZ = 100000;
-static constexpr const char* RTC_NTP_SERVER = "pool.ntp.org";
-static constexpr long RTC_NTP_GMT_OFFSET_SECONDS = 0;
-static constexpr int RTC_NTP_DAYLIGHT_OFFSET_SECONDS = 0;
-static constexpr uint32_t RTC_NTP_SYNC_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL;
-static constexpr uint32_t RTC_NTP_RETRY_INTERVAL_MS = 60UL * 1000UL;
-static constexpr const char* RTC_TIMEZONE_POSIX_DEFAULT = "UTC0";
-static constexpr int16_t RTC_TIME_OFFSET_MINUTES_DEFAULT = 0;
+static constexpr uint8_t RTC_I2C_SDA_PIN = I2C_SDA_PIN;
+static constexpr uint8_t RTC_I2C_SCL_PIN = I2C_SCL_PIN;
+static constexpr uint32_t RTC_I2C_FREQUENCY_HZ = I2C_FREQ_HZ;
+static constexpr uint8_t RTC_SQW_PIN = D2;
 
-// I2S - MAX9357A
+// Audio - I2S - MAX9357A
 static constexpr uint8_t I2S_LRCLK_PIN = 3; //A2;
 static constexpr uint8_t I2S_BCLK_PIN = 2; //A1;
 static constexpr uint8_t I2S_DATA_PIN = 1; //A0;
+static constexpr uint8_t AUDIO_SD = A3;
+static constexpr uint8_t AUDIO_GAIN_MUX_S1 = D5; // gain is controlled by HEF4051BT
+static constexpr uint8_t AUDIO_GAIN_MUX_S2 = D6;
+static constexpr uint8_t AUDIO_GAIN_MUX_S3 = D7;
+static constexpr uint8_t AUDIO_VOLUME_POT = A7; // volume potentiometer is 100k
+
+// Light
+static constexpr uint8_t LIGHT_PWM_PIN = D9;
+static constexpr uint8_t LIGHT_PWM_FREQUENCY = 10000; // Hz
+
+// Radio Dial - MPR121
+static constexpr uint8_t RADIO_DIAL_I2C_SDA_PIN = I2C_SDA_PIN;
+static constexpr uint8_t RADIO_DIAL_I2C_SCL_PIN = I2C_SCL_PIN;
+static constexpr uint32_t RADIO_DIAL_I2C_FREQUENCY_HZ = I2C_FREQ_HZ;
+
+// Radio Buttons - MCP23017
+static constexpr uint8_t RADIO_BUTTONS_I2C_SDA_PIN = I2C_SDA_PIN;
+static constexpr uint8_t RADIO_BUTTONS_I2C_SCL_PIN = I2C_SCL_PIN;
+static constexpr uint32_t RADIO_BUTTONS_I2C_FREQUENCY_HZ = I2C_FREQ_HZ;

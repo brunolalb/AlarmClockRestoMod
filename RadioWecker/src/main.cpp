@@ -2,11 +2,13 @@
 #include <WiFi.h>
 #include <WiFiManager.h>
 
+#include <HardwareConfig.h>
+#include <SoftwareConfig.h>
+
 #include <AlarmController.h>
 #include <ClockController.h>
 #include <DisplayManager.h>
 #include <GeneralConfigController.h>
-#include <HardwareConfig.h>
 #include <OnboardLedController.h>
 #include <SerialController.h>
 #include <SdController.h>
