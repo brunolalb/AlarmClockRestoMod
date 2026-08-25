@@ -30,9 +30,33 @@ static constexpr uint8_t I2C_SDA_PIN = A4;
 static constexpr uint8_t I2C_SCL_PIN = A5;
 static constexpr uint32_t I2C_FREQ_HZ = 100000;
 
-// Display
+// Display - TM1637
 static constexpr uint8_t DISPLAY_CLK_PIN = D4;
 static constexpr uint8_t DISPLAY_DIO_PIN = D3;
+
+static constexpr uint8_t DISPLAY_BUTTON_SLOW_GRID = 1;
+static constexpr uint8_t DISPLAY_BUTTON_SLOW_KEY = 1;
+static constexpr uint8_t DISPLAY_BUTTON_FAST_GRID = 1;
+static constexpr uint8_t DISPLAY_BUTTON_FAST_KEY = 2;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_TOP_GRID = 2;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_TOP_KEY = 2;
+static constexpr uint8_t DISPLAY_BUTTON_SIGNAL_GRID = 3;
+static constexpr uint8_t DISPLAY_BUTTON_SIGNAL_KEY = 1;
+static constexpr uint8_t DISPLAY_BUTTON_TIME_GRID = 3;
+static constexpr uint8_t DISPLAY_BUTTON_TIME_KEY = 2;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_FRONT_GRID = 4;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_FRONT_KEY = 1;
+static constexpr uint8_t DISPLAY_BUTTON_ILLUM_GRID = 4;
+static constexpr uint8_t DISPLAY_BUTTON_ILLUM_KEY = 2;
+
+// todo: verify that the channels are correct
+static constexpr uint8_t DISPLAY_BUTTON_SLOW_CHANNEL = 0;
+static constexpr uint8_t DISPLAY_BUTTON_FAST_CHANNEL = 1;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_TOP_CHANNEL = 2;
+static constexpr uint8_t DISPLAY_BUTTON_SIGNAL_CHANNEL = 3; 
+static constexpr uint8_t DISPLAY_BUTTON_TIME_CHANNEL = 4;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_FRONT_CHANNEL = 5;
+static constexpr uint8_t DISPLAY_BUTTON_ILLUM_CHANNEL = 6;
 
 // SD Card
 static constexpr uint8_t SD_SPI_CS_PIN = D10;
@@ -78,3 +102,12 @@ static constexpr uint32_t RADIO_DIAL_I2C_FREQUENCY_HZ = I2C_FREQ_HZ;
 static constexpr uint8_t RADIO_BUTTONS_I2C_SDA_PIN = I2C_SDA_PIN;
 static constexpr uint8_t RADIO_BUTTONS_I2C_SCL_PIN = I2C_SCL_PIN;
 static constexpr uint32_t RADIO_BUTTONS_I2C_FREQUENCY_HZ = I2C_FREQ_HZ;
+static constexpr uint8_t RADIO_BUTTONS_I2C_ADDRESS = 0x20;
+
+static constexpr uint8_t RADIO_BUTTON_OFF_CHANNEL = 0; //GPA0
+static constexpr uint8_t RADIO_BUTTON_ON_CHANNEL = 1; //GPA1
+static constexpr uint8_t RADIO_BUTTON_AUTOM_CHANNEL = 2; //GPA2
+static constexpr uint8_t RADIO_BUTTON_ALARM_CHANNEL = 3; //GPA3
+static constexpr uint8_t RADIO_BUTTON_MW_CHANNEL = 4; //GPA4
+static constexpr uint8_t RADIO_BUTTON_FM_CHANNEL = 5; //GPA5
+static constexpr uint8_t RADIO_BUTTON_AFC_CHANNEL = 6; //GPA6

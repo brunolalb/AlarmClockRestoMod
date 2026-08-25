@@ -22,6 +22,10 @@ uint8_t DisplayManager::brightness() const {
   return brightness_;
 }
 
+TM1637* DisplayManager::display() {
+  return &display_;
+}
+
 void DisplayManager::showTimeHHMM(int timeValue) {
   char hhmm[9];
   snprintf(hhmm, sizeof(hhmm), "%04d    ", timeValue);

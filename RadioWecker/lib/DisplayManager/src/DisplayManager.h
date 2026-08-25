@@ -18,6 +18,7 @@ class DisplayManager {
   bool initialize(uint8_t brightness = 7);
   void setBrightness(uint8_t brightness);
   uint8_t brightness() const;
+  TM1637* display();
   void showTimeHHMM(int timeValue);
   void showRtcFailure();
   void showSdFailure();

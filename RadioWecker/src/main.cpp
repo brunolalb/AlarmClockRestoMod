@@ -4,6 +4,7 @@
 #include <SoftwareConfig.h>
 
 #include <AlarmController.h>
+#include <ButtonReader.h>
 #include <ClockController.h>
 #include <DisplayManager.h>
 #include <GeneralConfigController.h>
@@ -26,6 +27,7 @@ typedef struct modules_ {
   WebServerController *webserver;
   WiFiController *wifi;
   CLIController *cli;
+  ButtonReader *buttons;
 } Modules;
 
 Modules modules;
@@ -78,6 +80,31 @@ void create_modules() {
                                   *modules.sd_card,
                                   *modules.alarm,
                                   *modules.webserver);
+  
+  ButtonReader::HardwareConfig ButtonsHWConfig = {
+    .i2cSdaPin = RADIO_BUTTONS_I2C_SDA_PIN,
+    .i2cSclPin = RADIO_BUTTONS_I2C_SCL_PIN,
+    .i2cFrequencyHz = RADIO_BUTTONS_I2C_FREQUENCY_HZ,
+    .i2cAddress = RADIO_BUTTONS_I2C_ADDRESS
+  };
+  ButtonReader::ButtonsChannels buttonsChannels = {
+    .RADIO_OFF = RADIO_BUTTON_OFF_CHANNEL,
+    .RADIO_ON = RADIO_BUTTON_ON_CHANNEL,
+    .RADIO_AUTOM = RADIO_BUTTON_AUTOM_CHANNEL,
+    .RADIO_ALARM = RADIO_BUTTON_ALARM_CHANNEL,
+    .RADIO_MW = RADIO_BUTTON_MW_CHANNEL,
+    .RADIO_FM = RADIO_BUTTON_FM_CHANNEL,
+    .RADIO_AFC = RADIO_BUTTON_AFC_CHANNEL,
+    .DISPLAY_SLOW = DISPLAY_BUTTON_SLOW_CHANNEL,
+    .DISPLAY_FAST = DISPLAY_BUTTON_FAST_CHANNEL,
+    .DISPLAY_SLEEP_TOP = DISPLAY_BUTTON_SLEEP_TOP_CHANNEL,
+    .DISPLAY_SIGNAL = DISPLAY_BUTTON_SIGNAL_CHANNEL,
+    .DISPLAY_TIME = DISPLAY_BUTTON_TIME_CHANNEL,
+    .DISPLAY_SLEEP_FRONT = DISPLAY_BUTTON_SLEEP_FRONT_CHANNEL,
+    .DISPLAY_ILLUM = DISPLAY_BUTTON_ILLUM_CHANNEL
+  };
+  modules.buttons = new ButtonReader(&ButtonsHWConfig,
+                                     &buttonsChannels);
 }
 
 
@@ -114,6 +141,10 @@ void initialize_modules() {
 
   if (!modules.wifi->initialize(&wifiConfig)) {
     Serial.println("main: WiFi initialization failed");
+  }
+
+  if (!modules.buttons->initialize(modules.display->display())) {
+    Serial.println("main: button reader initialization failed");
   }
 
   ClockController::TimeConfig clockConfig = {
@@ -180,6 +211,8 @@ void loop() {
   const uint32_t now = millis();
   if (now - lastDisplayUpdateMs >= 200) {
     lastDisplayUpdateMs = now;
+
+    modules.buttons->update();
 
     if (modules.clock->isReady()) {
       modules.clock->update();
