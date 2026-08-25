@@ -61,7 +61,6 @@ void create_modules() {
                                       I2S_DATA_PIN);
 
   modules.config = new GeneralConfigController( *modules.sd_card,
-                                                *modules.display,
                                                 RTC_TIMEZONE_POSIX_DEFAULT,
                                                 RTC_TIME_OFFSET_MINUTES_DEFAULT,
                                                 DISPLAY_BRIGHTNESS_DEFAULT);
@@ -70,6 +69,7 @@ void create_modules() {
                                               *modules.clock,
                                               *modules.sd_card,
                                               *modules.sound,
+                                              *modules.display,
                                               *modules.config);
 
   modules.wifi = new WiFiController(WIFI_CONFIG_PORTAL_TIMEOUT_S,

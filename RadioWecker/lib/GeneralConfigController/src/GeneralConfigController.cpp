@@ -1,7 +1,6 @@
 #include "GeneralConfigController.h"
 
 #include <ArduinoJson.h>
-#include <DisplayManager.h>
 #include <LittleFS.h>
 #include <SdController.h>
 #include <WebServer.h>
@@ -62,12 +61,10 @@ String decryptHexXor(const String& cipherHex, const String& key) {
 }
 
 GeneralConfigController::GeneralConfigController(SdController& sdController,
-                                                 DisplayManager& displayManager,
                                                  const char* defaultTimezonePosix,
                                                  int16_t defaultTimeOffsetMinutes,
                                                  uint8_t defaultBrightness)
     : sdController_(sdController),
-      displayManager_(displayManager),
       timezonePosix_(defaultTimezonePosix),
       timeOffsetMinutes_(defaultTimeOffsetMinutes),
       brightness_(defaultBrightness),
@@ -224,10 +221,6 @@ bool GeneralConfigController::initialize() {
   return saveToAllStorages();
 }
 
-void GeneralConfigController::applyToDisplay() {
-  displayManager_.setBrightness(brightness_);
-}
-
 bool GeneralConfigController::saveToLittleFs() {
   if (!ensureInternalFsMounted()) {
     Serial.println("general config: failed to mount LittleFS");
@@ -344,8 +337,6 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   hostname_ = hostname;
   ftpUsername_ = ftpUsername;
   ftpPassword_ = ftpPassword;
-
-  applyToDisplay();
 
   if (!saveToAllStorages()) {
     webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to persist configuration\"}");

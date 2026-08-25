@@ -2,20 +2,17 @@
 
 #include <Arduino.h>
 
-class DisplayManager;
 class SdController;
 class WebServer;
 
 class GeneralConfigController {
  public:
   explicit GeneralConfigController( SdController& sdController,
-                                    DisplayManager& displayManager,
                                     const char* defaultTimezonePosix,
                                     int16_t defaultTimeOffsetMinutes,
                                     uint8_t defaultBrightness);
 
   bool initialize();
-  void applyToDisplay();
 
   void handleGetConfig(WebServer& webServer);
   void handleSaveConfig(WebServer& webServer);
@@ -56,7 +53,6 @@ class GeneralConfigController {
   static constexpr const char* GENERAL_CONFIG_FILE = "/general_config.json";
 
   SdController& sdController_;
-  DisplayManager& displayManager_;
 
   String hostname_;
   String timezonePosix_;

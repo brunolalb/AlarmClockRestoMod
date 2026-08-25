@@ -30,12 +30,14 @@ WebServerController::WebServerController( AlarmController& alarmController,
                                           ClockController& clockController,
                                           SdController& sdController,
                                           SoundController& soundController,
+                                          DisplayManager& displayManager,
                                           GeneralConfigController& generalConfigController,
                                           uint16_t port)
     : alarmController_(alarmController),
       clockController_(clockController),
       sdController_(sdController),
       soundController_(soundController),
+      displayManager_(displayManager),
       generalConfigController_(generalConfigController),
       webServer_(port),
       port_(port) {}
@@ -208,6 +210,7 @@ void WebServerController::handleSaveConfig() {
 
   clockController_.applyTimeConfig( generalConfigController_.timezonePosix(),
                                     generalConfigController_.timeOffsetMinutes());
+  displayManager_.setBrightness(generalConfigController_.brightness());
 }
 
 void WebServerController::setupRoutes() {
