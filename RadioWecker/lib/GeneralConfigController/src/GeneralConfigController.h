@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 class SdController;
-class WebServer;
 
 class GeneralConfigController {
  public:
@@ -14,8 +14,8 @@ class GeneralConfigController {
 
   bool initialize();
 
-  void handleGetConfig(WebServer& webServer);
-  void handleSaveConfig(WebServer& webServer);
+  void configToJson(JsonDocument& doc);
+  String jsonToConfig(const JsonDocument& doc);
 
   uint8_t brightness() const;
   const String& hostname() const;

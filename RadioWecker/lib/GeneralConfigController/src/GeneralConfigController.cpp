@@ -3,7 +3,6 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <SdController.h>
-#include <WebServer.h>
 
 namespace {
 int fromHexNibble(char c) {
@@ -287,38 +286,18 @@ bool GeneralConfigController::saveToAllStorages() {
   return littleFsOk || sdOk; // at least one storage must succeed, otherwise we have no valid config anywhere
 }
 
-void GeneralConfigController::handleGetConfig(WebServer& webServer) {
-  StaticJsonDocument<512> doc;
+void GeneralConfigController::configToJson(JsonDocument& doc) {
+  // fills the provided JsonDocument with the current configuration values
   doc["hostname"] = hostname_;
   doc["timezone"] = timezonePosix_;
   doc["timeOffsetMinutes"] = timeOffsetMinutes_;
   doc["brightness"] = brightness_;
   doc["ftpUsername"] = ftpUsername_;
   doc["ftpPassword"] = ftpPassword_;
-
-  String payload;
-  serializeJson(doc, payload);
-  webServer.send(200, "application/json", payload);
 }
 
-void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  if (!webServer.hasArg("plain")) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
-    return;
-  }
-
-  StaticJsonDocument<512> doc;
-  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
-  if (err) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
-    return;
-  }
-
+String GeneralConfigController::jsonToConfig(const JsonDocument& doc) {
+  // saves the config to the internal storage and SD card, returns an empty string on success, or an error message on failure
   const String timezone = doc["timezone"] | "";
   const int offsetMinutes = doc["timeOffsetMinutes"] | 0;
   const int brightness = doc["brightness"] | -1;
@@ -327,8 +306,7 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   const String ftpPassword = doc["ftpPassword"] | "";
 
   if (!isValidConfig(timezone, offsetMinutes, brightness, ftpUsername, ftpPassword)) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid configuration\"}");
-    return;
+    return "Invalid configuration";
   }
 
   timezonePosix_ = timezone;
@@ -339,15 +317,10 @@ void GeneralConfigController::handleSaveConfig(WebServer& webServer) {
   ftpPassword_ = ftpPassword;
 
   if (!saveToAllStorages()) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to persist configuration\"}");
-    return;
+    return "Failed to save configuration";
   }
 
-  StaticJsonDocument<96> response;
-  response["ok"] = true;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
+  return "";
 }
 
 const String& GeneralConfigController::hostname() const {

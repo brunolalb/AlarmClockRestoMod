@@ -37,6 +37,7 @@ class WebServerController {
   void handleStatusPage();
   void handleGetStatus();
   void handleReboot();
+  void handleGetConfig();
   void handleSaveConfig();
   void setupRoutes();
   bool beginFtpServer();

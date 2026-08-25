@@ -205,12 +205,39 @@ void WebServerController::handleReboot() {
   ESP.restart();
 }
 
+void WebServerController::handleGetConfig() {
+  StaticJsonDocument<512> doc;
+  generalConfigController_.configToJson(doc);
+
+  String payload;
+  serializeJson(doc, payload);
+  webServer_.send(200, "application/json", payload);
+}
+
 void WebServerController::handleSaveConfig() {
-  generalConfigController_.handleSaveConfig(webServer_);
+  if (!webServer_.hasArg("plain")) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
+    return;
+  }
+
+  StaticJsonDocument<512> doc;
+  const DeserializationError err = deserializeJson(doc, webServer_.arg("plain"));
+  if (err) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  String answer = generalConfigController_.jsonToConfig(doc);
+  if (!answer.isEmpty()) {
+    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"" + answer + "\"}");
+    return;
+  }
 
   clockController_.applyTimeConfig( generalConfigController_.timezonePosix(),
                                     generalConfigController_.timeOffsetMinutes());
   displayManager_.setBrightness(generalConfigController_.brightness());
+
+  webServer_.send(200, "application/json", "{\"ok\":true}");
 }
 
 void WebServerController::setupRoutes() {
@@ -224,7 +251,7 @@ void WebServerController::setupRoutes() {
                 [this]() { serveFile("/common.css", "common.css not found", "text/css"); });
   webServer_.on("/api/status", HTTP_GET, [this]() { handleGetStatus(); });
   webServer_.on("/api/reboot", HTTP_POST, [this]() { handleReboot(); });
-  webServer_.on("/api/config", HTTP_GET, [this]() { generalConfigController_.handleGetConfig(webServer_); });
+  webServer_.on("/api/config", HTTP_GET, [this]() { handleGetConfig(); });
   webServer_.on("/api/config", HTTP_POST, [this]() { handleSaveConfig(); });
 
   // Alarms related
