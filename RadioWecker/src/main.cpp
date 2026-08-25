@@ -46,12 +46,7 @@ void create_modules() {
   modules.clock = new ClockController(RTC_SQW_PIN,
                                       RTC_I2C_SDA_PIN,
                                       RTC_I2C_SCL_PIN,
-                                      RTC_I2C_FREQUENCY_HZ,
-                                      RTC_NTP_SERVER,
-                                      RTC_NTP_GMT_OFFSET_SECONDS,
-                                      RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
-                                      RTC_NTP_SYNC_INTERVAL_MS,
-                                      RTC_NTP_RETRY_INTERVAL_MS);
+                                      RTC_I2C_FREQUENCY_HZ);
 
   modules.alarm = new AlarmController(*modules.sd_card);
 
@@ -109,7 +104,16 @@ void initialize_modules() {
     Serial.println("main: WiFi initialization failed");
   }
 
-  if (!modules.clock->initialize(modules.config->timezonePosix(), modules.config->timeOffsetMinutes())) {
+  ClockController::TimeConfig clockConfig = {
+    .ntpServer = RTC_NTP_SERVER,
+    .timezonePosix = modules.config->timezonePosix(),
+    .timeOffsetMinutes = modules.config->timeOffsetMinutes(),
+    .daylightOffsetSeconds = RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
+    .ntpSyncIntervalMs = RTC_NTP_SYNC_INTERVAL_MS,
+    .ntpRetryIntervalMs = RTC_NTP_RETRY_INTERVAL_MS
+  };
+
+  if (!modules.clock->initialize(&clockConfig)) {
     Serial.println("main: clock initialization failed");
   }
 

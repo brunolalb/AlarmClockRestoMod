@@ -14,46 +14,29 @@ RTC_DS3231 rtc;
 ClockController::ClockController(uint8_t rtcSqwPin,
                                  uint8_t i2cSdaPin,
                                  uint8_t i2cSclPin,
-                                 uint32_t i2cFrequencyHz,
-                                 const char* ntpServer,
-                                 long gmtOffsetSeconds,
-                                 int daylightOffsetSeconds,
-                                 uint32_t ntpSyncIntervalMs,
-                                 uint32_t ntpRetryIntervalMs)
-    : rtcSqwPin_(rtcSqwPin),
-      i2cSdaPin_(i2cSdaPin),
-      i2cSclPin_(i2cSclPin),
-      i2cFrequencyHz_(i2cFrequencyHz),
-      ntpServer_(ntpServer),
-      gmtOffsetSeconds_(gmtOffsetSeconds),
-      daylightOffsetSeconds_(daylightOffsetSeconds),
-      ntpSyncIntervalMs_(ntpSyncIntervalMs),
-      ntpRetryIntervalMs_(ntpRetryIntervalMs),
-      timezonePosix_("UTC0") {}
+                                 uint32_t i2cFrequencyHz)
+    : hwConfig_{rtcSqwPin, i2cSdaPin, i2cSclPin, i2cFrequencyHz} {}
 
-bool ClockController::initialize( const String& timezonePosix,
-                                  int16_t timeOffsetMinutes) {
-  if (!timezonePosix.isEmpty()) {
-    timezonePosix_ = timezonePosix;
-  }
-  if (timeOffsetMinutes != -32768) { // smallest int16 means not set, use default
-    timeOffsetMinutes_ = timeOffsetMinutes;
-  }
+bool ClockController::initialize(const TimeConfig* default_config) {
+  memcpy(&config_, default_config, sizeof(TimeConfig));
 
-  Wire.begin(i2cSdaPin_, i2cSclPin_, i2cFrequencyHz_);
+  Wire.begin( hwConfig_.i2cSdaPin_,
+              hwConfig_.i2cSclPin_,
+              hwConfig_.i2cFrequencyHz_);
 
   ready_ = rtc.begin();
   timeValid_ = false;
 
   if (!ready_) {
+    Serial.println("clock: RTC not found");
     return false;
   }
 
   timeValid_ = initializeRtcTimeFromChip();
   rtc.writeSqwPinMode(DS3231_SquareWave1Hz);
 
-  pinMode(rtcSqwPin_, INPUT_PULLUP);
-  const int sqwInterrupt = digitalPinToInterrupt(rtcSqwPin_);
+  pinMode(hwConfig_.rtcSqwPin_, INPUT_PULLUP);
+  const int sqwInterrupt = digitalPinToInterrupt(hwConfig_.rtcSqwPin_);
   if (sqwInterrupt != NOT_AN_INTERRUPT) {
     activeInstance_ = this;
     attachInterrupt(sqwInterrupt, handleRtcSecondTickISR, FALLING);
@@ -99,8 +82,8 @@ bool ClockController::isNtpSynchronized() const {
 }
 
 void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes) {
-  timezonePosix_ = timezonePosix;
-  timeOffsetMinutes_ = timeOffsetMinutes;
+  config_.timezonePosix = timezonePosix;
+  config_.timeOffsetMinutes = timeOffsetMinutes;
   updateDisplayedValue();
 
   ntpConfigured_ = false;
@@ -109,11 +92,11 @@ void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeO
 }
 
 String ClockController::timezonePosix() const {
-  return timezonePosix_;
+  return config_.timezonePosix;
 }
 
 int16_t ClockController::timeOffsetMinutes() const {
-  return timeOffsetMinutes_;
+  return config_.timeOffsetMinutes;
 }
 
 bool ClockController::initializeClockFromDateTime(const DateTime& now) {
@@ -134,7 +117,7 @@ bool ClockController::initializeRtcTimeFromChip() {
 void ClockController::updateDisplayedValue() {
   int totalMinutes = static_cast<int>(currentTime_.hour()) * 60 +
                      static_cast<int>(currentTime_.minute()) +
-                     static_cast<int>(timeOffsetMinutes_);
+                     static_cast<int>(config_.timeOffsetMinutes);
   const int minutesPerDay = 24 * 60;
   totalMinutes %= minutesPerDay;
   if (totalMinutes < 0) {
@@ -158,7 +141,7 @@ void ClockController::syncFromNtpIfNeeded() {
   }
 
   const bool synced = syncFromNtp();
-  nextNtpSyncAttemptMs_ = nowMs + (synced ? ntpSyncIntervalMs_ : ntpRetryIntervalMs_);
+  nextNtpSyncAttemptMs_ = nowMs + (synced ? config_.ntpSyncIntervalMs : config_.ntpRetryIntervalMs);
 }
 
 bool ClockController::syncFromNtp() {
@@ -167,10 +150,10 @@ bool ClockController::syncFromNtp() {
   }
 
   if (!ntpConfigured_) {
-    if (timezonePosix_.length() > 0) {
-      configTzTime(timezonePosix_.c_str(), ntpServer_);
+    if (config_.timezonePosix.length() > 0) {
+      configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
     } else {
-      configTime(gmtOffsetSeconds_, daylightOffsetSeconds_, ntpServer_);
+      configTime(config_.timeOffsetMinutes * 60, config_.daylightOffsetSeconds, config_.ntpServer.c_str());
     }
     ntpConfigured_ = true;
   }
