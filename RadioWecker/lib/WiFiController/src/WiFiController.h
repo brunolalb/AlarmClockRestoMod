@@ -6,18 +6,22 @@
 
 class WiFiController {
  public:
-  explicit WiFiController(const uint16_t configPortalTimeoutS,
-                          const char *hostname);
+  struct WifiConfig {
+    String hostname;
+    uint16_t config_portal_timeout_sec;
+  };
+  WiFiController();
 
-  bool initialize(String hostname = "");
+  bool initialize(const WifiConfig *default_config);
   bool update();
   bool connected() const;
 
  private:
   WiFiManager wifiManager_;
+
+  WifiConfig config_;
+
   bool connected_ = false;
   bool wasConnected_ = false;
   unsigned long nextReconnectAttemptMs_ = 0;
-  const uint16_t configPortalTimeoutS_;
-  const char *hostname_;
 };

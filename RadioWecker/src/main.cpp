@@ -64,8 +64,7 @@ void create_modules() {
                                               *modules.display,
                                               *modules.config);
 
-  modules.wifi = new WiFiController(WIFI_CONFIG_PORTAL_TIMEOUT_S,
-                                    WIFI_DEFAULT_HOSTNAME);
+  modules.wifi = new WiFiController();
 
   modules.cli = new CLIController(*modules.clock,
                                   *modules.sd_card,
@@ -100,7 +99,12 @@ void initialize_modules() {
     Serial.println("main: display initialization failed");
   }
 
-  if (!modules.wifi->initialize(modules.config->hostname())) {
+  WiFiController::WifiConfig wifiConfig = {
+    .hostname = modules.config->hostname(),
+    .config_portal_timeout_sec = WIFI_CONFIG_PORTAL_TIMEOUT_S
+  };
+
+  if (!modules.wifi->initialize(&wifiConfig)) {
     Serial.println("main: WiFi initialization failed");
   }
 

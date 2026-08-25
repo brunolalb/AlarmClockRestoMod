@@ -3,22 +3,19 @@
 #include <WiFi.h>
 
 
-WiFiController::WiFiController( const uint16_t configPortalTimeoutS,
-                                const char *hostname)
-    : configPortalTimeoutS_(configPortalTimeoutS),
-      hostname_(hostname) {}
+WiFiController::WiFiController()
+  {}
 
-bool WiFiController::initialize(String hostname) {
-  if (!hostname.isEmpty()) {
-    hostname_ = hostname.c_str();
-  }
+bool WiFiController::initialize(const WifiConfig *default_config) {
+  memcpy(&config_, default_config, sizeof(WifiConfig));
+
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   wifiManager_.setConfigPortalBlocking(false);
-  wifiManager_.setConfigPortalTimeout(configPortalTimeoutS_);
-  wifiManager_.setHostname(hostname_);
+  wifiManager_.setConfigPortalTimeout(config_.config_portal_timeout_sec);
+  wifiManager_.setHostname(config_.hostname.c_str());
 
-  const bool connected = wifiManager_.autoConnect("RadioWecker-Setup");
+  const bool connected = wifiManager_.autoConnect((config_.hostname + "-Setup").c_str());
   if (connected) {
     Serial.println("WiFi: connected");
     Serial.println(WiFi.localIP());
