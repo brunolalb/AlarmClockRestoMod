@@ -59,19 +59,38 @@ String decryptHexXor(const String& cipherHex, const String& key) {
 }
 }
 
-GeneralConfigController::GeneralConfigController(SdController& sdController,
-                                                 const char* defaultTimezonePosix,
-                                                 int16_t defaultTimeOffsetMinutes,
-                                                 uint8_t defaultBrightness)
-    : sdController_(sdController),
-      timezonePosix_(defaultTimezonePosix),
-      timeOffsetMinutes_(defaultTimeOffsetMinutes),
-      brightness_(defaultBrightness),
-      ftpUsername_(DEFAULT_FTP_USERNAME),
-      ftpPassword_(DEFAULT_FTP_PASSWORD),
-      defaultTimezonePosix_(defaultTimezonePosix),
-      defaultTimeOffsetMinutes_(defaultTimeOffsetMinutes),
-      defaultBrightness_(defaultBrightness) {}
+GeneralConfigController::GeneralConfigController(SdController& sdController)
+    : sdController_(sdController) {}
+
+bool GeneralConfigController::initialize(const ConfigData *default_config) {
+  if (!default_config) {
+    Serial.println("general config: no default config provided");
+    return false;
+  }
+
+  // copy the default config
+  ConfigData new_config;
+  memcpy(&new_config, default_config, sizeof(ConfigData));
+
+  if (readFromSdCard(&new_config)) {
+    if (saveToLittleFs(&new_config)) {
+      memcpy(&config_, &new_config, sizeof(ConfigData));
+      return true;
+    } else {
+      return false; // internal storage must not fail
+    }
+  }
+
+  if (readFromLittleFs(&new_config)) {
+    saveToSdCard(&new_config);
+
+    memcpy(&config_, &new_config, sizeof(ConfigData));
+
+    return true; // it doesn't matter if saving to SD card fails, we still have a valid config in LittleFS
+  }
+
+  return saveToAllStorages(&new_config);
+}
 
 bool GeneralConfigController::ensureInternalFsMounted() {
   if (internalFsMounted_) {
@@ -82,13 +101,12 @@ bool GeneralConfigController::ensureInternalFsMounted() {
   return internalFsMounted_;
 }
 
-bool GeneralConfigController::isValidConfig(const String& timezone,
-                                            int offsetMinutes,
-                                            int brightness,
-                                            const String& ftpUsername,
-                                            const String& ftpPassword) const {
-  return timezone.length() > 0 && offsetMinutes >= -720 && offsetMinutes <= 840 && brightness >= 0 && brightness <= 7 &&
-         ftpUsername.length() > 0 && ftpUsername.length() <= 32 && ftpPassword.length() >= 4 && ftpPassword.length() <= 32;
+bool GeneralConfigController::isValidConfig(const ConfigData *config) const {
+  return  config->timezonePosix.length() > 0 &&
+          config->timeOffsetMinutes >= -720 && config->timeOffsetMinutes <= 840 &&
+          config->brightness >= 0 && config->brightness <= 7 &&
+          !config->ftpUsername.isEmpty() && config->ftpUsername.length() <= 32 &&
+          !config->ftpPassword.isEmpty() && config->ftpPassword.length() <= 32;
 }
 
 String GeneralConfigController::encryptPassword(const String& plainText) const {
@@ -116,38 +134,41 @@ String GeneralConfigController::buildDevicePasswordKey() const {
   return String(key);
 }
 
-bool GeneralConfigController::readConfigFromJsonFile(const String& jsonPayload, ConfigData& outConfig) const {
+bool GeneralConfigController::readConfigFromJsonFile(const String& jsonPayload, ConfigData* config) const {
+  // reads the config from a JSON payload, updates the internal config_ if successful
   StaticJsonDocument<512> doc;
   const DeserializationError err = deserializeJson(doc, jsonPayload);
   if (err) {
     return false;
   }
 
-  const String hostname = doc["hostname"] | "";
-  const String timezone = doc["timezone"] | defaultTimezonePosix_;
-  const int offsetMinutes = doc["timeOffsetMinutes"] | defaultTimeOffsetMinutes_;
-  const int brightness = doc["brightness"] | defaultBrightness_;
-  const String ftpUsername = doc["ftpUsername"] | DEFAULT_FTP_USERNAME;
-  const String ftpPasswordEncrypted = doc["ftpPasswordEnc"] | "";
-  String ftpPassword = decryptPassword(ftpPasswordEncrypted);
-  if (ftpPassword.length() == 0) {
-    ftpPassword = doc["ftpPassword"] | DEFAULT_FTP_PASSWORD;
+  ConfigData new_config = {
+    .hostname = doc["hostname"] | "",
+    .timezonePosix = doc["timezone"] | "",
+    .timeOffsetMinutes = static_cast<int16_t>(doc["timeOffsetMinutes"] | 0),
+    .brightness = static_cast<uint8_t>(doc["brightness"] | 0),
+    .ftpUsername = doc["ftpUsername"] | "",
+    .ftpPassword = ""
+  };
+  // password comes encrypted from the JSON, we need to decrypt it
+  String ftp_psw_crypt = doc["ftpPassword"] | "";
+  String ftpPassword = decryptPassword(ftp_psw_crypt);
+  if (ftpPassword.isEmpty()) {
+    ftpPassword = config_.ftpPassword; // fallback to the current password if decryption fails
   }
+  new_config.ftpPassword = ftpPassword;
 
-  if (!isValidConfig(timezone, offsetMinutes, brightness, ftpUsername, ftpPassword)) {
+  if (!isValidConfig(&new_config)) {
     return false;
   }
 
-  outConfig.hostname = hostname;
-  outConfig.timezonePosix = timezone;
-  outConfig.timeOffsetMinutes = static_cast<int16_t>(offsetMinutes);
-  outConfig.brightness = static_cast<uint8_t>(brightness);
-  outConfig.ftpUsername = ftpUsername;
-  outConfig.ftpPassword = ftpPassword;
+  // copy new config to the parameter
+  memcpy(config, &new_config, sizeof(ConfigData));
+
   return true;
 }
 
-bool GeneralConfigController::readFromLittleFs(ConfigData& outConfig) {
+bool GeneralConfigController::readFromLittleFs(ConfigData* config) {
   if (!ensureInternalFsMounted()) {
     return false;
   }
@@ -163,10 +184,11 @@ bool GeneralConfigController::readFromLittleFs(ConfigData& outConfig) {
 
   const String payload = file.readString();
   file.close();
-  return readConfigFromJsonFile(payload, outConfig);
+  return readConfigFromJsonFile(payload, config);
 }
 
-bool GeneralConfigController::readFromSdCard(ConfigData& outConfig) {
+bool GeneralConfigController::readFromSdCard(ConfigData* config) {
+  // reads config from SD card, saves it in the internal config_
   if (!sdController_.isReady()) {
     return false;
   }
@@ -182,45 +204,10 @@ bool GeneralConfigController::readFromSdCard(ConfigData& outConfig) {
 
   const String payload = file.readString();
   file.close();
-  return readConfigFromJsonFile(payload, outConfig);
+  return readConfigFromJsonFile(payload, config);
 }
 
-bool GeneralConfigController::initialize() {
-  timezonePosix_ = defaultTimezonePosix_;
-  timeOffsetMinutes_ = defaultTimeOffsetMinutes_;
-  brightness_ = defaultBrightness_;
-  ftpUsername_ = DEFAULT_FTP_USERNAME;
-  ftpPassword_ = DEFAULT_FTP_PASSWORD;
-
-  ConfigData config;
-  if (readFromSdCard(config)) {
-    hostname_ = config.hostname;
-    timezonePosix_ = config.timezonePosix;
-    timeOffsetMinutes_ = config.timeOffsetMinutes;
-    brightness_ = config.brightness;
-    ftpUsername_ = config.ftpUsername;
-    ftpPassword_ = config.ftpPassword;
-
-    return saveToLittleFs(); // internal storage must not fail
-  }
-
-  if (readFromLittleFs(config)) {
-    hostname_ = config.hostname;
-    timezonePosix_ = config.timezonePosix;
-    timeOffsetMinutes_ = config.timeOffsetMinutes;
-    brightness_ = config.brightness;
-    ftpUsername_ = config.ftpUsername;
-    ftpPassword_ = config.ftpPassword;
-
-    saveToSdCard();
-
-    return true; // it doesn't matter if saving to SD card fails, we still have a valid config in LittleFS
-  }
-
-  return saveToAllStorages();
-}
-
-bool GeneralConfigController::saveToLittleFs() {
+bool GeneralConfigController::saveToLittleFs(const ConfigData* new_config) {
   if (!ensureInternalFsMounted()) {
     Serial.println("general config: failed to mount LittleFS");
     return false;
@@ -232,12 +219,12 @@ bool GeneralConfigController::saveToLittleFs() {
   }
 
   StaticJsonDocument<512> doc;
-  doc["hostname"] = hostname_;
-  doc["timezone"] = timezonePosix_;
-  doc["timeOffsetMinutes"] = timeOffsetMinutes_;
-  doc["brightness"] = brightness_;
-  doc["ftpUsername"] = ftpUsername_;
-  doc["ftpPasswordEnc"] = encryptPassword(ftpPassword_);
+  doc["hostname"] = new_config->hostname;
+  doc["timezone"] = new_config->timezonePosix;
+  doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
+  doc["brightness"] = new_config->brightness;
+  doc["ftpUsername"] = new_config->ftpUsername;
+  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
 
   File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
@@ -250,7 +237,7 @@ bool GeneralConfigController::saveToLittleFs() {
   return ok;
 }
 
-bool GeneralConfigController::saveToSdCard() {
+bool GeneralConfigController::saveToSdCard(const ConfigData* new_config) {
   if (!sdController_.isReady()) {
     Serial.println("general config: SD card not ready, cannot save config");
     return false;
@@ -262,12 +249,12 @@ bool GeneralConfigController::saveToSdCard() {
   }
 
   StaticJsonDocument<512> doc;
-  doc["hostname"] = hostname_;
-  doc["timezone"] = timezonePosix_;
-  doc["timeOffsetMinutes"] = timeOffsetMinutes_;
-  doc["brightness"] = brightness_;
-  doc["ftpUsername"] = ftpUsername_;
-  doc["ftpPasswordEnc"] = encryptPassword(ftpPassword_);
+  doc["hostname"] = new_config->hostname;
+  doc["timezone"] = new_config->timezonePosix;
+  doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
+  doc["brightness"] = new_config->brightness;
+  doc["ftpUsername"] = new_config->ftpUsername;
+  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
 
   File file = sdController_.open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
@@ -280,43 +267,42 @@ bool GeneralConfigController::saveToSdCard() {
   return ok;
 }
 
-bool GeneralConfigController::saveToAllStorages() {
-  const bool littleFsOk = saveToLittleFs();
-  const bool sdOk = sdController_.isReady() ? saveToSdCard() : true;
+bool GeneralConfigController::saveToAllStorages(const ConfigData* new_config) {
+  const bool littleFsOk = saveToLittleFs(new_config);
+  const bool sdOk = saveToSdCard(new_config);
+  if (littleFsOk || sdOk) {
+    memcpy(&config_, new_config, sizeof(ConfigData)); // update the internal config only if both storages succeeded
+  }
   return littleFsOk || sdOk; // at least one storage must succeed, otherwise we have no valid config anywhere
 }
 
 void GeneralConfigController::configToJson(JsonDocument& doc) {
   // fills the provided JsonDocument with the current configuration values
-  doc["hostname"] = hostname_;
-  doc["timezone"] = timezonePosix_;
-  doc["timeOffsetMinutes"] = timeOffsetMinutes_;
-  doc["brightness"] = brightness_;
-  doc["ftpUsername"] = ftpUsername_;
-  doc["ftpPassword"] = ftpPassword_;
+  doc["hostname"] = config_.hostname;
+  doc["timezone"] = config_.timezonePosix;
+  doc["timeOffsetMinutes"] = config_.timeOffsetMinutes;
+  doc["brightness"] = config_.brightness;
+  doc["ftpUsername"] = config_.ftpUsername;
+  doc["ftpPassword"] = config_.ftpPassword;
 }
 
 String GeneralConfigController::jsonToConfig(const JsonDocument& doc) {
   // saves the config to the internal storage and SD card, returns an empty string on success, or an error message on failure
-  const String timezone = doc["timezone"] | "";
-  const int offsetMinutes = doc["timeOffsetMinutes"] | 0;
-  const int brightness = doc["brightness"] | -1;
-  const String hostname = doc["hostname"] | "";
-  const String ftpUsername = doc["ftpUsername"] | DEFAULT_FTP_USERNAME;
-  const String ftpPassword = doc["ftpPassword"] | "";
 
-  if (!isValidConfig(timezone, offsetMinutes, brightness, ftpUsername, ftpPassword)) {
+  ConfigData new_config = {
+    .hostname = doc["hostname"] | "",
+    .timezonePosix = doc["timezone"] | "",
+    .timeOffsetMinutes = static_cast<int16_t>(doc["timeOffsetMinutes"] | 0),
+    .brightness = static_cast<uint8_t>(doc["brightness"] | 0),
+    .ftpUsername = doc["ftpUsername"] | "",
+    .ftpPassword = doc["ftpPassword"] | ""
+  };
+
+  if (!isValidConfig(&new_config)) {
     return "Invalid configuration";
   }
 
-  timezonePosix_ = timezone;
-  timeOffsetMinutes_ = static_cast<int16_t>(offsetMinutes);
-  brightness_ = static_cast<uint8_t>(brightness);
-  hostname_ = hostname;
-  ftpUsername_ = ftpUsername;
-  ftpPassword_ = ftpPassword;
-
-  if (!saveToAllStorages()) {
+  if (!saveToAllStorages(&new_config)) {
     return "Failed to save configuration";
   }
 
@@ -324,25 +310,25 @@ String GeneralConfigController::jsonToConfig(const JsonDocument& doc) {
 }
 
 const String& GeneralConfigController::hostname() const {
-  return hostname_;
+  return config_.hostname;
 }
 
 uint8_t GeneralConfigController::brightness() const {
-  return brightness_;
+  return config_.brightness;
 }
 
 const String& GeneralConfigController::timezonePosix() const {
-  return timezonePosix_;
+  return config_.timezonePosix;
 }
 
 int16_t GeneralConfigController::timeOffsetMinutes() const {
-  return timeOffsetMinutes_;
+  return config_.timeOffsetMinutes;
 }
 
 const String& GeneralConfigController::ftpUsername() const {
-  return ftpUsername_;
+  return config_.ftpUsername;
 }
 
 const String& GeneralConfigController::ftpPassword() const {
-  return ftpPassword_;
+  return config_.ftpPassword;
 }

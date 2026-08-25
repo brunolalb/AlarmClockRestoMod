@@ -60,10 +60,7 @@ void create_modules() {
                                       I2S_LRCLK_PIN,
                                       I2S_DATA_PIN);
 
-  modules.config = new GeneralConfigController( *modules.sd_card,
-                                                RTC_TIMEZONE_POSIX_DEFAULT,
-                                                RTC_TIME_OFFSET_MINUTES_DEFAULT,
-                                                DISPLAY_BRIGHTNESS_DEFAULT);
+  modules.config = new GeneralConfigController(*modules.sd_card);
 
   modules.webserver = new WebServerController(*modules.alarm,
                                               *modules.clock,
@@ -91,7 +88,16 @@ void initialize_modules() {
     Serial.println("main: SD Card initialization failed");
   }
 
-  if (!modules.config->initialize()) {
+  GeneralConfigController::ConfigData configData = {
+    .hostname = WIFI_DEFAULT_HOSTNAME,
+    .timezonePosix = RTC_TIMEZONE_POSIX_DEFAULT,
+    .timeOffsetMinutes = RTC_TIME_OFFSET_MINUTES_DEFAULT,
+    .brightness = DISPLAY_BRIGHTNESS_DEFAULT,
+    .ftpUsername = DEFAULT_FTP_USERNAME,
+    .ftpPassword = DEFAULT_FTP_PASSWORD
+  };
+
+  if (!modules.config->initialize(&configData)) {
     Serial.println("main: general configuration initialization failed");
   }
 
