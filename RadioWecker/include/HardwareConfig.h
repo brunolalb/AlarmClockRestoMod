@@ -56,6 +56,14 @@ static constexpr uint8_t AUDIO_GAIN_MUX_S1 = D5; // gain is controlled by HEF405
 static constexpr uint8_t AUDIO_GAIN_MUX_S2 = D6;
 static constexpr uint8_t AUDIO_GAIN_MUX_S3 = D7;
 static constexpr uint8_t AUDIO_VOLUME_POT = A7; // volume potentiometer is 100k
+// Audio control
+#define AUDIO_SHUTDOWN_MODE_OFF()  do { pinMode(AUDIO_SD, OUTPUT); digitalWrite(AUDIO_SD, LOW); } while (0)
+#define AUDIO_SHUTDOWN_MODE_ON()   pinMode(AUDIO_SD, OPEN_DRAIN)
+static constexpr uint8_t AUDIO_GAIN_3DB = 0b000;
+static constexpr uint8_t AUDIO_GAIN_6DB = 0b100;
+static constexpr uint8_t AUDIO_GAIN_9DB = 0b010;
+static constexpr uint8_t AUDIO_GAIN_12DB = 0b110;
+static constexpr uint8_t AUDIO_GAIN_15DB = 0b001;
 
 // Light
 static constexpr uint8_t LIGHT_PWM_PIN = D9;

@@ -1,6 +1,7 @@
 #include "SoundController.h"
 
 #include <ArduinoJson.h>
+#include <HardwareConfig.h>
 #include <WiFi.h>
 #include <WebServer.h>
 
@@ -84,21 +85,34 @@ String titleFromPath(const String& path) {
 
 const char* const SoundController::kSupportedFileExtensions[] = {".mp3", ".wav", ".ogg"};
 
-SoundController::SoundController(SdController& sdController,
-                                 uint8_t i2sBclkPin,
-                                 uint8_t i2sLrclkPin,
-                                 uint8_t i2sDataPin,
-                                 uint8_t volume)
+SoundController::SoundController( SdController& sdController,
+                                  const HardwareConfig *hwConfig)
     : sdController_(sdController),
       audio_(),
-      i2sBclkPin_(i2sBclkPin),
-      i2sLrclkPin_(i2sLrclkPin),
-      i2sDataPin_(i2sDataPin),
-      volume_(volume > 21 ? 21 : volume) {}
+      hwConfig_(*hwConfig) {}
 
 bool SoundController::initialize() {
   //audio_.connecttohost("0n-80s.radionetz.de:8000/0n-70s.mp3");
-  return ensureAudioReady();
+  volume_ = 0;
+
+  // start ShutDown pin
+  AUDIO_SHUTDOWN_MODE_OFF();
+
+  // start ADC for potentiometer
+  adcAttachPin(hwConfig_.volumePotentiometerPin);
+
+  // start MUX at lowest gain
+  pinMode(hwConfig_.GAINMuxS1Pin, OUTPUT);
+  pinMode(hwConfig_.GAINMuxS2Pin, OUTPUT);
+  pinMode(hwConfig_.GAINMuxS3Pin, OUTPUT);
+  digitalWrite(hwConfig_.GAINMuxS1Pin, AUDIO_GAIN_3DB & 0b001);
+  digitalWrite(hwConfig_.GAINMuxS2Pin, (AUDIO_GAIN_3DB & 0b010) >> 1);
+  digitalWrite(hwConfig_.GAINMuxS3Pin, (AUDIO_GAIN_3DB & 0b100) >> 2);
+
+  //start MAX98357A
+  bool max98357_ok = ensureAudioReady();
+
+  return max98357_ok;
 }
 
 void SoundController::update() {
@@ -139,7 +153,7 @@ bool SoundController::ensureAudioReady() {
     return false;
   }
 
-  audioReady_ = audio_.setPinout(i2sBclkPin_, i2sLrclkPin_, i2sDataPin_);
+  audioReady_ = audio_.setPinout(hwConfig_.i2sBclkPin, hwConfig_.i2sLrclkPin, hwConfig_.i2sDataPin);
   if (!audioReady_) {
     return false;
   }

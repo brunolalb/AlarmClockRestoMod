@@ -20,12 +20,19 @@ class SoundController {
     Previous,
     SetVolume,
   };
+  struct HardwareConfig {
+    uint8_t i2sBclkPin;
+    uint8_t i2sLrclkPin;
+    uint8_t i2sDataPin;
+    uint8_t SDPin;
+    uint8_t GAINMuxS1Pin;
+    uint8_t GAINMuxS2Pin;
+    uint8_t GAINMuxS3Pin;
+    uint8_t volumePotentiometerPin;
+  };
 
   SoundController(SdController& sdController,
-                  uint8_t i2sBclkPin,
-                  uint8_t i2sLrclkPin,
-                  uint8_t i2sDataPin,
-                  uint8_t volume = 5);
+                  const HardwareConfig *hwConfig);
 
   static const char* const kSupportedFileExtensions[];
   static constexpr size_t kSupportedFileExtensionCount = 3;
@@ -54,9 +61,8 @@ class SoundController {
 
   SdController& sdController_;
   Audio audio_;
-  uint8_t i2sBclkPin_;
-  uint8_t i2sLrclkPin_;
-  uint8_t i2sDataPin_;
+  HardwareConfig hwConfig_;
+
   uint8_t volume_;
   bool audioReady_ = false;
   bool playing_ = false;

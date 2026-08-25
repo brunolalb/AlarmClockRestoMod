@@ -39,24 +39,6 @@ static constexpr uint32_t RTC_NTP_RETRY_INTERVAL_MS = 60UL * 1000UL;
 static constexpr const char* RTC_TIMEZONE_POSIX_DEFAULT = "UTC0";
 static constexpr int16_t RTC_TIME_OFFSET_MINUTES_DEFAULT = 0;
 
-// Audio
-// - Shutdown mode:
-// GND - Shutdown
-// OPEN - Stereo Average
-#define AUDIO_SHUTDOWN_MODE_OFF()  pinMode(AUDIO_SD, OUTPUT) && digitalWrite(AUDIO_SD, LOW)
-#define AUDIO_SHUTDOWN_MODE_ON()   pinMode(AUDIO_SD, OPEN_DRAIN)
-// - Gain (MUX - S1S2S3):
-// 3dB - 000
-// 6dB - 100
-// 9dB - 010
-// 12dB - 110
-// 15dB - 001
-static constexpr uint8_t AUDIO_GAIN_3DB = 0b000;
-static constexpr uint8_t AUDIO_GAIN_6DB = 0b100;
-static constexpr uint8_t AUDIO_GAIN_9DB = 0b010;
-static constexpr uint8_t AUDIO_GAIN_12DB = 0b110;
-static constexpr uint8_t AUDIO_GAIN_15DB = 0b001;
-
 // Radio Buttons - read via MCP23017
 static constexpr uint8_t RADIO_BUTTON_OFF_CHANNEL = 0; //GPA0
 static constexpr uint8_t RADIO_BUTTON_ON_CHANNEL = 1; //GPA1

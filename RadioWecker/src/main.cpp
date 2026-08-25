@@ -50,10 +50,18 @@ void create_modules() {
 
   modules.alarm = new AlarmController(*modules.sd_card);
 
+  SoundController::HardwareConfig hwConfig = {
+    .i2sBclkPin = I2S_BCLK_PIN,
+    .i2sLrclkPin = I2S_LRCLK_PIN,
+    .i2sDataPin = I2S_DATA_PIN,
+    .SDPin = AUDIO_SD,
+    .GAINMuxS1Pin = AUDIO_GAIN_MUX_S1,
+    .GAINMuxS2Pin = AUDIO_GAIN_MUX_S2,
+    .GAINMuxS3Pin = AUDIO_GAIN_MUX_S3,
+    .volumePotentiometerPin = AUDIO_VOLUME_POT
+  };
   modules.sound = new SoundController(*modules.sd_card,
-                                      I2S_BCLK_PIN,
-                                      I2S_LRCLK_PIN,
-                                      I2S_DATA_PIN);
+                                      &hwConfig);
 
   modules.config = new GeneralConfigController(*modules.sd_card);
 
