@@ -21,7 +21,8 @@
 //#define SOUND_OFF
 //#define WEBSERVER_OFF
 //#define WIRELESS_OFF
-#define CLI_OFF
+//#define CLI_OFF
+#define BUTTONS_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -103,8 +104,11 @@ void create_modules() {
 
 #ifndef WIRELESS_OFF
   modules.wifi = new WiFiController();
+#else
+  modules.wifi = nullptr;
 #endif
 
+#ifndef BUTTONS_OFF
   ButtonReader::HardwareConfig ButtonsHWConfig = {
     .i2cSdaPin = RADIO_BUTTONS_I2C_SDA_PIN,
     .i2cSclPin = RADIO_BUTTONS_I2C_SCL_PIN,
@@ -129,6 +133,9 @@ void create_modules() {
   };
   modules.buttons = new ButtonReader(&ButtonsHWConfig,
                                      &buttonsChannels);
+#else
+  modules.buttons = nullptr;
+#endif
 
 #ifndef CLI_OFF
   modules.cli = new CLIController(modules.clock,
@@ -186,9 +193,11 @@ void initialize_modules() {
   WiFi.mode(WIFI_OFF);
 #endif
 
+#ifndef BUTTONS_OFF
   if (!modules.buttons->initialize(modules.display ? modules.display->display() : nullptr)) {
     Serial.println("main: button reader initialization failed");
   }
+#endif
 
   ClockController::TimeConfig clockConfig = {
     .ntpServer = RTC_NTP_SERVER,
@@ -258,7 +267,9 @@ void loop() {
 #ifndef SOUND_OFF
   modules.sound->update();
 #endif
+#ifndef BUTTONS_OFF
   modules.buttons->update();
+#endif
   modules.clock->update();
 #ifndef DISPLAY_OFF
   modules.display->showTimeHHMM(modules.clock->displayValueHHMM());

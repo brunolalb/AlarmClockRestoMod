@@ -187,6 +187,11 @@ void CLIController::printModuleStatus() const {
 }
 
 void CLIController::printButtonStates() const {
+  if (!buttonReader_) {
+    Serial.println("Buttons reader not initialized");
+    return;
+  }
+
   const ButtonReader::ButtonsStates& states = buttonReader_->states();
   String output;
   output.reserve(256);
