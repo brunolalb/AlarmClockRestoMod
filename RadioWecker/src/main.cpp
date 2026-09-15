@@ -75,11 +75,6 @@ void create_modules() {
                                               *modules.config);
 
   modules.wifi = new WiFiController();
-
-  modules.cli = new CLIController(*modules.clock,
-                                  *modules.sd_card,
-                                  *modules.alarm,
-                                  *modules.webserver);
   
   ButtonReader::HardwareConfig ButtonsHWConfig = {
     .i2cSdaPin = RADIO_BUTTONS_I2C_SDA_PIN,
@@ -105,6 +100,12 @@ void create_modules() {
   };
   modules.buttons = new ButtonReader(&ButtonsHWConfig,
                                      &buttonsChannels);
+
+  modules.cli = new CLIController(modules.clock,
+                                  modules.sd_card,
+                                  modules.alarm,
+                                  modules.webserver,
+                                  modules.buttons);
 }
 
 

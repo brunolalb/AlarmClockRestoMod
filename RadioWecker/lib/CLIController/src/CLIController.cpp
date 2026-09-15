@@ -33,14 +33,16 @@ String formatBytes(uint64_t bytes) {
 }
 }
 
-CLIController::CLIController( ClockController& clockController,
-                              SdController& sdController,
-                              AlarmController& alarmController,
-                              WebServerController& webServerController)
+CLIController::CLIController( ClockController* clockController,
+                              SdController* sdController,
+                              AlarmController* alarmController,
+                              WebServerController* webServerController,
+                              ButtonReader* buttonReader)
     : clockController_(clockController),
       sdController_(sdController),
       alarmController_(alarmController),
-      webServerController_(webServerController) {}
+      webServerController_(webServerController),
+      buttonReader_(buttonReader) {}
 
 bool CLIController::initialize() {
   Serial.println("\n\nCommand Line Interface ready. Type 'help' for commands.\n");
@@ -77,18 +79,18 @@ void CLIController::handleCommand(const String& rawCommand) {
     return;
   }
 
-  if (command == "ip") {
-    printIp();
-    return;
-  }
-
   if (command == "wifi") {
     printWifi();
     return;
   }
 
-  if (command == "status" || command == "modules") {
+  if (command == "status") {
     printModuleStatus();
+    return;
+  }
+
+  if (command == "buttons") {
+    printButtonStates();
     return;
   }
 
@@ -106,25 +108,9 @@ void CLIController::printHelp() const {
   output =
       "Commands:\n"
       "  help      - Show this help\n"
-      "  ip        - Print local IP address\n"
       "  wifi      - Print WiFi connection details\n"
       "  status    - Print system/module state\n"
-      "  modules   - Alias for status\n";
-  Serial.print(output);
-}
-
-void CLIController::printIp() const {
-  String output;
-  output.reserve(48);
-
-  if (WiFi.status() != WL_CONNECTED) {
-    output = "IP: not connected\n";
-  } else {
-    output = "IP: ";
-    output += WiFi.localIP().toString();
-    output += '\n';
-  }
-
+      "  buttons   - Print the state of all buttons\n";
   Serial.print(output);
 }
 
@@ -162,40 +148,77 @@ void CLIController::printModuleStatus() const {
   output += '\n';
 
   output += "  webserver: ";
-  output += (webServerController_.isStarted() ? "running" : "stopped");
+  output += (webServerController_ && webServerController_->isStarted() ? "running" : "stopped");
   output += '\n';
 
   output += "  clock: ";
-  if (!clockController_.isReady()) {
+  if (!clockController_ || !clockController_->isReady()) {
     output += "not ready";
-  } else if (!clockController_.isTimeValid()) {
+  } else if (!clockController_->isTimeValid()) {
     output += "ready, time invalid";
   } else {
     output += "ready, time valid";
   }
   output += ", ntp ";
-  output += (clockController_.isNtpSynchronized() ? "sync" : "not sync");
+  output += (clockController_ && clockController_->isNtpSynchronized() ? "sync" : "not sync");
   output += '\n';
 
   output += "  sd: ";
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     output += "not ready";
   } else {
     output += "ready, free ";
-    output += formatBytes(sdController_.availableBytes());
+    output += formatBytes(sdController_->availableBytes());
     output += "/";
-    output += formatBytes(sdController_.totalBytes());
+    output += formatBytes(sdController_->totalBytes());
   }
   output += '\n';
 
   output += "  alarm: ";
-  if (!alarmController_.isInitialized()) {
+  if (!alarmController_ || !alarmController_->isInitialized()) {
     output += "not initialized";
   } else {
     output += "initialized, configured alarms=";
-    output += String(alarmController_.alarmCount());
+    output += String(alarmController_->alarmCount());
   }
   output += '\n';
 
+  Serial.print(output);
+}
+
+void CLIController::printButtonStates() const {
+  const ButtonReader::ButtonsStates& states = buttonReader_->states();
+  String output;
+  output.reserve(256);
+  output = "Button states (1=active, 0=inactive):\n";
+  output += "  RADIO_OFF: ";
+  output += String(states.RADIO_OFF);
+  output += "\n  RADIO_ON: ";
+  output += String(states.RADIO_ON);
+  output += "\n  RADIO_AUTOM: ";
+  output += String(states.RADIO_AUTOM);
+  output += "\n  RADIO_ALARM: ";
+  output += String(states.RADIO_ALARM);
+  output += "\n  RADIO_MW: ";
+  output += String(states.RADIO_MW);
+  output += "\n  RADIO_FM: ";
+  output += String(states.RADIO_FM);
+  output += "\n  RADIO_AFC: ";
+  output += String(states.RADIO_AFC);
+  output += "\n  DISPLAY_SLOW: ";
+  output += String(states.DISPLAY_SLOW);
+  output += "\n  DISPLAY_FAST: ";
+  output += String(states.DISPLAY_FAST);
+  output += "\n  DISPLAY_SLEEP_TOP: ";
+  output += String(states.DISPLAY_SLEEP_TOP);
+  output += "\n  DISPLAY_SIGNAL: ";
+  output += String(states.DISPLAY_SIGNAL);
+  output += "\n  DISPLAY_TIME: ";
+  output += String(states.DISPLAY_TIME);
+  output += "\n  DISPLAY_SLEEP_FRONT: ";
+  output += String(states.DISPLAY_SLEEP_FRONT);
+  output += "\n  DISPLAY_ILLUM: ";
+  output += String(states.DISPLAY_ILLUM);
+  output += '\n';
   Serial.print(output);
 }
