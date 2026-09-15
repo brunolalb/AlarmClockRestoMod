@@ -20,7 +20,8 @@
 //#define SDCARD_OFF
 //#define SOUND_OFF
 //#define WEBSERVER_OFF
-#define WIRELESS_OFF
+//#define WIRELESS_OFF
+#define CLI_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -129,11 +130,15 @@ void create_modules() {
   modules.buttons = new ButtonReader(&ButtonsHWConfig,
                                      &buttonsChannels);
 
+#ifndef CLI_OFF
   modules.cli = new CLIController(modules.clock,
                                   modules.sd_card,
                                   modules.alarm,
                                   modules.webserver,
                                   modules.buttons);
+#else
+  modules.cli = nullptr;
+#endif
 }
 
 
@@ -214,9 +219,11 @@ void initialize_modules() {
   }
 #endif
 
+#ifndef CLI_OFF
   if (!modules.cli->initialize()) {
     Serial.println("main: CLI initialization failed");
   }
+#endif
 }
 
 
@@ -241,7 +248,9 @@ void loop() {
   wifi_was_connected = wifi_connected;
 #endif
 
+#ifndef CLI_OFF
   modules.cli->update();
+#endif
 
 #ifndef WEBSERVER_OFF
   modules.webserver->update();
