@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <Adafruit_MCP23X17.h>
 #include <TM1637.h>
-#include <TM16xxButtons.h>
 
 class ButtonReader {
  public:
@@ -29,6 +28,22 @@ class ButtonReader {
     uint8_t DISPLAY_SLEEP_FRONT;
     uint8_t DISPLAY_ILLUM;
   };
+  struct ButtonsStates {
+    bool RADIO_OFF;
+    bool RADIO_ON;
+    bool RADIO_AUTOM;
+    bool RADIO_ALARM;
+    bool RADIO_MW;
+    bool RADIO_FM;
+    bool RADIO_AFC;
+    bool DISPLAY_SLOW;
+    bool DISPLAY_FAST;
+    bool DISPLAY_SLEEP_TOP;
+    bool DISPLAY_SIGNAL;
+    bool DISPLAY_TIME;
+    bool DISPLAY_SLEEP_FRONT;
+    bool DISPLAY_ILLUM;
+  };
   enum class Buttons : uint8_t {
     RADIO_OFF = 0,
     RADIO_ON,
@@ -50,6 +65,7 @@ class ButtonReader {
                const ButtonsChannels* buttonsChannels);
   bool initialize(TM1637* display);
   void update();
+  const ButtonsStates& states() const;
 
  private:
     void read_buttons();
@@ -57,8 +73,7 @@ class ButtonReader {
     HardwareConfig hwConfig_;
     ButtonsChannels buttonsChannels_;
     TM1637* display_;
-    TM16xxButtons* displayButtons_ = nullptr;
     Adafruit_MCP23X17 mcp_;
-    ButtonsChannels buttonsStates_;
+    ButtonsStates buttonsStates_{};
 
 };
