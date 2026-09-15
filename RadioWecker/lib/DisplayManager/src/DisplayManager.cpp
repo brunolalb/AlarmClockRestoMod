@@ -42,6 +42,6 @@ void DisplayManager::showTimeHHMM(int timeValue) {
 }
 
 void DisplayManager::displayText(const char* text, SeparatorMode separatorMode) {
-  const word dots = separatorMode == SeparatorMode::None ? 0 : (1 << 1);
+  const word dots = separatorMode == SeparatorMode::None ? 0 : (1 << 2);
   display_.setDisplayToString(text, dots);
 }
