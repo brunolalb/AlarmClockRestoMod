@@ -16,7 +16,8 @@
 #include <WebServerController.h>
 
 //#define WEBSERVER_OFF
-#define DISPLAY_OFF
+//#define DISPLAY_OFF
+#define ONBOARDLED_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -35,7 +36,11 @@ typedef struct modules_ {
 Modules modules;
 
 void create_modules() {
+#ifndef ONBOARDLED_OFF
   modules.led = new OnboardLedController(ONBOARD_LED_PIN);
+#else
+  modules.led = nullptr;
+#endif
 
   modules.sd_card = new SdController( SD_SPI_CS_PIN,
                                       SD_SPI_SCK_PIN,
@@ -120,9 +125,11 @@ void create_modules() {
 
 
 void initialize_modules() {
+#ifndef ONBOARDLED_OFF
   if (!modules.led->initialize()) {
     Serial.println("main: onboard LED initialization failed");
   }
+#endif
 
   if (!modules.sd_card->initialize()) {
     Serial.println("main: SD Card initialization failed");
@@ -226,5 +233,7 @@ void loop() {
   modules.display->showTimeHHMM(modules.clock->displayValueHHMM());
 #endif
 
+#ifndef ONBOARDLED_OFF
   modules.led->update();
+#endif
 }
