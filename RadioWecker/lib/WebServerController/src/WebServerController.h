@@ -14,7 +14,7 @@
 class WebServerController {
  public:
   explicit WebServerController(AlarmController* alarmController,
-                               ClockController& clockController,
+                               ClockController* clockController,
                                SdController* sdController,
                                SoundController* soundController,
                                DisplayManager* displayManager,
@@ -43,7 +43,7 @@ class WebServerController {
   bool beginFtpServer();
 
   AlarmController* alarmController_;
-  ClockController& clockController_;
+  ClockController* clockController_;
   SdController* sdController_;
   SoundController* soundController_;
   DisplayManager* displayManager_;

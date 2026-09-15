@@ -23,7 +23,8 @@
 //#define WIRELESS_OFF
 //#define CLI_OFF
 //#define BUTTONS_OFF
-#define ALARMS_OFF
+//#define ALARMS_OFF
+#define CLOCK_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -66,10 +67,14 @@ void create_modules() {
   modules.display = nullptr;
 #endif
 
+#ifndef CLOCK_OFF
   modules.clock = new ClockController(RTC_SQW_PIN,
                                       RTC_I2C_SDA_PIN,
                                       RTC_I2C_SCL_PIN,
                                       RTC_I2C_FREQUENCY_HZ);
+#else
+  modules.clock = nullptr;
+#endif
 
 #ifndef ALARMS_OFF
   modules.alarm = new AlarmController(modules.sd_card);
@@ -98,7 +103,7 @@ void create_modules() {
 
 #ifndef WEBSERVER_OFF
   modules.webserver = new WebServerController(modules.alarm,
-                                              *modules.clock,
+                                              modules.clock,
                                               modules.sd_card,
                                               modules.sound,
                                               modules.display,
@@ -204,6 +209,7 @@ void initialize_modules() {
   }
 #endif
 
+#ifndef CLOCK_OFF
   ClockController::TimeConfig clockConfig = {
     .ntpServer = RTC_NTP_SERVER,
     .timezonePosix = modules.config->timezonePosix(),
@@ -212,10 +218,10 @@ void initialize_modules() {
     .ntpSyncIntervalMs = RTC_NTP_SYNC_INTERVAL_MS,
     .ntpRetryIntervalMs = RTC_NTP_RETRY_INTERVAL_MS
   };
-
   if (!modules.clock->initialize(&clockConfig)) {
     Serial.println("main: clock initialization failed");
   }
+#endif
 
 #ifndef ALARMS_OFF
   if (!modules.alarm->initialize()) {
@@ -277,9 +283,11 @@ void loop() {
 #ifndef BUTTONS_OFF
   modules.buttons->update();
 #endif
+#ifndef CLOCK_OFF
   modules.clock->update();
+#endif
 #ifndef DISPLAY_OFF
-  modules.display->showTimeHHMM(modules.clock->displayValueHHMM());
+  modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
 #endif
 
 #ifndef ONBOARDLED_OFF

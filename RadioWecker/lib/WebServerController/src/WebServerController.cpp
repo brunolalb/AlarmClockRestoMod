@@ -27,7 +27,7 @@ String formatBytes(uint64_t bytes) {
 }
 
 WebServerController::WebServerController( AlarmController* alarmController,
-                                          ClockController& clockController,
+                                          ClockController* clockController,
                                           SdController* sdController,
                                           SoundController* soundController,
                                           DisplayManager* displayManager,
@@ -157,15 +157,15 @@ void WebServerController::handleGetStatus() {
   doc["webserver"] = isStarted() ? "running" : "stopped";
 
   String clockStatus;
-  if (!clockController_.isReady()) {
+  if (!clockController_ || !clockController_->isReady()) {
     clockStatus = "not ready";
-  } else if (!clockController_.isTimeValid()) {
+  } else if (!clockController_->isTimeValid()) {
     clockStatus = "ready, time invalid";
   } else {
     clockStatus = "ready, time valid";
   }
   doc["clock"] = clockStatus;
-  doc["ntp"] = clockController_.isNtpSynchronized() ? "sync" : "not sync";
+  doc["ntp"] = clockController_ && clockController_->isNtpSynchronized() ? "sync" : "not sync";
 
   if (!sdController_ || !sdController_->isReady()) {
     doc["sd"] = "not ready";
@@ -233,8 +233,10 @@ void WebServerController::handleSaveConfig() {
     return;
   }
 
-  clockController_.applyTimeConfig( generalConfigController_.timezonePosix(),
-                                    generalConfigController_.timeOffsetMinutes());
+  if (clockController_) {
+    clockController_->applyTimeConfig( generalConfigController_.timezonePosix(),
+                                       generalConfigController_.timeOffsetMinutes());
+  }
   if (displayManager_) {
     displayManager_->setBrightness(generalConfigController_.brightness());
   }
