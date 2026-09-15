@@ -28,19 +28,17 @@ TM1637* DisplayManager::display() {
 
 void DisplayManager::showTimeHHMM(int timeValue) {
   char hhmm[9];
+
+  if (timeValue == currentTimeHHMM_) {
+    return;
+  }
+  currentTimeHHMM_ = timeValue;
+
   snprintf(hhmm, sizeof(hhmm), "%04d    ", timeValue);
   if (hhmm[0] == '0') {
     hhmm[0] = ' ';
   }
   displayText(hhmm, separatorMode_);
-}
-
-void DisplayManager::showRtcFailure() {
-  displayText("RTCF    ", SeparatorMode::None);
-}
-
-void DisplayManager::showSdFailure() {
-  displayText("SDFL    ", SeparatorMode::None);
 }
 
 void DisplayManager::displayText(const char* text, SeparatorMode separatorMode) {

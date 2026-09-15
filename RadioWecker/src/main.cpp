@@ -175,10 +175,6 @@ void initialize_modules() {
   if (!modules.cli->initialize()) {
     Serial.println("main: CLI initialization failed");
   }
-
-  if (!modules.sd_card->isReady()) {
-    modules.display->showSdFailure();
-  }
 }
 
 
@@ -207,27 +203,9 @@ void loop() {
 
   modules.webserver->update();
   modules.sound->update();
-
-  const uint32_t now = millis();
-  if (now - lastDisplayUpdateMs >= 200) {
-    lastDisplayUpdateMs = now;
-
-    modules.buttons->update();
-
-    if (modules.clock->isReady()) {
-      modules.clock->update();
-
-      if (modules.clock->isTimeValid()) {
-        modules.display->showTimeHHMM(modules.clock->displayValueHHMM());
-      } else {
-        modules.display->showRtcFailure();
-      }
-    } else if (modules.sd_card->isReady()) {
-      modules.display->showRtcFailure();
-    } else {
-      modules.display->showSdFailure();
-    }
-  }
+  modules.buttons->update();
+  modules.clock->update();
+  modules.display->showTimeHHMM(modules.clock->displayValueHHMM());
 
   modules.led->update();
 }

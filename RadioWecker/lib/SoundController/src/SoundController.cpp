@@ -149,10 +149,6 @@ bool SoundController::ensureAudioReady() {
     return true;
   }
 
-  if (!sdController_.isReady()) {
-    return false;
-  }
-
   audioReady_ = audio_.setPinout(hwConfig_.i2sBclkPin, hwConfig_.i2sLrclkPin, hwConfig_.i2sDataPin);
   if (!audioReady_) {
     return false;

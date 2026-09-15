@@ -20,11 +20,11 @@ class DisplayManager {
   uint8_t brightness() const;
   TM1637* display();
   void showTimeHHMM(int timeValue);
-  void showRtcFailure();
-  void showSdFailure();
 
  private:
   void displayText(const char* text, SeparatorMode separatorMode);
+
+  int currentTimeHHMM_ = 0;
 
   TM1637 display_;
   uint8_t brightness_ = 7;

@@ -48,21 +48,28 @@ bool ClockController::initialize(const TimeConfig* default_config) {
 }
 
 void ClockController::update() {
+  static uint32_t lastDisplayUpdateMs = 0;
+
   if (!ready_) {
     return;
   }
 
-  syncFromNtpIfNeeded();
+  const uint32_t now = millis();
+  if (now - lastDisplayUpdateMs >= 200) {
+    lastDisplayUpdateMs = now;
+    
+    syncFromNtpIfNeeded();
 
-  if (!timeValid_ || !secondTick_) {
-    return;
+    if (!timeValid_ || !secondTick_) {
+      return;
+    }
+
+    noInterrupts();
+    secondTick_ = false;
+    interrupts();
+
+    advanceSoftwareClockOneSecond();
   }
-
-  noInterrupts();
-  secondTick_ = false;
-  interrupts();
-
-  advanceSoftwareClockOneSecond();
 }
 
 bool ClockController::isReady() const {

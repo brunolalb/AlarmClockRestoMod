@@ -30,7 +30,13 @@ bool ButtonReader::initialize(TM1637* display) {
 }
 
 void ButtonReader::update() {
-  read_buttons();
+  static uint32_t lastDisplayUpdateMs = 0;
+
+  const uint32_t now = millis();
+  if (now - lastDisplayUpdateMs >= 200) {
+    read_buttons();
+    lastDisplayUpdateMs = now;
+  }
 }
 
 void ButtonReader::read_buttons() {
