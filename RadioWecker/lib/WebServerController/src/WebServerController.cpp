@@ -1,4 +1,5 @@
 #include "WebServerController.h"
+#include "SoftwareConfig.h"
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
@@ -31,7 +32,7 @@ WebServerController::WebServerController( AlarmController* alarmController,
                                           SdController* sdController,
                                           SoundController* soundController,
                                           DisplayManager* displayManager,
-                                          GeneralConfigController& generalConfigController,
+                                          GeneralConfigController* generalConfigController,
                                           uint16_t port)
     : alarmController_(alarmController),
       clockController_(clockController),
@@ -52,10 +53,11 @@ bool WebServerController::beginFtpServer() {
     return false;
   }
 
-  ftpServer_.begin(generalConfigController_.ftpUsername().c_str(), generalConfigController_.ftpPassword().c_str());
+  ftpServer_.begin(generalConfigController_ ? generalConfigController_->ftpUsername().c_str() : DEFAULT_FTP_USERNAME, 
+                   generalConfigController_ ? generalConfigController_->ftpPassword().c_str() : DEFAULT_FTP_PASSWORD);
   ftpStarted_ = true;
   Serial.print("webserver: FTP on port 21 (user: ");
-  Serial.print(generalConfigController_.ftpUsername());
+  Serial.print(generalConfigController_ ? generalConfigController_->ftpUsername() : DEFAULT_FTP_USERNAME);
   Serial.println(")");
 
   return true;
@@ -207,7 +209,11 @@ void WebServerController::handleReboot() {
 
 void WebServerController::handleGetConfig() {
   StaticJsonDocument<512> doc;
-  generalConfigController_.configToJson(doc);
+  if (!generalConfigController_) {
+    webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"General config controller not available\"}");
+    return;
+  }
+  generalConfigController_->configToJson(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -215,6 +221,10 @@ void WebServerController::handleGetConfig() {
 }
 
 void WebServerController::handleSaveConfig() {
+  if (!generalConfigController_) {
+    webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"General config controller not available\"}");
+    return;
+  }
   if (!webServer_.hasArg("plain")) {
     webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
     return;
@@ -227,18 +237,18 @@ void WebServerController::handleSaveConfig() {
     return;
   }
 
-  String answer = generalConfigController_.jsonToConfig(doc);
+  String answer = generalConfigController_->jsonToConfig(doc);
   if (!answer.isEmpty()) {
     webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"" + answer + "\"}");
     return;
   }
 
   if (clockController_) {
-    clockController_->applyTimeConfig( generalConfigController_.timezonePosix(),
-                                       generalConfigController_.timeOffsetMinutes());
+    clockController_->applyTimeConfig( generalConfigController_->timezonePosix(),
+                                       generalConfigController_->timeOffsetMinutes());
   }
   if (displayManager_) {
-    displayManager_->setBrightness(generalConfigController_.brightness());
+    displayManager_->setBrightness(generalConfigController_->brightness());
   }
 
   webServer_.send(200, "application/json", "{\"ok\":true}");

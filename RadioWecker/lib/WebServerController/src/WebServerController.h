@@ -18,7 +18,7 @@ class WebServerController {
                                SdController* sdController,
                                SoundController* soundController,
                                DisplayManager* displayManager,
-                               GeneralConfigController& generalConfigController,
+                               GeneralConfigController* generalConfigController,
                                uint16_t port = 80);
 
   bool initialize(bool wifi_is_connected);
@@ -47,7 +47,7 @@ class WebServerController {
   SdController* sdController_;
   SoundController* soundController_;
   DisplayManager* displayManager_;
-  GeneralConfigController& generalConfigController_;
+  GeneralConfigController* generalConfigController_;
   FtpServer ftpServer_;
   WebServer webServer_;
   uint16_t port_;

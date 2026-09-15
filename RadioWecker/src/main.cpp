@@ -24,7 +24,8 @@
 //#define CLI_OFF
 //#define BUTTONS_OFF
 //#define ALARMS_OFF
-#define CLOCK_OFF
+//#define CLOCK_OFF
+#define GENERALCONFIG_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -99,7 +100,11 @@ void create_modules() {
   modules.sound = nullptr;
 #endif
 
+#ifndef GENERALCONFIG_OFF
   modules.config = new GeneralConfigController(modules.sd_card);
+#else
+  modules.config = nullptr;
+#endif
 
 #ifndef WEBSERVER_OFF
   modules.webserver = new WebServerController(modules.alarm,
@@ -107,7 +112,7 @@ void create_modules() {
                                               modules.sd_card,
                                               modules.sound,
                                               modules.display,
-                                              *modules.config);
+                                              modules.config);
 #else
   modules.webserver = nullptr;
 #endif
@@ -172,6 +177,7 @@ void initialize_modules() {
   }
 #endif
 
+#ifndef GENERALCONFIG_OFF
   GeneralConfigController::ConfigData configData = {
     .hostname = WIFI_DEFAULT_HOSTNAME,
     .timezonePosix = RTC_TIMEZONE_POSIX_DEFAULT,
@@ -180,20 +186,20 @@ void initialize_modules() {
     .ftpUsername = DEFAULT_FTP_USERNAME,
     .ftpPassword = DEFAULT_FTP_PASSWORD
   };
-
   if (!modules.config->initialize(&configData)) {
     Serial.println("main: general configuration initialization failed");
   }
+#endif
 
 #ifndef DISPLAY_OFF
-  if (!modules.display->initialize(modules.config->brightness())) {
+  if (!modules.display->initialize(modules.config ? modules.config->brightness() : DISPLAY_BRIGHTNESS_DEFAULT)) {
     Serial.println("main: display initialization failed");
   }
 #endif
 
 #ifndef WIRELESS_OFF
   WiFiController::WifiConfig wifiConfig = {
-    .hostname = modules.config->hostname(),
+    .hostname = modules.config ? modules.config->hostname() : WIFI_DEFAULT_HOSTNAME,
     .config_portal_timeout_sec = WIFI_CONFIG_PORTAL_TIMEOUT_S
   };
   if (!modules.wifi->initialize(&wifiConfig)) {
@@ -212,8 +218,8 @@ void initialize_modules() {
 #ifndef CLOCK_OFF
   ClockController::TimeConfig clockConfig = {
     .ntpServer = RTC_NTP_SERVER,
-    .timezonePosix = modules.config->timezonePosix(),
-    .timeOffsetMinutes = modules.config->timeOffsetMinutes(),
+    .timezonePosix = modules.config ? modules.config->timezonePosix() : RTC_TIMEZONE_POSIX_DEFAULT,
+    .timeOffsetMinutes = modules.config ? modules.config->timeOffsetMinutes() : RTC_TIME_OFFSET_MINUTES_DEFAULT,
     .daylightOffsetSeconds = RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
     .ntpSyncIntervalMs = RTC_NTP_SYNC_INTERVAL_MS,
     .ntpRetryIntervalMs = RTC_NTP_RETRY_INTERVAL_MS
