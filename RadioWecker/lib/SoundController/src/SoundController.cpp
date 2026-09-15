@@ -85,7 +85,7 @@ String titleFromPath(const String& path) {
 
 const char* const SoundController::kSupportedFileExtensions[] = {".mp3", ".wav", ".ogg"};
 
-SoundController::SoundController( SdController& sdController,
+SoundController::SoundController( SdController* sdController,
                                   const HardwareConfig *hwConfig)
     : sdController_(sdController),
       audio_(),
@@ -202,18 +202,18 @@ String SoundController::normalizeRadioUrl(const String& requestedUrl) const {
 }
 
 bool SoundController::resolveLocalPlaybackPath(const String& path, String& playbackPath) const {
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     return false;
   }
 
   playbackPath = path;
-  if (sdController_.exists(playbackPath)) {
+  if (sdController_->exists(playbackPath)) {
     return true;
   }
 
   if (playbackPath.startsWith("/")) {
     const String noSlashPath = playbackPath.substring(1);
-    if (sdController_.exists(noSlashPath)) {
+    if (sdController_->exists(noSlashPath)) {
       playbackPath = noSlashPath;
       return true;
     }
@@ -229,7 +229,7 @@ bool SoundController::startLocalTrack(const String& playbackPath, String& error)
   }
 
   audio_.stopSong();
-  if (!audio_.connecttoFS(sdController_.fs(), playbackPath.c_str())) {
+  if (!audio_.connecttoFS(sdController_->fs(), playbackPath.c_str())) {
     error = "Playback start failed";
     return false;
   }
@@ -264,9 +264,9 @@ void SoundController::populateTrackMetadataFromFile(const String& playbackPath) 
   trackFormat_ = upperExtensionFromPath(normalizedPath);
   trackFolder_ = folderFromPath(normalizedPath);
 
-  File trackFile = sdController_.open(normalizedPath, FILE_READ);
+  File trackFile = sdController_->open(normalizedPath, FILE_READ);
   if (!trackFile) {
-    trackFile = sdController_.open(playbackPath, FILE_READ);
+    trackFile = sdController_->open(playbackPath, FILE_READ);
   }
 
   if (!trackFile) {
@@ -299,14 +299,14 @@ void SoundController::populateTrackMetadataFromFile(const String& playbackPath) 
 
 bool SoundController::findNextMusicFile(String& nextTrack) const {
   nextTrack = String();
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     return false;
   }
 
   const String currentNoSlash = currentTrack_.startsWith("/") ? currentTrack_.substring(1) : currentTrack_;
   const String currentWithSlash = currentTrack_.startsWith("/") ? currentTrack_ : ("/" + currentTrack_);
 
-  File root = sdController_.open("/", FILE_READ);
+  File root = sdController_->open("/", FILE_READ);
   if (!root || !root.isDirectory()) {
     return false;
   }
@@ -351,14 +351,14 @@ bool SoundController::findNextMusicFile(String& nextTrack) const {
 
 bool SoundController::findPreviousMusicFile(String& prevTrack) const {
   prevTrack = String();
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     return false;
   }
 
   const String currentNoSlash = currentTrack_.startsWith("/") ? currentTrack_.substring(1) : currentTrack_;
   const String currentWithSlash = currentTrack_.startsWith("/") ? currentTrack_ : ("/" + currentTrack_);
 
-  File root = sdController_.open("/", FILE_READ);
+  File root = sdController_->open("/", FILE_READ);
   if (!root || !root.isDirectory()) {
     return false;
   }
@@ -464,7 +464,7 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
         return;
       }
 
-      if (!sdController_.isReady()) {
+      if (!sdController_ || !sdController_->isReady()) {
         webServer.send(503, "application/json", "{\"ok\":false,\"error\":\"SD not ready\"}");
         return;
       }

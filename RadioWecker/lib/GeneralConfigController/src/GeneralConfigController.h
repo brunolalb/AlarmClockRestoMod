@@ -16,7 +16,7 @@ class GeneralConfigController {
     String ftpPassword;
   };
 
-  explicit GeneralConfigController(SdController& sdController);
+  explicit GeneralConfigController(SdController* sdController);
 
   bool initialize(const ConfigData *default_config);
 
@@ -45,7 +45,7 @@ class GeneralConfigController {
 
   static constexpr const char* GENERAL_CONFIG_FILE = "/general_config.json";
 
-  SdController& sdController_;
+  SdController* sdController_;
 
   ConfigData config_;
 

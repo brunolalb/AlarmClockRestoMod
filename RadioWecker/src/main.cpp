@@ -17,7 +17,9 @@
 
 //#define WEBSERVER_OFF
 //#define DISPLAY_OFF
-#define ONBOARDLED_OFF
+//#define ONBOARDLED_OFF
+//#define SDCARD_OFF
+#define SOUND_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -42,11 +44,15 @@ void create_modules() {
   modules.led = nullptr;
 #endif
 
+#ifndef SDCARD_OFF
   modules.sd_card = new SdController( SD_SPI_CS_PIN,
                                       SD_SPI_SCK_PIN,
                                       SD_SPI_MISO_PIN,
                                       SD_SPI_MOSI_PIN,
                                       SD_SPI_FREQUENCY_HZ);
+#else
+  modules.sd_card = nullptr;
+#endif
 
 #ifndef DISPLAY_OFF
   modules.display = new DisplayManager( DISPLAY_CLK_PIN,
@@ -61,8 +67,9 @@ void create_modules() {
                                       RTC_I2C_SCL_PIN,
                                       RTC_I2C_FREQUENCY_HZ);
 
-  modules.alarm = new AlarmController(*modules.sd_card);
+  modules.alarm = new AlarmController(modules.sd_card);
 
+#ifndef SOUND_OFF
   SoundController::HardwareConfig hwConfig = {
     .i2sBclkPin = I2S_BCLK_PIN,
     .i2sLrclkPin = I2S_LRCLK_PIN,
@@ -73,16 +80,19 @@ void create_modules() {
     .GAINMuxS3Pin = AUDIO_GAIN_MUX_S3,
     .volumePotentiometerPin = AUDIO_VOLUME_POT
   };
-  modules.sound = new SoundController(*modules.sd_card,
+  modules.sound = new SoundController(modules.sd_card,
                                       &hwConfig);
+#else
+  modules.sound = nullptr;
+#endif
 
-  modules.config = new GeneralConfigController(*modules.sd_card);
+  modules.config = new GeneralConfigController(modules.sd_card);
 
 #ifndef WEBSERVER_OFF
   modules.webserver = new WebServerController(*modules.alarm,
                                               *modules.clock,
-                                              *modules.sd_card,
-                                              *modules.sound,
+                                              modules.sd_card,
+                                              modules.sound,
                                               modules.display,
                                               *modules.config);
 #else
@@ -131,9 +141,11 @@ void initialize_modules() {
   }
 #endif
 
+#ifndef SDCARD_OFF
   if (!modules.sd_card->initialize()) {
     Serial.println("main: SD Card initialization failed");
   }
+#endif
 
   GeneralConfigController::ConfigData configData = {
     .hostname = WIFI_DEFAULT_HOSTNAME,
@@ -184,9 +196,11 @@ void initialize_modules() {
     Serial.println("main: alarm initialization failed");
   }
 
+#ifndef SOUND_OFF
   if (!modules.sound->initialize()) {
     Serial.println("main: sound initialization failed");
   }
+#endif
 
 #ifndef WEBSERVER_OFF
   if (!modules.webserver->initialize(modules.wifi->connected())) {
@@ -226,7 +240,9 @@ void loop() {
 #ifndef WEBSERVER_OFF
   modules.webserver->update();
 #endif
+#ifndef SOUND_OFF
   modules.sound->update();
+#endif
   modules.buttons->update();
   modules.clock->update();
 #ifndef DISPLAY_OFF

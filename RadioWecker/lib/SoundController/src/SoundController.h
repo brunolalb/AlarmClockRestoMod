@@ -31,7 +31,7 @@ class SoundController {
     uint8_t volumePotentiometerPin;
   };
 
-  SoundController(SdController& sdController,
+  SoundController(SdController* sdController,
                   const HardwareConfig *hwConfig);
 
   static const char* const kSupportedFileExtensions[];
@@ -59,7 +59,7 @@ class SoundController {
   void clearTrackMetadata();
   void populateTrackMetadataFromFile(const String& playbackPath);
 
-  SdController& sdController_;
+  SdController* sdController_;
   Audio audio_;
   HardwareConfig hwConfig_;
 

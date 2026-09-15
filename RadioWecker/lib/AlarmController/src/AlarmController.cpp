@@ -6,7 +6,7 @@
 
 const char* AlarmController::ALARM_FILE = "/alarm_config.json";
 
-AlarmController::AlarmController(SdController& sdController)
+AlarmController::AlarmController(SdController* sdController)
     : sdController_(sdController) {}
 
 bool AlarmController::initialize() {
@@ -157,17 +157,17 @@ StaticJsonDocument<4096> AlarmController::makeJSON(const AlarmSettings* settings
 }
 
 bool AlarmController::saveAlarmSettingsToSd(const AlarmSettings* settings, uint8_t count) {
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     return false;
   }
 
-  if (sdController_.exists(ALARM_FILE) && !sdController_.remove(ALARM_FILE)) {
+  if (sdController_->exists(ALARM_FILE) && !sdController_->remove(ALARM_FILE)) {
     return false;
   }
 
   StaticJsonDocument<4096> doc = makeJSON(settings, count);
 
-  File file = sdController_.open(ALARM_FILE, FILE_WRITE);
+  File file = sdController_->open(ALARM_FILE, FILE_WRITE);
   if (!file) {
     return false;
   }
@@ -205,15 +205,15 @@ bool AlarmController::saveAlarmSettingsToAll(const AlarmSettings* settings, uint
 }
 
 bool AlarmController::loadAlarmSettingsFromSd(AlarmSettings* settings, uint8_t& count) {
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     return false;
   }
 
-  if (!sdController_.exists(ALARM_FILE)) {
+  if (!sdController_->exists(ALARM_FILE)) {
     return false;
   }
 
-  File file = sdController_.open(ALARM_FILE, FILE_READ);
+  File file = sdController_->open(ALARM_FILE, FILE_READ);
   if (!file) {
     return false;
   }
@@ -330,8 +330,8 @@ void AlarmController::handleListMusicFiles(WebServer& webServer) {
   DynamicJsonDocument doc(1024);
   JsonArray files = doc.to<JsonArray>();
 
-  if (sdController_.isReady()) {
-    File root = sdController_.open("/", FILE_READ);
+  if (sdController_ && sdController_->isReady()) {
+    File root = sdController_->open("/", FILE_READ);
     if (root && root.isDirectory()) {
       File file = root.openNextFile();
       while (file) {

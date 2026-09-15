@@ -59,7 +59,7 @@ String decryptHexXor(const String& cipherHex, const String& key) {
 }
 }
 
-GeneralConfigController::GeneralConfigController(SdController& sdController)
+GeneralConfigController::GeneralConfigController(SdController* sdController)
     : sdController_(sdController) {}
 
 bool GeneralConfigController::initialize(const ConfigData *default_config) {
@@ -189,15 +189,15 @@ bool GeneralConfigController::readFromLittleFs(ConfigData* config) {
 
 bool GeneralConfigController::readFromSdCard(ConfigData* config) {
   // reads config from SD card, saves it in the internal config_
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     return false;
   }
 
-  if (!sdController_.exists(GENERAL_CONFIG_FILE)) {
+  if (!sdController_->exists(GENERAL_CONFIG_FILE)) {
     return false;
   }
 
-  File file = sdController_.open(GENERAL_CONFIG_FILE, FILE_READ);
+  File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_READ);
   if (!file) {
     return false;
   }
@@ -238,12 +238,12 @@ bool GeneralConfigController::saveToLittleFs(const ConfigData* new_config) {
 }
 
 bool GeneralConfigController::saveToSdCard(const ConfigData* new_config) {
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     Serial.println("general config: SD card not ready, cannot save config");
     return false;
   }
 
-  if (sdController_.exists(GENERAL_CONFIG_FILE) && !sdController_.remove(GENERAL_CONFIG_FILE)) {
+  if (sdController_->exists(GENERAL_CONFIG_FILE) && !sdController_->remove(GENERAL_CONFIG_FILE)) {
     Serial.println("general config: failed to remove existing config file from SD card");
     return false;
   }
@@ -256,7 +256,7 @@ bool GeneralConfigController::saveToSdCard(const ConfigData* new_config) {
   doc["ftpUsername"] = new_config->ftpUsername;
   doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
 
-  File file = sdController_.open(GENERAL_CONFIG_FILE, FILE_WRITE);
+  File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
     Serial.println("general config: failed to open config file for writing to SD card");
     return false;

@@ -9,7 +9,7 @@ class WebServer;
 
 class AlarmController {
  public:
-  explicit AlarmController(SdController& sdController);
+  explicit AlarmController(SdController* sdController);
 
   bool initialize();
   void handleGetAlarmConfig(WebServer& webServer);
@@ -48,7 +48,7 @@ class AlarmController {
 
   void sendAlarmConfigJson(WebServer& webServer);
 
-  SdController& sdController_;
+  SdController* sdController_;
 
   AlarmSettings alarmSettings_[MAX_ALARMS];
   uint8_t alarmCount_ = 0;

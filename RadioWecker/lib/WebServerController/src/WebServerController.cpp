@@ -28,8 +28,8 @@ String formatBytes(uint64_t bytes) {
 
 WebServerController::WebServerController( AlarmController& alarmController,
                                           ClockController& clockController,
-                                          SdController& sdController,
-                                          SoundController& soundController,
+                                          SdController* sdController,
+                                          SoundController* soundController,
                                           DisplayManager* displayManager,
                                           GeneralConfigController& generalConfigController,
                                           uint16_t port)
@@ -47,7 +47,7 @@ bool WebServerController::beginFtpServer() {
     return true;
   }
 
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     Serial.println("webserver: FTP not started (SD is not ready)");
     return false;
   }
@@ -167,14 +167,14 @@ void WebServerController::handleGetStatus() {
   doc["clock"] = clockStatus;
   doc["ntp"] = clockController_.isNtpSynchronized() ? "sync" : "not sync";
 
-  if (!sdController_.isReady()) {
+  if (!sdController_ || !sdController_->isReady()) {
     doc["sd"] = "not ready";
     doc["sdFree"] = "0 B";
     doc["sdTotal"] = "0 B";
   } else {
     doc["sd"] = "ready";
-    doc["sdFree"] = formatBytes(sdController_.availableBytes());
-    doc["sdTotal"] = formatBytes(sdController_.totalBytes());
+    doc["sdFree"] = formatBytes(sdController_->availableBytes());
+    doc["sdTotal"] = formatBytes(sdController_->totalBytes());
   }
 
   if (!alarmController_.isInitialized()) {
@@ -185,9 +185,9 @@ void WebServerController::handleGetStatus() {
     doc["alarmCount"] = alarmController_.alarmCount();
   }
 
-  doc["soundReady"] = soundController_.isReady();
-  doc["soundPlaying"] = soundController_.isPlaying();
-  doc["soundTrack"] = soundController_.currentTrack();
+  doc["soundReady"] = soundController_ ? soundController_->isReady() : false;
+  doc["soundPlaying"] = soundController_ ? soundController_->isPlaying() : false;
+  doc["soundTrack"] = soundController_ ? soundController_->currentTrack() : "";
 
   String payload;
   serializeJson(doc, payload);
@@ -262,41 +262,101 @@ void WebServerController::setupRoutes() {
 
   // sound controller related
   webServer_.on("/api/sound/status", HTTP_GET, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::GetStatus);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::GetStatus);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/play", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Play);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::Play);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/radio", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::PlayRadio);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::PlayRadio);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/pause", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::PauseToggle);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::PauseToggle);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/next", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Next);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::Next);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/prev", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Previous);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::Previous);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/stop", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::Stop);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::Stop);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
   webServer_.on("/api/sound/volume", HTTP_POST, [this]() {
-    soundController_.handleWebServerCommand(webServer_, SoundController::WebServerCommand::SetVolume);
+    if (soundController_) {
+      soundController_->handleWebServerCommand(webServer_, SoundController::WebServerCommand::SetVolume);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
+    }
   });
 
   // sd card related
   webServer_.on("/api/sdcard/listMusicFiles", HTTP_GET, [this]() {
-    sdController_.handleListFiles(webServer_,
+    if (!sdController_ || !sdController_->isReady()) {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"SD card not ready\"}");
+      return;
+    }
+    sdController_->handleListFiles(webServer_,
                                   SoundController::kSupportedFileExtensions,
                                   SoundController::kSupportedFileExtensionCount);
   });
-  webServer_.on("/api/sdcard/mkdir", HTTP_POST, [this]() { sdController_.handleCreateFolder(webServer_); });
-  webServer_.on("/api/sdcard/delete", HTTP_POST, [this]() { sdController_.handleDeletePath(webServer_); });
+  webServer_.on("/api/sdcard/mkdir", HTTP_POST, [this]() { 
+    if (!sdController_ || !sdController_->isReady()) {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"SD card not ready\"}");
+      return;
+    }
+    sdController_->handleCreateFolder(webServer_); 
+  });
+  webServer_.on("/api/sdcard/delete", HTTP_POST, [this]() { 
+    if (!sdController_ || !sdController_->isReady()) {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"SD card not ready\"}");
+      return;
+    }
+    sdController_->handleDeletePath(webServer_); 
+  });
   webServer_.on("/api/sdcard/upload", HTTP_POST,
-                [this]() { sdController_.handleUploadCompleted(webServer_); },
-                [this]() { sdController_.handleUploadFile(webServer_); });
+                [this]() { 
+                  if (!sdController_ || !sdController_->isReady()) {
+                    webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"SD card not ready\"}");
+                    return;
+                  }
+                  sdController_->handleUploadCompleted(webServer_); 
+                },
+                [this]() { 
+                  if (!sdController_ || !sdController_->isReady()) {
+                    webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"SD card not ready\"}");
+                    return;
+                  }
+                  sdController_->handleUploadFile(webServer_); 
+                });
 
   // not found handler
   webServer_.onNotFound([this]() {

@@ -15,8 +15,8 @@ class WebServerController {
  public:
   explicit WebServerController(AlarmController& alarmController,
                                ClockController& clockController,
-                               SdController& sdController,
-                               SoundController& soundController,
+                               SdController* sdController,
+                               SoundController* soundController,
                                DisplayManager* displayManager,
                                GeneralConfigController& generalConfigController,
                                uint16_t port = 80);
@@ -44,8 +44,8 @@ class WebServerController {
 
   AlarmController& alarmController_;
   ClockController& clockController_;
-  SdController& sdController_;
-  SoundController& soundController_;
+  SdController* sdController_;
+  SoundController* soundController_;
   DisplayManager* displayManager_;
   GeneralConfigController& generalConfigController_;
   FtpServer ftpServer_;
