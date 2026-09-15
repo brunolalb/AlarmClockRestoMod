@@ -17,7 +17,7 @@ class WebServerController {
                                ClockController& clockController,
                                SdController& sdController,
                                SoundController& soundController,
-                               DisplayManager& displayManager,
+                               DisplayManager* displayManager,
                                GeneralConfigController& generalConfigController,
                                uint16_t port = 80);
 
@@ -46,7 +46,7 @@ class WebServerController {
   ClockController& clockController_;
   SdController& sdController_;
   SoundController& soundController_;
-  DisplayManager& displayManager_;
+  DisplayManager* displayManager_;
   GeneralConfigController& generalConfigController_;
   FtpServer ftpServer_;
   WebServer webServer_;

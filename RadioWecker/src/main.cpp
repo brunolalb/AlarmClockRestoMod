@@ -15,7 +15,8 @@
 #include <WiFiController.h>
 #include <WebServerController.h>
 
-#define WEBSERVER_OFF
+//#define WEBSERVER_OFF
+#define DISPLAY_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -42,9 +43,13 @@ void create_modules() {
                                       SD_SPI_MOSI_PIN,
                                       SD_SPI_FREQUENCY_HZ);
 
+#ifndef DISPLAY_OFF
   modules.display = new DisplayManager( DISPLAY_CLK_PIN,
                                         DISPLAY_DIO_PIN,
                                         DISPLAY_SEPARATOR_MODE_DEFAULT);
+#else
+  modules.display = nullptr;
+#endif
 
   modules.clock = new ClockController(RTC_SQW_PIN,
                                       RTC_I2C_SDA_PIN,
@@ -73,7 +78,7 @@ void create_modules() {
                                               *modules.clock,
                                               *modules.sd_card,
                                               *modules.sound,
-                                              *modules.display,
+                                              modules.display,
                                               *modules.config);
 #else
   modules.webserver = nullptr;
@@ -136,9 +141,11 @@ void initialize_modules() {
     Serial.println("main: general configuration initialization failed");
   }
 
+#ifndef DISPLAY_OFF
   if (!modules.display->initialize(modules.config->brightness())) {
     Serial.println("main: display initialization failed");
   }
+#endif
 
   WiFiController::WifiConfig wifiConfig = {
     .hostname = modules.config->hostname(),
@@ -149,7 +156,7 @@ void initialize_modules() {
     Serial.println("main: WiFi initialization failed");
   }
 
-  if (!modules.buttons->initialize(modules.display->display())) {
+  if (!modules.buttons->initialize(modules.display ? modules.display->display() : nullptr)) {
     Serial.println("main: button reader initialization failed");
   }
 
@@ -215,7 +222,9 @@ void loop() {
   modules.sound->update();
   modules.buttons->update();
   modules.clock->update();
+#ifndef DISPLAY_OFF
   modules.display->showTimeHHMM(modules.clock->displayValueHHMM());
+#endif
 
   modules.led->update();
 }

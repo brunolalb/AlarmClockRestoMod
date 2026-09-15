@@ -47,7 +47,7 @@ const ButtonReader::ButtonsStates& ButtonReader::states() const {
 void ButtonReader::read_buttons() {
   ButtonsStates newStates = {};
   static uint32_t lastDisplayButtonsState = 0;
-  uint32_t displayButtonsState = display_->getButtons();
+  uint32_t displayButtonsState = display_ ? display_->getButtons() : 0;
 
   newStates.RADIO_OFF = mcp_.digitalRead(buttonsChannels_.RADIO_OFF);
   newStates.RADIO_ON = mcp_.digitalRead(buttonsChannels_.RADIO_ON);
