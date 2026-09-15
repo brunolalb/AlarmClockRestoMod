@@ -15,6 +15,7 @@
 #include <WiFiController.h>
 #include <WebServerController.h>
 
+#define WEBSERVER_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -67,15 +68,19 @@ void create_modules() {
 
   modules.config = new GeneralConfigController(*modules.sd_card);
 
+#ifndef WEBSERVER_OFF
   modules.webserver = new WebServerController(*modules.alarm,
                                               *modules.clock,
                                               *modules.sd_card,
                                               *modules.sound,
                                               *modules.display,
                                               *modules.config);
+#else
+  modules.webserver = nullptr;
+#endif
 
   modules.wifi = new WiFiController();
-  
+
   ButtonReader::HardwareConfig ButtonsHWConfig = {
     .i2cSdaPin = RADIO_BUTTONS_I2C_SDA_PIN,
     .i2cSclPin = RADIO_BUTTONS_I2C_SCL_PIN,
@@ -169,9 +174,11 @@ void initialize_modules() {
     Serial.println("main: sound initialization failed");
   }
 
+#ifndef WEBSERVER_OFF
   if (!modules.webserver->initialize(modules.wifi->connected())) {
     Serial.println("main: web server initialization failed");
   }
+#endif
 
   if (!modules.cli->initialize()) {
     Serial.println("main: CLI initialization failed");
@@ -191,18 +198,20 @@ void setup() {
 
 
 void loop() {
-  static uint32_t lastDisplayUpdateMs = 0;
+#ifndef WEBSERVER_OFF
   static bool wifi_was_connected = modules.wifi->connected();
-
   bool wifi_connected = modules.wifi->update();
   if (wifi_connected && !wifi_was_connected) {
     modules.webserver->initialize(true);
   }
   wifi_was_connected = wifi_connected;
+#endif
 
   modules.cli->update();
 
+#ifndef WEBSERVER_OFF
   modules.webserver->update();
+#endif
   modules.sound->update();
   modules.buttons->update();
   modules.clock->update();
