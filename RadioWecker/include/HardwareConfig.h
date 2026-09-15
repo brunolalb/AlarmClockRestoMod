@@ -34,6 +34,7 @@ static constexpr uint32_t I2C_FREQ_HZ = 100000;
 static constexpr uint8_t DISPLAY_CLK_PIN = D4;
 static constexpr uint8_t DISPLAY_DIO_PIN = D3;
 
+// todo: the TM1637 can only read one button at a time - move them to the MCP
 static constexpr uint8_t DISPLAY_BUTTON_SLOW_GRID = 1;
 static constexpr uint8_t DISPLAY_BUTTON_SLOW_KEY = 1;
 static constexpr uint8_t DISPLAY_BUTTON_FAST_GRID = 1;
@@ -49,14 +50,13 @@ static constexpr uint8_t DISPLAY_BUTTON_SLEEP_FRONT_KEY = 1;
 static constexpr uint8_t DISPLAY_BUTTON_ILLUM_GRID = 4;
 static constexpr uint8_t DISPLAY_BUTTON_ILLUM_KEY = 2;
 
-// todo: verify that the channels are correct
-static constexpr uint8_t DISPLAY_BUTTON_SLOW_CHANNEL = 0;
-static constexpr uint8_t DISPLAY_BUTTON_FAST_CHANNEL = 1;
-static constexpr uint8_t DISPLAY_BUTTON_SLEEP_TOP_CHANNEL = 2;
-static constexpr uint8_t DISPLAY_BUTTON_SIGNAL_CHANNEL = 3; 
-static constexpr uint8_t DISPLAY_BUTTON_TIME_CHANNEL = 4;
-static constexpr uint8_t DISPLAY_BUTTON_SLEEP_FRONT_CHANNEL = 5;
-static constexpr uint8_t DISPLAY_BUTTON_ILLUM_CHANNEL = 6;
+static constexpr uint8_t DISPLAY_BUTTON_SLOW_CHANNEL = 99; //last one to check
+static constexpr uint8_t DISPLAY_BUTTON_FAST_CHANNEL = 0;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_TOP_CHANNEL = 1;
+static constexpr uint8_t DISPLAY_BUTTON_SIGNAL_CHANNEL = 10;
+static constexpr uint8_t DISPLAY_BUTTON_TIME_CHANNEL = 2;
+static constexpr uint8_t DISPLAY_BUTTON_SLEEP_FRONT_CHANNEL = 13;
+static constexpr uint8_t DISPLAY_BUTTON_ILLUM_CHANNEL = 5;
 
 // SD Card
 static constexpr uint8_t SD_SPI_CS_PIN = D10;
