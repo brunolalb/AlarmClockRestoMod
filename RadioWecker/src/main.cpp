@@ -22,7 +22,8 @@
 //#define WEBSERVER_OFF
 //#define WIRELESS_OFF
 //#define CLI_OFF
-#define BUTTONS_OFF
+//#define BUTTONS_OFF
+#define ALARMS_OFF
 
 typedef struct modules_ {
   DisplayManager *display;
@@ -70,7 +71,11 @@ void create_modules() {
                                       RTC_I2C_SCL_PIN,
                                       RTC_I2C_FREQUENCY_HZ);
 
+#ifndef ALARMS_OFF
   modules.alarm = new AlarmController(modules.sd_card);
+#else
+  modules.alarm = nullptr;
+#endif
 
 #ifndef SOUND_OFF
   SoundController::HardwareConfig hwConfig = {
@@ -92,7 +97,7 @@ void create_modules() {
   modules.config = new GeneralConfigController(modules.sd_card);
 
 #ifndef WEBSERVER_OFF
-  modules.webserver = new WebServerController(*modules.alarm,
+  modules.webserver = new WebServerController(modules.alarm,
                                               *modules.clock,
                                               modules.sd_card,
                                               modules.sound,
@@ -212,9 +217,11 @@ void initialize_modules() {
     Serial.println("main: clock initialization failed");
   }
 
+#ifndef ALARMS_OFF
   if (!modules.alarm->initialize()) {
     Serial.println("main: alarm initialization failed");
   }
+#endif
 
 #ifndef SOUND_OFF
   if (!modules.sound->initialize()) {

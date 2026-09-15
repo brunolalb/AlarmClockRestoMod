@@ -13,7 +13,7 @@
 
 class WebServerController {
  public:
-  explicit WebServerController(AlarmController& alarmController,
+  explicit WebServerController(AlarmController* alarmController,
                                ClockController& clockController,
                                SdController* sdController,
                                SoundController* soundController,
@@ -42,7 +42,7 @@ class WebServerController {
   void setupRoutes();
   bool beginFtpServer();
 
-  AlarmController& alarmController_;
+  AlarmController* alarmController_;
   ClockController& clockController_;
   SdController* sdController_;
   SoundController* soundController_;

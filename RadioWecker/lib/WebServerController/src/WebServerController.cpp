@@ -26,7 +26,7 @@ String formatBytes(uint64_t bytes) {
 }
 }
 
-WebServerController::WebServerController( AlarmController& alarmController,
+WebServerController::WebServerController( AlarmController* alarmController,
                                           ClockController& clockController,
                                           SdController* sdController,
                                           SoundController* soundController,
@@ -177,12 +177,12 @@ void WebServerController::handleGetStatus() {
     doc["sdTotal"] = formatBytes(sdController_->totalBytes());
   }
 
-  if (!alarmController_.isInitialized()) {
+  if (!alarmController_ || !alarmController_->isInitialized()) {
     doc["alarm"] = "not initialized";
     doc["alarmCount"] = 0;
   } else {
     doc["alarm"] = "initialized";
-    doc["alarmCount"] = alarmController_.alarmCount();
+    doc["alarmCount"] = alarmController_->alarmCount();
   }
 
   doc["soundReady"] = soundController_ ? soundController_->isReady() : false;
@@ -257,8 +257,20 @@ void WebServerController::setupRoutes() {
   webServer_.on("/api/config", HTTP_POST, [this]() { handleSaveConfig(); });
 
   // Alarms related
-  webServer_.on("/api/alarm", HTTP_GET, [this]() { alarmController_.handleGetAlarmConfig(webServer_); });
-  webServer_.on("/api/alarm", HTTP_POST, [this]() { alarmController_.handleSaveAlarmConfig(webServer_); });
+  webServer_.on("/api/alarm", HTTP_GET, [this]() {
+    if (alarmController_) {
+      alarmController_->handleGetAlarmConfig(webServer_);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Alarm controller not available\"}");
+    }
+  });
+  webServer_.on("/api/alarm", HTTP_POST, [this]() {
+    if (alarmController_) {
+      alarmController_->handleSaveAlarmConfig(webServer_);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Alarm controller not available\"}");
+    }
+  });
 
   // sound controller related
   webServer_.on("/api/sound/status", HTTP_GET, [this]() {
