@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <thread>
 
 #include <AlarmController.h>
 #include <ButtonReader.h>
@@ -18,7 +19,7 @@ class CLIController {
                 ButtonReader* buttonReader);
 
   bool initialize();
-  void update();
+  void updateTask();
 
  private:
   void handleCommand(const String& rawCommand);
@@ -32,5 +33,6 @@ class CLIController {
   AlarmController* alarmController_;
   WebServerController* webServerController_;
   ButtonReader* buttonReader_;
-  String inputBuffer_;
+
+  std::thread _updateTask;
 };

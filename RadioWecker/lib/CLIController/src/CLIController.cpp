@@ -1,5 +1,7 @@
 #include "CLIController.h"
 
+#include <task.h>
+
 #include <WiFi.h>
 
 #include <WebServerController.h>
@@ -45,26 +47,38 @@ CLIController::CLIController( ClockController* clockController,
       buttonReader_(buttonReader) {}
 
 bool CLIController::initialize() {
+  _updateTask = std::thread(&CLIController::updateTask, this);
+
+  if (!_updateTask.joinable()) {
+    Serial.println("CLI failed to create thread");
+    return false;
+  }
+
   Serial.println("\n\nCommand Line Interface ready. Type 'help' for commands.\n");
   return true;
 }
 
-void CLIController::update() {
-  while (Serial.available() > 0) {
-    const char c = static_cast<char>(Serial.read());
-    if (c == '\r') {
-      continue;
-    }
+void CLIController::updateTask() {
+  String inputBuffer_;
 
-    if (c == '\n') {
-      handleCommand(inputBuffer_);
-      inputBuffer_ = "";
-      continue;
-    }
+  while (true) {
+    while (Serial.available() > 0) {
+      const char c = static_cast<char>(Serial.read());
+      if (c == '\r') {
+        continue;
+      }
 
-    if (inputBuffer_.length() < 96) {
-      inputBuffer_ += c;
+      if (c == '\n') {
+        handleCommand(inputBuffer_);
+        inputBuffer_ = "";
+        continue;
+      }
+
+      if (inputBuffer_.length() < 96) {
+        inputBuffer_ += c;
+      }
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
@@ -94,6 +108,12 @@ void CLIController::handleCommand(const String& rawCommand) {
     return;
   }
 
+  if (command == "reboot") {
+    Serial.println("Rebooting...");
+    ESP.restart();
+    return;
+  }
+
   String output;
   output.reserve(96);
   output += "Unknown command: ";
@@ -110,7 +130,8 @@ void CLIController::printHelp() const {
       "  help      - Show this help\n"
       "  wifi      - Print WiFi connection details\n"
       "  status    - Print system/module state\n"
-      "  buttons   - Print the state of all buttons\n";
+      "  buttons   - Print the state of all buttons\n"
+      "  reboot    - Reboot the system\n";
   Serial.print(output);
 }
 

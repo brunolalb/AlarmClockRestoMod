@@ -236,8 +236,6 @@ void loop() {
     wifi_was_connected = wifi_connected;
   }
 
-  if (modules.cli) modules.cli->update();
-
   if (modules.webserver) modules.webserver->update();
   if (modules.sound) modules.sound->update();
   if (modules.buttons) modules.buttons->update();
