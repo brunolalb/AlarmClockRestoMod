@@ -1,33 +1,11 @@
 #pragma once
 
 #include <Arduino.h>
-
-class HeartbeatLedController {
- public:
-  explicit HeartbeatLedController(unsigned long intervalMs);
-
-  bool update(unsigned long nowMs);
-
- private:
-  unsigned long intervalMs_;
-  unsigned long lastToggleMs_;
-  bool state_;
-};
-
-class ActivityPulseController {
- public:
-  ActivityPulseController();
-
-  void trigger(unsigned long nowMs, unsigned long durationMs);
-  bool isActive(unsigned long nowMs) const;
-
- private:
-  unsigned long activeUntilMs_;
-};
+#include <timers.h>
 
 class OnboardLedController {
  public:
-  explicit OnboardLedController(uint8_t pin, unsigned long heartbeatIntervalMs = 500);
+  explicit OnboardLedController(uint8_t pin, uint32_t heartbeatIntervalMs = 500);
 
   bool initialize();
   void pulseActivity(unsigned long durationMs = 120);
@@ -35,6 +13,7 @@ class OnboardLedController {
 
  private:
   uint8_t pin_;
-  HeartbeatLedController heartbeat_;
-  ActivityPulseController activity_;
+  uint32_t heartbeatIntervalMs_;
+  TimerHandle_t xTimer;
+  static void timerCallback(TimerHandle_t timer);
 };

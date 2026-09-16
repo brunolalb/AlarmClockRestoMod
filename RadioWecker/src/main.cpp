@@ -47,7 +47,7 @@ void create_modules() {
   memset(&modules, 0, sizeof(Modules));
 
 #ifndef ONBOARDLED_OFF
-  modules.led = new OnboardLedController(ONBOARD_LED_PIN);
+  modules.led = new OnboardLedController(ONBOARD_LED_PIN, 500);
 #endif
 
 #ifndef SDCARD_OFF
@@ -243,6 +243,4 @@ void loop() {
   if (modules.buttons) modules.buttons->update();
   if (modules.clock) modules.clock->update();
   if (modules.display) modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
-
-  if (modules.led) modules.led->update();
 }
