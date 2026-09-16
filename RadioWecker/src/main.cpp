@@ -15,39 +15,39 @@
 #include <WiFiController.h>
 #include <WebServerController.h>
 
-//#define DISPLAY_OFF
 //#define ONBOARDLED_OFF
+//#define DISPLAY_OFF
 //#define SDCARD_OFF
 //#define SOUND_OFF
-//#define WEBSERVER_OFF
 //#define WIRELESS_OFF
-//#define CLI_OFF
+//#define WEBSERVER_OFF
 //#define BUTTONS_OFF
 //#define ALARMS_OFF
 //#define CLOCK_OFF
-#define GENERALCONFIG_OFF
+//#define GENERALCONFIG_OFF
+//#define CLI_OFF
 
 typedef struct modules_ {
-  DisplayManager *display;
   OnboardLedController *led;
-  ClockController *clock;
+  DisplayManager *display;
   SdController *sd_card;
-  AlarmController *alarm;
   SoundController *sound;
-  GeneralConfigController *config;
-  WebServerController *webserver;
   WiFiController *wifi;
-  CLIController *cli;
+  WebServerController *webserver;
   ButtonReader *buttons;
+  AlarmController *alarm;
+  ClockController *clock;
+  GeneralConfigController *config;
+  CLIController *cli;
 } Modules;
 
 Modules modules;
 
 void create_modules() {
+  memset(&modules, 0, sizeof(Modules));
+
 #ifndef ONBOARDLED_OFF
   modules.led = new OnboardLedController(ONBOARD_LED_PIN);
-#else
-  modules.led = nullptr;
 #endif
 
 #ifndef SDCARD_OFF
@@ -56,16 +56,12 @@ void create_modules() {
                                       SD_SPI_MISO_PIN,
                                       SD_SPI_MOSI_PIN,
                                       SD_SPI_FREQUENCY_HZ);
-#else
-  modules.sd_card = nullptr;
 #endif
 
 #ifndef DISPLAY_OFF
   modules.display = new DisplayManager( DISPLAY_CLK_PIN,
                                         DISPLAY_DIO_PIN,
                                         DISPLAY_SEPARATOR_MODE_DEFAULT);
-#else
-  modules.display = nullptr;
 #endif
 
 #ifndef CLOCK_OFF
@@ -73,14 +69,10 @@ void create_modules() {
                                       RTC_I2C_SDA_PIN,
                                       RTC_I2C_SCL_PIN,
                                       RTC_I2C_FREQUENCY_HZ);
-#else
-  modules.clock = nullptr;
 #endif
 
 #ifndef ALARMS_OFF
   modules.alarm = new AlarmController(modules.sd_card);
-#else
-  modules.alarm = nullptr;
 #endif
 
 #ifndef SOUND_OFF
@@ -96,14 +88,10 @@ void create_modules() {
   };
   modules.sound = new SoundController(modules.sd_card,
                                       &hwConfig);
-#else
-  modules.sound = nullptr;
 #endif
 
 #ifndef GENERALCONFIG_OFF
   modules.config = new GeneralConfigController(modules.sd_card);
-#else
-  modules.config = nullptr;
 #endif
 
 #ifndef WEBSERVER_OFF
@@ -113,14 +101,10 @@ void create_modules() {
                                               modules.sound,
                                               modules.display,
                                               modules.config);
-#else
-  modules.webserver = nullptr;
 #endif
 
 #ifndef WIRELESS_OFF
   modules.wifi = new WiFiController();
-#else
-  modules.wifi = nullptr;
 #endif
 
 #ifndef BUTTONS_OFF
@@ -148,8 +132,6 @@ void create_modules() {
   };
   modules.buttons = new ButtonReader(&ButtonsHWConfig,
                                      &buttonsChannels);
-#else
-  modules.buttons = nullptr;
 #endif
 
 #ifndef CLI_OFF
@@ -158,26 +140,19 @@ void create_modules() {
                                   modules.alarm,
                                   modules.webserver,
                                   modules.buttons);
-#else
-  modules.cli = nullptr;
 #endif
 }
 
 
 void initialize_modules() {
-#ifndef ONBOARDLED_OFF
-  if (!modules.led->initialize()) {
+  if (modules.led) if (!modules.led->initialize()) {
     Serial.println("main: onboard LED initialization failed");
   }
-#endif
 
-#ifndef SDCARD_OFF
-  if (!modules.sd_card->initialize()) {
+  if (modules.sd_card) if (!modules.sd_card->initialize()) {
     Serial.println("main: SD Card initialization failed");
   }
-#endif
 
-#ifndef GENERALCONFIG_OFF
   GeneralConfigController::ConfigData configData = {
     .hostname = WIFI_DEFAULT_HOSTNAME,
     .timezonePosix = RTC_TIMEZONE_POSIX_DEFAULT,
@@ -186,36 +161,30 @@ void initialize_modules() {
     .ftpUsername = DEFAULT_FTP_USERNAME,
     .ftpPassword = DEFAULT_FTP_PASSWORD
   };
-  if (!modules.config->initialize(&configData)) {
+  if (modules.config) if (!modules.config->initialize(&configData)) {
     Serial.println("main: general configuration initialization failed");
   }
-#endif
 
-#ifndef DISPLAY_OFF
-  if (!modules.display->initialize(modules.config ? modules.config->brightness() : DISPLAY_BRIGHTNESS_DEFAULT)) {
+  if (modules.display) if (!modules.display->initialize(modules.config ? modules.config->brightness() : DISPLAY_BRIGHTNESS_DEFAULT)) {
     Serial.println("main: display initialization failed");
   }
-#endif
 
-#ifndef WIRELESS_OFF
   WiFiController::WifiConfig wifiConfig = {
     .hostname = modules.config ? modules.config->hostname() : WIFI_DEFAULT_HOSTNAME,
     .config_portal_timeout_sec = WIFI_CONFIG_PORTAL_TIMEOUT_S
   };
-  if (!modules.wifi->initialize(&wifiConfig)) {
-    Serial.println("main: WiFi initialization failed");
+  if (modules.wifi) { 
+    if (!modules.wifi->initialize(&wifiConfig)) {
+      Serial.println("main: WiFi initialization failed");
+    }
+  } else {
+    WiFi.mode(WIFI_OFF);
   }
-#else
-  WiFi.mode(WIFI_OFF);
-#endif
 
-#ifndef BUTTONS_OFF
-  if (!modules.buttons->initialize(modules.display ? modules.display->display() : nullptr)) {
+  if (modules.buttons) if (!modules.buttons->initialize(modules.display ? modules.display->display() : nullptr)) {
     Serial.println("main: button reader initialization failed");
   }
-#endif
 
-#ifndef CLOCK_OFF
   ClockController::TimeConfig clockConfig = {
     .ntpServer = RTC_NTP_SERVER,
     .timezonePosix = modules.config ? modules.config->timezonePosix() : RTC_TIMEZONE_POSIX_DEFAULT,
@@ -224,34 +193,25 @@ void initialize_modules() {
     .ntpSyncIntervalMs = RTC_NTP_SYNC_INTERVAL_MS,
     .ntpRetryIntervalMs = RTC_NTP_RETRY_INTERVAL_MS
   };
-  if (!modules.clock->initialize(&clockConfig)) {
+  if (modules.clock) if (!modules.clock->initialize(&clockConfig)) {
     Serial.println("main: clock initialization failed");
   }
-#endif
 
-#ifndef ALARMS_OFF
-  if (!modules.alarm->initialize()) {
+  if (modules.alarm) if (!modules.alarm->initialize()) {
     Serial.println("main: alarm initialization failed");
   }
-#endif
 
-#ifndef SOUND_OFF
-  if (!modules.sound->initialize()) {
+  if (modules.sound) if (!modules.sound->initialize()) {
     Serial.println("main: sound initialization failed");
   }
-#endif
 
-#ifndef WEBSERVER_OFF
-  if (!modules.webserver->initialize(modules.wifi ? modules.wifi->connected() : false)) {
+  if (modules.webserver) if (!modules.webserver->initialize(modules.wifi ? modules.wifi->connected() : false)) {
     Serial.println("main: web server initialization failed");
   }
-#endif
 
-#ifndef CLI_OFF
-  if (!modules.cli->initialize()) {
+  if (modules.cli) if (!modules.cli->initialize()) {
     Serial.println("main: CLI initialization failed");
   }
-#endif
 }
 
 
@@ -267,36 +227,22 @@ void setup() {
 
 
 void loop() {
-#ifndef WEBSERVER_OFF
-  static bool wifi_was_connected = modules.wifi ? modules.wifi->connected() : false;
-  bool wifi_connected = modules.wifi ? modules.wifi->update() : false;
-  if (wifi_connected && !wifi_was_connected) {
-    modules.webserver->initialize(true);
+  if (modules.webserver) {
+    static bool wifi_was_connected = modules.wifi ? modules.wifi->connected() : false;
+    bool wifi_connected = modules.wifi ? modules.wifi->update() : false;
+    if (wifi_connected && !wifi_was_connected) {
+      modules.webserver->initialize(true);
+    }
+    wifi_was_connected = wifi_connected;
   }
-  wifi_was_connected = wifi_connected;
-#endif
 
-#ifndef CLI_OFF
-  modules.cli->update();
-#endif
+  if (modules.cli) modules.cli->update();
 
-#ifndef WEBSERVER_OFF
-  modules.webserver->update();
-#endif
-#ifndef SOUND_OFF
-  modules.sound->update();
-#endif
-#ifndef BUTTONS_OFF
-  modules.buttons->update();
-#endif
-#ifndef CLOCK_OFF
-  modules.clock->update();
-#endif
-#ifndef DISPLAY_OFF
-  modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
-#endif
+  if (modules.webserver) modules.webserver->update();
+  if (modules.sound) modules.sound->update();
+  if (modules.buttons) modules.buttons->update();
+  if (modules.clock) modules.clock->update();
+  if (modules.display) modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
 
-#ifndef ONBOARDLED_OFF
-  modules.led->update();
-#endif
+  if (modules.led) modules.led->update();
 }
