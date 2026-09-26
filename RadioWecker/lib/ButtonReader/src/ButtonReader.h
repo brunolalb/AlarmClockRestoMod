@@ -4,6 +4,8 @@
 #include <Adafruit_MCP23X17.h>
 #include <TM1637.h>
 
+#include <thread>
+
 class ButtonReader {
  public:
   struct HardwareConfig {
@@ -64,10 +66,10 @@ class ButtonReader {
   ButtonReader(const HardwareConfig* hwConfig,
                const ButtonsChannels* buttonsChannels);
   bool initialize(TM1637* display);
-  void update();
   const ButtonsStates& states() const;
 
  private:
+    void updateTask();
     void read_buttons();
 
     HardwareConfig hwConfig_;
@@ -75,5 +77,7 @@ class ButtonReader {
     TM1637* display_;
     Adafruit_MCP23X17 mcp_;
     ButtonsStates buttonsStates_{};
+
+    std::thread _updateTask;
 
 };

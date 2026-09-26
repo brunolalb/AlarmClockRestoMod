@@ -27,16 +27,16 @@ bool ButtonReader::initialize(TM1637* display) {
   mcp_.pinMode(buttonsChannels_.RADIO_FM, INPUT);
   mcp_.pinMode(buttonsChannels_.RADIO_AFC, INPUT);
 
+  _updateTask = std::thread(&ButtonReader::updateTask, this);
+
   return true;
 }
 
-void ButtonReader::update() {
-  static uint32_t lastDisplayUpdateMs = 0;
-
-  const uint32_t now = millis();
-  if (now - lastDisplayUpdateMs >= 200) {
+void ButtonReader::updateTask() {
+  while (1) {
     read_buttons();
-    lastDisplayUpdateMs = now;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
 }
 

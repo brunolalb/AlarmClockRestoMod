@@ -238,7 +238,6 @@ void loop() {
 
   if (modules.webserver) modules.webserver->update();
   if (modules.sound) modules.sound->update();
-  if (modules.buttons) modules.buttons->update();
   if (modules.clock) modules.clock->update();
   if (modules.display) modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
 }
