@@ -169,7 +169,7 @@ void CLIController::printModuleStatus() const {
   output += '\n';
 
   output += "  webserver: ";
-  output += (webServerController_ && webServerController_->isStarted() ? "running" : "stopped");
+  output += (webServerController_ && webServerController_->isReady() ? "running" : "stopped");
   output += '\n';
 
   output += "  clock: ";

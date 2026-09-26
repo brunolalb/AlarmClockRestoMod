@@ -44,6 +44,7 @@ WebServerController::WebServerController( AlarmController* alarmController,
       port_(port) {}
 
 bool WebServerController::beginFtpServer() {
+  // todo: ftp server needs a review
   if (ftpStarted_) {
     return true;
   }
@@ -63,36 +64,46 @@ bool WebServerController::beginFtpServer() {
   return true;
 }
 
-bool WebServerController::initialize(bool wifi_is_connected) {
-  if (!wifi_is_connected) {
-    Serial.println("web server: not started: WiFi is not connected");
-    return false;
-  }
+bool WebServerController::initialize() {
 
-  if (!started_) {
-    setupRoutes();
-    webServer_.begin();
-    started_ = true;
-  }
+  // setup the web server routes
+  setupRoutes();
 
+  // initialize the FTP server
   beginFtpServer();
 
-  Serial.print("web server: running on port ");
-  Serial.println(port_);
+  _updateTask = std::thread(&WebServerController::updateTask, this);
+
+  Serial.print("web server: initialized");
   return true;
 }
 
-void WebServerController::update() {
-  if (started_) {
+void WebServerController::updateTask() {
+  bool wifi_connected = false;
+  auto now = std::chrono::steady_clock::now();
+
+  // wait until wifi is connected to start the webserver
+  while (!wifi_connected) {
+    wifi_connected = WiFi.status() == WL_CONNECTED;
+    if (wifi_connected) {
+      webServer_.begin();
+      Serial.println("web server: started on port " + String(port_));
+      break;
+    }
+    std::this_thread::sleep_until(now + std::chrono::milliseconds(500));
+    now = std::chrono::steady_clock::now();
+  }
+  ready_ = true;
+    
+  while (1) {
     webServer_.handleClient();
     if (ftpStarted_) {
       ftpServer_.handleFTP();
     }
+    // yield to other threads
+    std::this_thread::sleep_until(now + std::chrono::milliseconds(10));
+    now = std::chrono::steady_clock::now();
   }
-}
-
-bool WebServerController::isStarted() const {
-  return started_;
 }
 
 WebServer& WebServerController::server() {
@@ -156,7 +167,7 @@ void WebServerController::handleGetStatus() {
   doc["wifiRssi"] = WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0;
   doc["ip"] = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
 
-  doc["webserver"] = isStarted() ? "running" : "stopped";
+  doc["webserver"] = "running";
 
   String clockStatus;
   if (!clockController_ || !clockController_->isReady()) {

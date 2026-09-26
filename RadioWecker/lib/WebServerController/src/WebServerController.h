@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <ESP32FtpServer.h>
 #include <WebServer.h>
+#include <thread>
 
 #include <DisplayManager.h>
 #include <AlarmController.h>
@@ -21,12 +22,12 @@ class WebServerController {
                                GeneralConfigController* generalConfigController,
                                uint16_t port = 80);
 
-  bool initialize(bool wifi_is_connected);
-  void update();
-  bool isStarted() const;
+  bool initialize();
+  bool isReady() const { return ready_; }
   WebServer& server();
 
  private:
+  void updateTask();
   bool ensureInternalFsMounted();
   void serveFile(const char* path, const char* notFoundMessage, const char* contentType = "text/html");
   void handleIndexPage();
@@ -51,7 +52,8 @@ class WebServerController {
   FtpServer ftpServer_;
   WebServer webServer_;
   uint16_t port_;
-  bool started_ = false;
+  bool ready_ = false;
   bool internalFsMounted_ = false;
   bool ftpStarted_ = false;
+  std::thread _updateTask;
 };

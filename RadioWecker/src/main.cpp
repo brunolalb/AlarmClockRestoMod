@@ -205,7 +205,7 @@ void initialize_modules() {
     Serial.println("main: sound initialization failed");
   }
 
-  if (modules.webserver) if (!modules.webserver->initialize(modules.wifi ? modules.wifi->connected() : false)) {
+  if (modules.webserver) if (!modules.webserver->initialize()) {
     Serial.println("main: web server initialization failed");
   }
 
@@ -227,16 +227,6 @@ void setup() {
 
 
 void loop() {
-  if (modules.webserver) {
-    static bool wifi_was_connected = modules.wifi ? modules.wifi->connected() : false;
-    bool wifi_connected = modules.wifi ? modules.wifi->update() : false;
-    if (wifi_connected && !wifi_was_connected) {
-      modules.webserver->initialize(true);
-    }
-    wifi_was_connected = wifi_connected;
-  }
-
-  if (modules.webserver) modules.webserver->update();
   if (modules.sound) modules.sound->update();
   if (modules.clock) modules.clock->update();
   if (modules.display) modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
