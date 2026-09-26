@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <thread>
 #include <RTClib.h>
 
 class ClockController {
@@ -18,7 +19,6 @@ class ClockController {
                   uint8_t i2cSclPin,
                   uint32_t i2cFrequencyHz = 100000);
   bool initialize(const TimeConfig* default_config);
-  void update();
 
   bool isReady() const;
   bool isTimeValid() const;
@@ -35,6 +35,7 @@ class ClockController {
     uint8_t i2cSclPin_;
     uint32_t i2cFrequencyHz_;
   };
+  void updateTask();
   bool initializeClockFromDateTime(const DateTime& now);
   bool initializeRtcTimeFromChip();
   void updateDisplayedValue();
@@ -48,8 +49,9 @@ class ClockController {
 
   HardwareConfig hwConfig_;
   TimeConfig config_;
+  std::thread _updateTask;
 
-  bool ready_ = false; //todo: rename to RTC_ready or something
+  bool rtcReady_ = false;
   bool timeValid_ = false;
   DateTime currentTime_;
   int displayedHHMM_ = 0;

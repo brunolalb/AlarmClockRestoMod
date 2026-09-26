@@ -20,43 +20,43 @@ ClockController::ClockController(uint8_t rtcSqwPin,
 bool ClockController::initialize(const TimeConfig* default_config) {
   memcpy(&config_, default_config, sizeof(TimeConfig));
 
-  Wire.begin( hwConfig_.i2cSdaPin_,
-              hwConfig_.i2cSclPin_,
-              hwConfig_.i2cFrequencyHz_);
+  // first initialize the I2C RTC
+  rtcReady_ = Wire.begin(hwConfig_.i2cSdaPin_,
+                         hwConfig_.i2cSclPin_,
+                         hwConfig_.i2cFrequencyHz_);
+  if (!rtcReady_) {
+    Serial.println("clock: I2C init failed");
+  } else {
+    rtcReady_ = rtc.begin();
+    timeValid_ = false;
+    if (!rtcReady_) {
+      Serial.println("clock: RTC not found");
+      // todo: use the internal rtc to keep track of time
+    } else {
+      timeValid_ = initializeRtcTimeFromChip();
+      rtc.writeSqwPinMode(DS3231_SquareWave1Hz);
 
-  ready_ = rtc.begin();
-  timeValid_ = false;
-
-  if (!ready_) {
-    Serial.println("clock: RTC not found");
-    return false;
+      pinMode(hwConfig_.rtcSqwPin_, INPUT_PULLUP);
+      const int sqwInterrupt = digitalPinToInterrupt(hwConfig_.rtcSqwPin_);
+      if (sqwInterrupt != NOT_AN_INTERRUPT) {
+        activeInstance_ = this;
+        attachInterrupt(sqwInterrupt, handleRtcSecondTickISR, FALLING);
+      }
+    }
   }
 
-  timeValid_ = initializeRtcTimeFromChip();
-  rtc.writeSqwPinMode(DS3231_SquareWave1Hz);
+  // now initialize the NTP synchronization if needed
+  configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
 
-  pinMode(hwConfig_.rtcSqwPin_, INPUT_PULLUP);
-  const int sqwInterrupt = digitalPinToInterrupt(hwConfig_.rtcSqwPin_);
-  if (sqwInterrupt != NOT_AN_INTERRUPT) {
-    activeInstance_ = this;
-    attachInterrupt(sqwInterrupt, handleRtcSecondTickISR, FALLING);
-  }
+  _updateTask = std::thread(&ClockController::updateTask, this);
 
-  syncFromNtpIfNeeded();
-
-  return ready_;
+  return true;
 }
 
-void ClockController::update() {
-  static uint32_t lastDisplayUpdateMs = 0;
+void ClockController::updateTask() {
+  auto now = std::chrono::steady_clock::now();
 
-  if (!ready_) {
-    return;
-  }
-
-  const uint32_t now = millis();
-  if (now - lastDisplayUpdateMs >= 200) {
-    lastDisplayUpdateMs = now;
+  while(1) {
     
     syncFromNtpIfNeeded();
 
@@ -69,11 +69,14 @@ void ClockController::update() {
     interrupts();
 
     advanceSoftwareClockOneSecond();
+
+    std::this_thread::sleep_until(now + std::chrono::milliseconds(200));
+    now = std::chrono::steady_clock::now();
   }
 }
 
 bool ClockController::isReady() const {
-  return ready_;
+  return true;
 }
 
 bool ClockController::isTimeValid() const {
