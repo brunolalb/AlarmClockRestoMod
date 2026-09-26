@@ -10,47 +10,51 @@ bool WiFiController::initialize(const WifiConfig *default_config) {
   memcpy(&config_, default_config, sizeof(WifiConfig));
 
   WiFi.mode(WIFI_STA);
-  WiFi.setAutoReconnect(true);
   wifiManager_.setConfigPortalBlocking(false);
   wifiManager_.setConfigPortalTimeout(config_.config_portal_timeout_sec);
   wifiManager_.setHostname(config_.hostname.c_str());
+  wifiManager_.setWiFiAutoReconnect(true);
 
-  const bool connected = wifiManager_.autoConnect((config_.hostname + "-Setup").c_str());
-  if (connected) {
+  connected_ = wifiManager_.autoConnect((config_.hostname + "-Setup").c_str());
+  if (connected_) {
     Serial.println("WiFi: connected");
     Serial.println(WiFi.localIP());
-    connected_ = true;
   } else {
     Serial.println("WiFi: setup started");
   }
+  wasConnected_ = connected_;
 
-  wasConnected_ = connected;
+  _updateTask = std::thread(&WiFiController::updateTask, this);
   return true;
 }
 
-bool WiFiController::update() {
-  // returns true if it's connected
-  wifiManager_.process();
-  const bool connected = WiFi.status() == WL_CONNECTED;
+void WiFiController::updateTask() {
 
-  if (connected && !wasConnected_) {
-    Serial.println("WiFi: reconnected");
-    Serial.println(WiFi.localIP());
-  } else if (!connected && wasConnected_) {
-    Serial.println("WiFi: disconnected");
-  }
-  connected_ = connected;
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  if (!connected) {
-    const unsigned long nowMs = millis();
-    if (static_cast<long>(nowMs - nextReconnectAttemptMs_) >= 0) {
-      WiFi.reconnect();
-      nextReconnectAttemptMs_ = nowMs + 10000UL;
+  while (1) {
+    wifiManager_.process();
+
+    connected_ = (WiFi.status() == WL_CONNECTED);
+    if (connected_ && !wasConnected_) {
+      Serial.println("WiFi: reconnected");
+      Serial.println(WiFi.localIP());
+    } else if (!connected_ && wasConnected_) {
+      Serial.println("WiFi: disconnected");
     }
-  }
 
-  wasConnected_ = connected;
-  return connected;
+    // if (!connected_) {
+    //   const unsigned long nowMs = millis();
+    //   if (static_cast<long>(nowMs - nextReconnectAttemptMs_) >= 0) {
+    //     WiFi.reconnect();
+    //     nextReconnectAttemptMs_ = nowMs + 10000UL;
+    //   }
+    // }
+
+    wasConnected_ = connected_;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
 }
 
 bool WiFiController::connected() const {

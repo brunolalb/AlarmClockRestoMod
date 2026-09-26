@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <thread>
 #include <WiFiManager.h>
 
 
@@ -13,13 +14,15 @@ class WiFiController {
   WiFiController();
 
   bool initialize(const WifiConfig *default_config);
-  bool update();
   bool connected() const;
 
  private:
+  void updateTask();
+
   WiFiManager wifiManager_;
 
   WifiConfig config_;
+  std::thread _updateTask;
 
   bool connected_ = false;
   bool wasConnected_ = false;
