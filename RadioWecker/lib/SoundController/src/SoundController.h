@@ -49,6 +49,7 @@ class SoundController {
 
  private:
   void updateTask();
+  void volumeTask();
   bool isMusicFilename(const String& name) const;
   String normalizePath(const String& requestedPath) const;
   String normalizeRadioUrl(const String& requestedUrl) const;
@@ -63,6 +64,7 @@ class SoundController {
   Audio audio_;
   HardwareConfig hwConfig_;
   std::thread _updateTask;
+  std::thread _volumeTask;
 
   uint8_t volume_;
   bool ready_ = false;

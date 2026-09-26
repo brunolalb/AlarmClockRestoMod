@@ -5,6 +5,9 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
+#include <LittleFS.h>
+#include <esp_pthread.h>
+
 namespace {
 void warmUpAudioDecoder(Audio& audio) {
   for (uint8_t i = 0; i < 24; ++i) {
@@ -117,20 +120,69 @@ bool SoundController::initialize() {
   }
   audio_.setVolume(volume_);
 
+  esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
+  size_t stackSize_orig = cfg.stack_size;
+  int core_orig = cfg.pin_to_core;
+  cfg.stack_size = 64*1024;
+  //cfg.pin_to_core = 1;
+  esp_pthread_set_cfg(&cfg);
+
   _updateTask = std::thread(&SoundController::updateTask, this);
+
+  cfg.stack_size = stackSize_orig;
+  //cfg.pin_to_core = core_orig;
+  esp_pthread_set_cfg(&cfg);
+
+  _volumeTask = std::thread(&SoundController::volumeTask, this);
 
   ready_ = true;
 
   return max98357_ok;
 }
 
+void SoundController::volumeTask() {
+  uint16_t volumeReading = 0;
+  uint16_t lastVolumeReading = 0;
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  while (1) {
+    volumeReading = analogRead(hwConfig_.volumePotentiometerPin);
+    volume_ = map(volumeReading, 0, 4095, 0, 21);
+    if (volume_ != lastVolumeReading) {
+      lastVolumeReading = volume_;
+      audio_.setVolume(volume_);
+      Serial.println("sound: volume " + String(volume_));
+    }
+    if (playing_) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+  }
+}
+
 void SoundController::updateTask() {
+  uint16_t volumeReading = 0;
+  uint16_t lastVolumeReading = 0;
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  bool worked = audio_.connecttoFS(LittleFS, "/bemtevi.mp3");
+  if (!worked) {
+    Serial.println("sound: failed to connect to /bemtevi.mp3");
+  } else {
+    Serial.println("sound: connected to /bemtevi.mp3");
+  }
+  playing_ = worked;
+
+
   while (1) {
     audio_.loop();
     playing_ = audio_.isRunning();
 
     if (playing_) {
       paused_ = false;
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
   }
 }
