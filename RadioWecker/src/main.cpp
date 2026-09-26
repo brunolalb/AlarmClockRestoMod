@@ -227,7 +227,6 @@ void setup() {
 
 
 void loop() {
-  if (modules.sound) modules.sound->update();
   if (modules.clock) modules.clock->update();
   if (modules.display) modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
 }

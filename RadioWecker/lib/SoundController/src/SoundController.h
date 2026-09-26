@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Audio.h>
+#include <thread>
 
 #include <SdController.h>
 
@@ -38,17 +39,16 @@ class SoundController {
   static constexpr size_t kSupportedFileExtensionCount = 3;
 
   bool initialize();
-  void update();
 
   void handleWebServerCommand(WebServer& webServer, WebServerCommand command);
 
-  bool isReady() const;
+  bool isReady() const { return ready_; }
   bool isPlaying() const;
   const String& currentTrack() const;
   uint8_t volume() const;
 
  private:
-  bool ensureAudioReady();
+  void updateTask();
   bool isMusicFilename(const String& name) const;
   String normalizePath(const String& requestedPath) const;
   String normalizeRadioUrl(const String& requestedUrl) const;
@@ -62,9 +62,10 @@ class SoundController {
   SdController* sdController_;
   Audio audio_;
   HardwareConfig hwConfig_;
+  std::thread _updateTask;
 
   uint8_t volume_;
-  bool audioReady_ = false;
+  bool ready_ = false;
   bool playing_ = false;
   bool paused_ = false;
   String currentTrack_;

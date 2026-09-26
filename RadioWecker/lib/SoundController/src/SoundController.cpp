@@ -110,30 +110,33 @@ bool SoundController::initialize() {
   digitalWrite(hwConfig_.GAINMuxS3Pin, (AUDIO_GAIN_3DB & 0b100) >> 2);
 
   //start MAX98357A
-  bool max98357_ok = ensureAudioReady();
+  bool max98357_ok = audio_.setPinout(hwConfig_.i2sBclkPin, hwConfig_.i2sLrclkPin, hwConfig_.i2sDataPin);
+  if (!max98357_ok) {
+    Serial.println("sound: MAX98357A init failed");
+    return false;
+  }
+  audio_.setVolume(volume_);
+
+  _updateTask = std::thread(&SoundController::updateTask, this);
+
+  ready_ = true;
 
   return max98357_ok;
 }
 
-void SoundController::update() {
-  if (!ensureAudioReady()) {
-    return;
+void SoundController::updateTask() {
+  while (1) {
+    audio_.loop();
+    playing_ = audio_.isRunning();
+
+    if (playing_) {
+      paused_ = false;
+    }
   }
-
-  audio_.loop();
-  playing_ = audio_.isRunning();
-
-  if (playing_) {
-    paused_ = false;
-  }
-}
-
-bool SoundController::isReady() const {
-  return audioReady_;
 }
 
 bool SoundController::isPlaying() const {
-  return audioReady_ && playing_;
+  return playing_;
 }
 
 const String& SoundController::currentTrack() const {
@@ -142,20 +145,6 @@ const String& SoundController::currentTrack() const {
 
 uint8_t SoundController::volume() const {
   return volume_;
-}
-
-bool SoundController::ensureAudioReady() {
-  if (audioReady_) {
-    return true;
-  }
-
-  audioReady_ = audio_.setPinout(hwConfig_.i2sBclkPin, hwConfig_.i2sLrclkPin, hwConfig_.i2sDataPin);
-  if (!audioReady_) {
-    return false;
-  }
-
-  audio_.setVolume(volume_);
-  return true;
 }
 
 bool SoundController::isMusicFilename(const String& name) const {
@@ -223,7 +212,7 @@ bool SoundController::resolveLocalPlaybackPath(const String& path, String& playb
 }
 
 bool SoundController::startLocalTrack(const String& playbackPath, String& error) {
-  if (!ensureAudioReady()) {
+  if (!ready_) {
     error = "Audio init failed";
     return false;
   }
@@ -515,7 +504,7 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
         return;
       }
 
-      if (!ensureAudioReady()) {
+      if (!ready_) {
         webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Audio init failed\"}");
         return;
       }
@@ -543,7 +532,7 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
     }
 
     case WebServerCommand::PauseToggle: {
-      if (!ensureAudioReady()) {
+      if (!ready_) {
         webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Audio init failed\"}");
         return;
       }
@@ -572,7 +561,7 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
     }
 
     case WebServerCommand::Stop: {
-      if (audioReady_) {
+      if (ready_) {
         audio_.stopSong();
       }
       playing_ = false;
@@ -666,7 +655,7 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
       }
 
       volume_ = static_cast<uint8_t>(nextVolume);
-      if (ensureAudioReady()) {
+      if (ready_) {
         audio_.setVolume(volume_);
       }
 
