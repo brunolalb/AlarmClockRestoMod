@@ -5,6 +5,8 @@
 #include <LittleFS.h>
 #include <WiFi.h>
 
+#include <esp_pthread.h>
+
 namespace {
 String formatBytes(uint64_t bytes) {
   const double kib = 1024.0;
@@ -72,7 +74,15 @@ bool WebServerController::initialize() {
   // initialize the FTP server
   beginFtpServer();
 
+  esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
+  size_t stackSize_orig = cfg.stack_size;
+  cfg.stack_size = 20*1024;
+  esp_pthread_set_cfg(&cfg);
+
   _updateTask = std::thread(&WebServerController::updateTask, this);
+
+  cfg.stack_size = stackSize_orig;
+  esp_pthread_set_cfg(&cfg);
 
   Serial.print("web server: initialized");
   return true;
@@ -82,18 +92,21 @@ void WebServerController::updateTask() {
   bool wifi_connected = false;
   auto now = std::chrono::steady_clock::now();
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  now = std::chrono::steady_clock::now();
+
   // wait until wifi is connected to start the webserver
   while (!wifi_connected) {
     wifi_connected = WiFi.status() == WL_CONNECTED;
     if (wifi_connected) {
       webServer_.begin();
-      Serial.println("web server: started on port " + String(port_));
       break;
     }
     std::this_thread::sleep_until(now + std::chrono::milliseconds(500));
     now = std::chrono::steady_clock::now();
   }
   ready_ = true;
+  Serial.println("web server: started on port " + String(port_));
     
   while (1) {
     webServer_.handleClient();
@@ -101,8 +114,7 @@ void WebServerController::updateTask() {
       ftpServer_.handleFTP();
     }
     // yield to other threads
-    std::this_thread::sleep_until(now + std::chrono::milliseconds(10));
-    now = std::chrono::steady_clock::now();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
