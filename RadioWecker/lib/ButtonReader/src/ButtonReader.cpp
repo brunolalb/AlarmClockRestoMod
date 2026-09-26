@@ -33,10 +33,12 @@ bool ButtonReader::initialize(TM1637* display) {
 }
 
 void ButtonReader::updateTask() {
+  auto now = std::chrono::steady_clock::now();
   while (1) {
     read_buttons();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_until(now + std::chrono::milliseconds(200));
+    now = std::chrono::steady_clock::now();
   }
 }
 
