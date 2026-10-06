@@ -1,6 +1,7 @@
 #include "WiFiController.h"
 
 #include <WiFi.h>
+#include <esp_pthread.h>
 
 
 WiFiController::WiFiController()
@@ -24,7 +25,19 @@ bool WiFiController::initialize(const WifiConfig *default_config) {
   }
   wasConnected_ = connected_;
 
+  esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
+  size_t stackSize_orig = cfg.stack_size;
+  int core_orig = cfg.pin_to_core;
+  cfg.stack_size = 10*1024;
+  //cfg.pin_to_core = 1;
+  esp_pthread_set_cfg(&cfg);
+
   _updateTask = std::thread(&WiFiController::updateTask, this);
+
+  cfg.stack_size = stackSize_orig;
+  //cfg.pin_to_core = core_orig;
+  esp_pthread_set_cfg(&cfg);
+
   return true;
 }
 
