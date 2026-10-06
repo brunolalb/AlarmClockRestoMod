@@ -64,6 +64,19 @@ void Coordinator::transitionTo(State next) {
   postEvent({EventType::_ENTER, 0});
 }
 
+bool Coordinator::basic_event_handler(const Event &event) {
+    switch (event.type) {
+    case EventType::NewTime:
+        // Handle new time event
+        display_->showTimeHHMM(event.value);
+        break;
+    default:
+        // Handle other events
+        return false;
+    }
+    return true;
+}
+
 void Coordinator::state_startup(const Event &event) {
     switch (event.type) {
     case EventType::_ENTER:
@@ -79,6 +92,7 @@ void Coordinator::state_startup(const Event &event) {
 }
 
 void Coordinator::state_idle(const Event &event) {
+    if (basic_event_handler(event)) return;
     switch (event.type) {
       case EventType::_ENTER:
         // Handle entering the Idle state
@@ -93,6 +107,7 @@ void Coordinator::state_idle(const Event &event) {
 }
 
 void Coordinator::state_music(const Event &event) {
+    if (basic_event_handler(event)) return;
     switch (event.type) {
       case EventType::_ENTER:
         // Handle entering the Music state

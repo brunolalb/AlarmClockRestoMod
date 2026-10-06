@@ -18,8 +18,7 @@ static constexpr DisplayManager::SeparatorMode DISPLAY_SEPARATOR_MODE_DEFAULT = 
 static constexpr const char* RTC_NTP_SERVER = "pool.ntp.org";
 static constexpr long RTC_NTP_GMT_OFFSET_SECONDS = 0;
 static constexpr int RTC_NTP_DAYLIGHT_OFFSET_SECONDS = 0;
-static constexpr uint32_t RTC_NTP_SYNC_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL;
-static constexpr uint32_t RTC_NTP_RETRY_INTERVAL_MS = 60UL * 1000UL;
+static constexpr uint32_t RTC_NTP_SYNC_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL; // 6 hours
 static constexpr const char* RTC_TIMEZONE_POSIX_DEFAULT = "UTC0";
 static constexpr int16_t RTC_TIME_OFFSET_MINUTES_DEFAULT = 0;
 

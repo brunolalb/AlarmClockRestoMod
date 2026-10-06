@@ -15,6 +15,7 @@ class Coordinator {
     _ENTER,
     _EXIT,
     StartupDone,
+    NewTime,
     MusicStart,
     MusicStop,
   };
@@ -40,6 +41,8 @@ class Coordinator {
   void run();
   void handleEvent();
   void transitionTo(State next);
+
+  bool basic_event_handler(const Event &event);
 
   void state_startup(const Event &event);
   void state_idle(const Event &event);

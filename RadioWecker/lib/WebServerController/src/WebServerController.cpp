@@ -184,13 +184,13 @@ void WebServerController::handleGetStatus() {
   String clockStatus;
   if (!clockController_ || !clockController_->isReady()) {
     clockStatus = "not ready";
-  } else if (!clockController_->isTimeValid()) {
-    clockStatus = "ready, time invalid";
+  } else if (!clockController_->externalRTCReady()) {
+    clockStatus = "ready, external rtc not ready";
   } else {
-    clockStatus = "ready, time valid";
+    clockStatus = "ready, external rtc ready";
   }
   doc["clock"] = clockStatus;
-  doc["ntp"] = clockController_ && clockController_->isNtpSynchronized() ? "sync" : "not sync";
+  doc["ntp"] = clockController_ ? clockController_->ntpLastSynchronized().toString("YY-MM-DD hh:mm:ss") : "";
 
   if (!sdController_ || !sdController_->isReady()) {
     doc["sd"] = "not ready";

@@ -1,9 +1,11 @@
 #include "ClockController.h"
 
+#include <Coordinator.h>
 #include <RTClib.h>
 #include <WiFi.h>
 #include <Wire.h>
 #include <time.h>
+#include <esp_sntp.h>
 
 ClockController* ClockController::activeInstance_ = nullptr;
 
@@ -17,8 +19,11 @@ ClockController::ClockController(uint8_t rtcSqwPin,
                                  uint32_t i2cFrequencyHz)
     : hwConfig_{rtcSqwPin, i2cSdaPin, i2cSclPin, i2cFrequencyHz} {}
 
-bool ClockController::initialize(const TimeConfig* default_config) {
+bool ClockController::initialize(const TimeConfig* default_config,
+                                 Coordinator* coordinator) {
   memcpy(&config_, default_config, sizeof(TimeConfig));
+  coordinator_ = coordinator;
+  activeInstance_ = this;
 
   // first initialize the I2C RTC
   rtcReady_ = Wire.begin(hwConfig_.i2cSdaPin_,
@@ -28,25 +33,45 @@ bool ClockController::initialize(const TimeConfig* default_config) {
     Serial.println("clock: I2C init failed");
   } else {
     rtcReady_ = rtc.begin();
-    timeValid_ = false;
     if (!rtcReady_) {
       Serial.println("clock: RTC not found");
-      // todo: use the internal rtc to keep track of time
     } else {
-      timeValid_ = initializeRtcTimeFromChip();
+      // sync internal RTC with external RTC
+      const DateTime now = rtc.now();
+      timeval timeval_;
+      timezone timezone_;
+      
+      timeval_.tv_sec = now.unixtime();
+      timeval_.tv_usec = 0;
+
+      timezone_.tz_minuteswest = 0;
+      timezone_.tz_dsttime = 0;
+
+      settimeofday(&timeval_, &timezone_);
+
       rtc.writeSqwPinMode(DS3231_SquareWave1Hz);
 
-      pinMode(hwConfig_.rtcSqwPin_, INPUT_PULLUP);
-      const int sqwInterrupt = digitalPinToInterrupt(hwConfig_.rtcSqwPin_);
-      if (sqwInterrupt != NOT_AN_INTERRUPT) {
-        activeInstance_ = this;
-        attachInterrupt(sqwInterrupt, handleRtcSecondTickISR, FALLING);
-      }
+      // pinMode(hwConfig_.rtcSqwPin_, INPUT_PULLUP);
+      // const int sqwInterrupt = digitalPinToInterrupt(hwConfig_.rtcSqwPin_);
+      // if (sqwInterrupt != NOT_AN_INTERRUPT) {
+      //   activeInstance_ = this;
+      //   attachInterrupt(sqwInterrupt, handleRtcSecondTickISR, FALLING);
+      // }
     }
   }
 
-  // now initialize the NTP synchronization if needed
+  // now initialize the NTP synchronization
+  ntpLastSynchronized_ = DateTime((uint32_t )0);
+  messageQueue_ = xQueueCreate(4, sizeof(Message));
+  sntp_set_time_sync_notification_cb(sntpSyncCallback);
   configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
+  sntp_set_sync_interval(config_.ntpSyncIntervalMs);
+
+  nextMinuteTimer_ = xTimerCreate("NextMinuteTimer",
+                                  pdMS_TO_TICKS(60000),
+                                  pdFALSE, // no auto reload
+                                  nullptr,
+                                  onNextMinuteTimer);
 
   _updateTask = std::thread(&ClockController::updateTask, this);
 
@@ -54,51 +79,92 @@ bool ClockController::initialize(const TimeConfig* default_config) {
 }
 
 void ClockController::updateTask() {
-  auto now = std::chrono::steady_clock::now();
+  struct tm now = {};
+  Message msg;
 
   while(1) {
-    
-    syncFromNtpIfNeeded();
+    xQueueReceive(messageQueue_, &msg, portMAX_DELAY);
+    switch (msg) {
+      case Message::NTPSynced:
+        getLocalTime(&now, 0);
+        Serial.println("clock: NTP synced: " + String(now.tm_hour) + ":" + String(now.tm_min) + ":" + String(now.tm_sec));
+        //stop the next minute timer 
+        xTimerStop(nextMinuteTimer_, 0);
+        // send the NextMinute message to the queue manually
+        msg = Message::NextMinute;
+        xQueueSend(messageQueue_, &msg, 0);
+        // update the RTC
+        syncExternalRtc();
+        // update the last synchronized time
+        ntpLastSynchronized_ = DateTime(now.tm_year + 1900,
+                                        now.tm_mon + 1,
+                                        now.tm_mday,
+                                        now.tm_hour,
+                                        now.tm_min,
+                                        now.tm_sec);
+        break;
 
-    if (!timeValid_ || !secondTick_) {
-      return;
+      case Message::NextMinute:
+        getLocalTime(&now, 0);
+        // update the displayed value
+        now.tm_min += config_.timeOffsetMinutes;
+        if (now.tm_min >= 60) {
+          now.tm_hour += (now.tm_min + config_.timeOffsetMinutes) / 60;
+          now.tm_min = (now.tm_min + config_.timeOffsetMinutes) % 60;
+          now.tm_hour %= 24;
+        }
+        displayedHHMM_ = now.tm_hour * 100 + now.tm_min;
+        // send the new time to the coordinator
+        if (coordinator_) {
+          coordinator_->postEvent({Coordinator::EventType::NewTime, displayedHHMM_});
+        }
+        // schedule the timer
+        xTimerChangePeriod(nextMinuteTimer_, pdMS_TO_TICKS((60 - now.tm_sec) * 1000), 0);
+        xTimerStart(nextMinuteTimer_, 0);
+        break;
     }
-
-    noInterrupts();
-    secondTick_ = false;
-    interrupts();
-
-    advanceSoftwareClockOneSecond();
-
-    std::this_thread::sleep_until(now + std::chrono::milliseconds(200));
-    now = std::chrono::steady_clock::now();
   }
 }
 
+void ClockController::sntpSyncCallback(struct timeval* tv) {
+  const Message msg = Message::NTPSynced;
+  xQueueSend(activeInstance_->messageQueue_, &msg, 0);
+}
+
+void ClockController::onNextMinuteTimer(TimerHandle_t xTimer) {
+  Message msg = Message::NextMinute;
+  xQueueSend(activeInstance_->messageQueue_, &msg, 0);
+}
+
+void ClockController::syncExternalRtc() {
+  struct tm now = {};
+  if (!getLocalTime(&now, 0)) {
+    return;
+  }
+
+  const DateTime ntpNow(now.tm_year + 1900,
+                        now.tm_mon + 1,
+                        now.tm_mday,
+                        now.tm_hour,
+                        now.tm_min,
+                        now.tm_sec);
+
+  if (rtcReady_) {
+    rtc.adjust(ntpNow);
+  }
+}
+
+/******* Getters ******* */
 bool ClockController::isReady() const {
   return true;
 }
 
-bool ClockController::isTimeValid() const {
-  return timeValid_;
+bool ClockController::externalRTCReady() const {
+  return rtcReady_;
 }
 
-int ClockController::displayValueHHMM() const {
-  return displayedHHMM_;
-}
-
-bool ClockController::isNtpSynchronized() const {
-  return ntpSynchronized_;
-}
-
-void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes) {
-  config_.timezonePosix = timezonePosix;
-  config_.timeOffsetMinutes = timeOffsetMinutes;
-  updateDisplayedValue();
-
-  ntpConfigured_ = false;
-  ntpSynchronized_ = false;
-  nextNtpSyncAttemptMs_ = 0;
+DateTime ClockController::ntpLastSynchronized() const {
+  return ntpLastSynchronized_;
 }
 
 String ClockController::timezonePosix() const {
@@ -109,94 +175,18 @@ int16_t ClockController::timeOffsetMinutes() const {
   return config_.timeOffsetMinutes;
 }
 
-bool ClockController::initializeClockFromDateTime(const DateTime& now) {
-  if (!now.isValid()) {
-    return false;
+
+/******* Setters ******* */
+void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes) {
+  Message msg = Message::NextMinute;
+
+  if (timezonePosix != config_.timezonePosix) {
+    config_.timezonePosix = timezonePosix;
+    setenv("TZ", config_.timezonePosix.c_str(), 1);
+    tzset();
   }
+  config_.timeOffsetMinutes = timeOffsetMinutes;
 
-  currentTime_ = now;
-  updateDisplayedValue();
-  return true;
-}
-
-bool ClockController::initializeRtcTimeFromChip() {
-  const DateTime now = rtc.now();
-  return initializeClockFromDateTime(now);
-}
-
-void ClockController::updateDisplayedValue() {
-  int totalMinutes = static_cast<int>(currentTime_.hour()) * 60 +
-                     static_cast<int>(currentTime_.minute()) +
-                     static_cast<int>(config_.timeOffsetMinutes);
-  const int minutesPerDay = 24 * 60;
-  totalMinutes %= minutesPerDay;
-  if (totalMinutes < 0) {
-    totalMinutes += minutesPerDay;
-  }
-
-  const int displayHour = totalMinutes / 60;
-  const int displayMinute = totalMinutes % 60;
-  displayedHHMM_ = displayHour * 100 + displayMinute;
-}
-
-void ClockController::advanceSoftwareClockOneSecond() {
-  currentTime_ = currentTime_ + TimeSpan(1);
-  updateDisplayedValue();
-}
-
-void ClockController::syncFromNtpIfNeeded() {
-  const unsigned long nowMs = millis();
-  if (static_cast<long>(nowMs - nextNtpSyncAttemptMs_) < 0) {
-    return;
-  }
-
-  const bool synced = syncFromNtp();
-  nextNtpSyncAttemptMs_ = nowMs + (synced ? config_.ntpSyncIntervalMs : config_.ntpRetryIntervalMs);
-}
-
-bool ClockController::syncFromNtp() {
-  if (WiFi.status() != WL_CONNECTED) {
-    return false;
-  }
-
-  if (!ntpConfigured_) {
-    if (config_.timezonePosix.length() > 0) {
-      configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
-    } else {
-      configTime(config_.timeOffsetMinutes * 60, config_.daylightOffsetSeconds, config_.ntpServer.c_str());
-    }
-    ntpConfigured_ = true;
-  }
-
-  struct tm now = {};
-  if (!getLocalTime(&now, 1500)) {
-    return false;
-  }
-
-  const DateTime ntpNow(now.tm_year + 1900,
-                        now.tm_mon + 1,
-                        now.tm_mday,
-                        now.tm_hour,
-                        now.tm_min,
-                        now.tm_sec);
-
-  rtc.adjust(ntpNow);
-
-  const bool initialized = initializeClockFromDateTime(ntpNow);
-  if (initialized) {
-    ntpSynchronized_ = true;
-    Serial.println("NTP sync successful");
-  }
-
-  return initialized;
-}
-
-void ClockController::onRtcSecondTick() {
-  secondTick_ = true;
-}
-
-void IRAM_ATTR ClockController::handleRtcSecondTickISR() {
-  if (activeInstance_ != nullptr) {
-    activeInstance_->onRtcSecondTick();
-  }
+  // signal that we should update the time
+  xQueueSend(messageQueue_, &msg, 0);
 }

@@ -197,10 +197,9 @@ void initialize_modules() {
     .timezonePosix = modules.config ? modules.config->timezonePosix() : RTC_TIMEZONE_POSIX_DEFAULT,
     .timeOffsetMinutes = modules.config ? modules.config->timeOffsetMinutes() : RTC_TIME_OFFSET_MINUTES_DEFAULT,
     .daylightOffsetSeconds = RTC_NTP_DAYLIGHT_OFFSET_SECONDS,
-    .ntpSyncIntervalMs = RTC_NTP_SYNC_INTERVAL_MS,
-    .ntpRetryIntervalMs = RTC_NTP_RETRY_INTERVAL_MS
+    .ntpSyncIntervalMs = RTC_NTP_SYNC_INTERVAL_MS
   };
-  if (modules.clock) if (!modules.clock->initialize(&clockConfig)) {
+  if (modules.clock) if (!modules.clock->initialize(&clockConfig, modules.coordinator)) {
     Serial.println("main: clock initialization failed");
   }
 
@@ -240,5 +239,4 @@ void setup() {
 
 
 void loop() {
-  if (modules.display) modules.display->showTimeHHMM(modules.clock ? modules.clock->displayValueHHMM() : 8888);
 }

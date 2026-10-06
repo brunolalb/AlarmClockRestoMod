@@ -175,13 +175,16 @@ void CLIController::printModuleStatus() const {
   output += "  clock: ";
   if (!clockController_ || !clockController_->isReady()) {
     output += "not ready";
-  } else if (!clockController_->isTimeValid()) {
-    output += "ready, time invalid";
   } else {
-    output += "ready, time valid";
+    output += "ready, external rtc ";
+    if (!clockController_->externalRTCReady()) {
+      output += "NOK";
+    } else {
+      output += "ok";
+    }
+    output += ", ntp ";
+    output += clockController_->ntpLastSynchronized().toString("YY-MM-DD hh:mm:ss");
   }
-  output += ", ntp ";
-  output += (clockController_ && clockController_->isNtpSynchronized() ? "sync" : "not sync");
   output += '\n';
 
   output += "  sd: ";
