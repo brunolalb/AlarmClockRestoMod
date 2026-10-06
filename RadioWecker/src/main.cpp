@@ -15,6 +15,8 @@
 #include <WiFiController.h>
 #include <WebServerController.h>
 
+#include <Coordinator.h>
+
 //#define ONBOARDLED_OFF
 //#define DISPLAY_OFF
 //#define SDCARD_OFF
@@ -39,6 +41,7 @@ typedef struct modules_ {
   ClockController *clock;
   GeneralConfigController *config;
   CLIController *cli;
+  Coordinator *coordinator;
 } Modules;
 
 Modules modules;
@@ -141,6 +144,10 @@ void create_modules() {
                                   modules.webserver,
                                   modules.buttons);
 #endif
+
+#ifndef COORDINATOR_OFF
+  modules.coordinator = new Coordinator(modules.display);
+#endif
 }
 
 
@@ -212,6 +219,10 @@ void initialize_modules() {
   if (modules.cli) if (!modules.cli->initialize()) {
     Serial.println("main: CLI initialization failed");
   }
+
+  if (modules.coordinator) if (!modules.coordinator->begin()) {
+    Serial.println("main: coordinator initialization failed");
+  }
 }
 
 
@@ -222,7 +233,9 @@ void setup() {
 
   initialize_modules();
 
-  delay(800);
+  delay(1000);
+
+  modules.coordinator->postEvent({Coordinator::EventType::StartupDone, 0});
 }
 
 
