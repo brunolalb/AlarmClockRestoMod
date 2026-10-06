@@ -95,7 +95,6 @@ SoundController::SoundController( SdController* sdController,
       hwConfig_(*hwConfig) {}
 
 bool SoundController::initialize() {
-  //audio_.connecttohost("0n-80s.radionetz.de:8000/0n-70s.mp3");
   volume_ = 0;
 
   // start ShutDown pin
@@ -145,14 +144,28 @@ void SoundController::volumeTask() {
   uint16_t lastVolumeReading = 0;
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+  // Vol - Pot
+  //  0 - 0
+  //  1 - 5
+  //  2 - 180
+  //  3 - 360
+  //  4 - 500
+  //  5 - 560
+  //  6 - 690
+  //  7 - 1700
+  //  8 - 2600
+  //  9 - 3900
+  // 10 - 4095
+
   while (1) {
     volumeReading = analogRead(hwConfig_.volumePotentiometerPin);
     volume_ = map(volumeReading, 0, 4095, 0, 21);
     if (volume_ != lastVolumeReading) {
       lastVolumeReading = volume_;
       audio_.setVolume(volume_);
-      Serial.println("sound: volume " + String(volume_));
+      //Serial.println("sound: volume " + String(volume_));
     }
+    //Serial.println("sound: volume pot " + String(volumeReading));
     if (playing_) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     } else {
@@ -166,11 +179,13 @@ void SoundController::updateTask() {
   uint16_t lastVolumeReading = 0;
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  bool worked = audio_.connecttoFS(LittleFS, "/bemtevi.mp3");
+  bool worked = false;
+  //worked = audio_.connecttoFS(LittleFS, "/bemtevi.mp3");
+  //worked = audio_.connecttohost("https://stm19.voxhd.com.br:12974/listen.pls?sid=1");
   if (!worked) {
-    Serial.println("sound: failed to connect to /bemtevi.mp3");
+    Serial.println("sound: failed to connect");
   } else {
-    Serial.println("sound: connected to /bemtevi.mp3");
+    Serial.println("sound: connected");
   }
   playing_ = worked;
 
