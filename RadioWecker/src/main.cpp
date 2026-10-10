@@ -148,7 +148,8 @@ void create_modules() {
 #ifndef COORDINATOR_OFF
   modules.coordinator = new Coordinator(modules.display,
                                         modules.clock,
-                                        modules.config);
+                                        modules.config,
+                                        modules.webserver);
 #endif
 }
 
@@ -213,7 +214,12 @@ void initialize_modules() {
     Serial.println("main: sound initialization failed");
   }
 
-  if (modules.webserver) if (!modules.webserver->initialize()) {
+  WebServerController::WebserverConfig webserverCfg = {
+    .port = DEFAULT_WEB_SERVER_PORT,
+    .ftpUsername = modules.config ? modules.config->ftpUsername() : DEFAULT_FTP_USERNAME,
+    .ftpPassword = modules.config ? modules.config->ftpPassword() : DEFAULT_FTP_PASSWORD
+  };
+  if (modules.webserver) if (!modules.webserver->initialize(&webserverCfg)) {
     Serial.println("main: web server initialization failed");
   }
 

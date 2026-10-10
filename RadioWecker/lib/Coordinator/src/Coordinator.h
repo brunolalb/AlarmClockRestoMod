@@ -8,6 +8,7 @@
 class DisplayManager;
 class ClockController;
 class GeneralConfigController;
+class WebServerController;
 
 class Coordinator {
  public:
@@ -30,7 +31,8 @@ class Coordinator {
 
   Coordinator(DisplayManager *display,
               ClockController *clockController,
-              GeneralConfigController *generalConfigController); 
+              GeneralConfigController *generalConfigController,
+              WebServerController *webServerController); 
 
   bool begin(uint32_t queueLength = 16, uint32_t stackBytes = 4096, UBaseType_t priority = 1);
 
@@ -59,4 +61,5 @@ class Coordinator {
   DisplayManager *display_;
   ClockController *clockController_;
   GeneralConfigController *generalConfigController_;
+  WebServerController *webServerController_;
 };

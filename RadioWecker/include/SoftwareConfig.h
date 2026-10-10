@@ -9,6 +9,7 @@ static constexpr uint16_t WIFI_CONFIG_PORTAL_TIMEOUT_S = 300;
 static constexpr const char* WIFI_DEFAULT_HOSTNAME = "RadioWecker";
 static constexpr const char* DEFAULT_FTP_USERNAME = "radiowecker";
 static constexpr const char* DEFAULT_FTP_PASSWORD = "radiowecker";
+static constexpr uint16_t DEFAULT_WEB_SERVER_PORT = 80;
 
 // Display - TM1637
 static constexpr uint8_t DISPLAY_BRIGHTNESS_DEFAULT = 1;

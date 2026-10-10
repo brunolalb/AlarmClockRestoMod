@@ -3,16 +3,21 @@
 #include <DisplayManager.h>
 #include <ClockController.h>
 #include <GeneralConfigController.h>
+#include <WebServerController.h>
+
+#include <SoftwareConfig.h>
 
 Coordinator::Coordinator(DisplayManager *display,
                          ClockController *clockController,
-                         GeneralConfigController *generalConfigController) : 
+                         GeneralConfigController *generalConfigController,
+                         WebServerController *webServerController) : 
     state_(State::Startup), 
     queue_(nullptr), 
     task_(nullptr),
     display_(display),
     clockController_(clockController),
-    generalConfigController_(generalConfigController) {}
+    generalConfigController_(generalConfigController),
+    webServerController_(webServerController) {}
 
 
 bool Coordinator::begin(uint32_t queueLength, uint32_t stackBytes, UBaseType_t priority) {
@@ -78,12 +83,19 @@ bool Coordinator::basic_event_handler(const Event &event) {
         // Handle new time event
         display_->showTimeHHMM(event.value);
         break;
-    case EventType::NewConfig:
+    case EventType::NewConfig: {
         // Handle new config event
         clockController_->applyTimeConfig(generalConfigController_->timezonePosix(),
                                           generalConfigController_->timeOffsetMinutes());
         display_->setBrightness(generalConfigController_->brightness());
+        WebServerController::WebserverConfig webserverCfg = {
+            .port = DEFAULT_WEB_SERVER_PORT,
+            .ftpUsername = generalConfigController_->ftpUsername(),
+            .ftpPassword = generalConfigController_->ftpPassword()
+        };
+        webServerController_->reconfigure(&webserverCfg);
         break;
+      }
     default:
         // Handle other events
         return false;

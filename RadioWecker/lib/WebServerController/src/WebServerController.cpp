@@ -34,16 +34,14 @@ WebServerController::WebServerController( AlarmController* alarmController,
                                           SdController* sdController,
                                           SoundController* soundController,
                                           DisplayManager* displayManager,
-                                          GeneralConfigController* generalConfigController,
-                                          uint16_t port)
+                                          GeneralConfigController* generalConfigController)
     : alarmController_(alarmController),
       clockController_(clockController),
       sdController_(sdController),
       soundController_(soundController),
       displayManager_(displayManager),
       generalConfigController_(generalConfigController),
-      webServer_(port),
-      port_(port) {}
+      webServer_(DEFAULT_WEB_SERVER_PORT) {}
 
 bool WebServerController::beginFtpServer() {
   // todo: ftp server needs a review
@@ -56,17 +54,18 @@ bool WebServerController::beginFtpServer() {
     return false;
   }
 
-  ftpServer_.begin(generalConfigController_ ? generalConfigController_->ftpUsername().c_str() : DEFAULT_FTP_USERNAME, 
-                   generalConfigController_ ? generalConfigController_->ftpPassword().c_str() : DEFAULT_FTP_PASSWORD);
+  ftpServer_.begin(config_.ftpUsername.c_str(), 
+                   config_.ftpPassword.c_str());
   ftpStarted_ = true;
   Serial.print("webserver: FTP on port 21 (user: ");
-  Serial.print(generalConfigController_ ? generalConfigController_->ftpUsername() : DEFAULT_FTP_USERNAME);
+  Serial.print(config_.ftpUsername);
   Serial.println(")");
 
   return true;
 }
 
-bool WebServerController::initialize() {
+bool WebServerController::initialize(const WebserverConfig* default_config) {
+  memcpy(&config_, default_config, sizeof(WebserverConfig));
 
   // setup the web server routes
   setupRoutes();
@@ -99,14 +98,14 @@ void WebServerController::updateTask() {
   while (!wifi_connected) {
     wifi_connected = WiFi.status() == WL_CONNECTED;
     if (wifi_connected) {
-      webServer_.begin();
+      webServer_.begin(config_.port);
       break;
     }
     std::this_thread::sleep_until(now + std::chrono::milliseconds(500));
     now = std::chrono::steady_clock::now();
   }
   ready_ = true;
-  Serial.println("web server: started on port " + String(port_));
+  Serial.println("web server: started on port " + String(config_.port));
     
   while (1) {
     webServer_.handleClient();
@@ -121,6 +120,32 @@ void WebServerController::updateTask() {
 WebServer& WebServerController::server() {
   return webServer_;
 }
+
+bool WebServerController::reconfigure(const WebserverConfig* config) {
+  WebserverConfig new_config = *config;
+  if (!config) {
+    return false;
+  }
+
+  new_config.port = new_config.port == 0 ? config_.port : new_config.port;
+  new_config.ftpUsername = new_config.ftpUsername.isEmpty() ? config_.ftpUsername : new_config.ftpUsername;
+  new_config.ftpPassword = new_config.ftpPassword.isEmpty() ? config_.ftpPassword : new_config.ftpPassword;
+
+  if (ftpStarted_) {
+    ftpServer_.begin(new_config.ftpUsername.c_str(), new_config.ftpPassword.c_str());
+  }
+
+  if ((config_.port != new_config.port) && (ready_)) {
+    webServer_.close();
+    webServer_.begin(new_config.port);
+  }
+
+  memcpy(&config_, &new_config, sizeof(WebserverConfig));
+
+  return true;
+}
+
+
 
 bool WebServerController::ensureInternalFsMounted() {
   if (internalFsMounted_) {
@@ -172,7 +197,7 @@ void WebServerController::handleStatusPage() {
 }
 
 void WebServerController::handleGetStatus() {
-  StaticJsonDocument<1024> doc;
+  JsonDocument doc;
 
   doc["wifiConnected"] = WiFi.status() == WL_CONNECTED;
   doc["wifiSsid"] = WiFi.status() == WL_CONNECTED ? WiFi.SSID() : "";

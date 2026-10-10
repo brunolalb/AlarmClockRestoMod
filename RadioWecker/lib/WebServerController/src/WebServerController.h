@@ -14,17 +14,23 @@
 
 class WebServerController {
  public:
+  struct WebserverConfig {
+    uint16_t port;
+    String ftpUsername;
+    String ftpPassword;
+  };
+
   explicit WebServerController(AlarmController* alarmController,
                                ClockController* clockController,
                                SdController* sdController,
                                SoundController* soundController,
                                DisplayManager* displayManager,
-                               GeneralConfigController* generalConfigController,
-                               uint16_t port = 80);
+                               GeneralConfigController* generalConfigController);
 
-  bool initialize();
+  bool initialize(const WebserverConfig* default_config);
   bool isReady() const { return ready_; }
   WebServer& server();
+  bool reconfigure(const WebserverConfig* new_config);
 
  private:
   void updateTask();
@@ -51,7 +57,9 @@ class WebServerController {
   GeneralConfigController* generalConfigController_;
   FtpServer ftpServer_;
   WebServer webServer_;
-  uint16_t port_;
+
+  WebserverConfig config_;
+
   bool ready_ = false;
   bool internalFsMounted_ = false;
   bool ftpStarted_ = false;
