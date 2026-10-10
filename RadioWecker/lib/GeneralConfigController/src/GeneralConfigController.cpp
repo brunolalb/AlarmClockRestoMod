@@ -72,20 +72,78 @@ bool GeneralConfigController::initialize(const ConfigData *default_config, Coord
 }
 
 bool GeneralConfigController::isValidConfig(const ConfigData *config) const {
-  return  config->timezonePosix.length() > 0 &&
-          config->timeOffsetMinutes >= -720 && config->timeOffsetMinutes <= 840 &&
-          config->brightness >= 0 && config->brightness <= 7 &&
-          !config->ftpUsername.isEmpty() && config->ftpUsername.length() <= 32 &&
-          !config->ftpPassword.isEmpty() && config->ftpPassword.length() <= 32;
+  if (config->timezonePosix.length() == 0) {
+    Serial.print("cfg: invalid timezonePosix: ");
+    Serial.println(config->timezonePosix);
+    return false;
+  }
+  if (config->timeOffsetMinutes < -720 || config->timeOffsetMinutes > 840) {
+    Serial.print("cfg: invalid timeOffsetMinutes: ");
+    Serial.println(config->timeOffsetMinutes);
+    return false;
+  }
+  if (config->brightness < 0 || config->brightness > 7) {
+    Serial.print("cfg: invalid brightness: ");
+    Serial.println(config->brightness);
+    return false;
+  }
+  if (config->ftpUsername.isEmpty() || config->ftpUsername.length() > 32) {
+    Serial.print("cfg: invalid ftpUsername: ");
+    Serial.println(config->ftpUsername);
+    return false;
+  }
+  if (config->ftpPassword.isEmpty() || config->ftpPassword.length() > 32) {
+    Serial.print("cfg: invalid ftpPassword: ");
+    Serial.println(config->ftpPassword);
+    return false;
+  }
+  return true;
 }
 
 bool GeneralConfigController::compareConfig(const ConfigData* config1, const ConfigData* config2) const {
-  return config1->hostname == config2->hostname &&
-         config1->timezonePosix == config2->timezonePosix &&
-         config1->timeOffsetMinutes == config2->timeOffsetMinutes &&
-         config1->brightness == config2->brightness &&
-         config1->ftpUsername == config2->ftpUsername &&
-         config1->ftpPassword == config2->ftpPassword;
+  if (config1->hostname != config2->hostname) {
+    Serial.print("cfg: hostname mismatch: ");
+    Serial.print(config1->hostname);
+    Serial.print(" != ");
+    Serial.println(config2->hostname);
+    return false;
+  }
+  if (config1->timezonePosix != config2->timezonePosix) {
+    Serial.print("cfg: timezonePosix mismatch: ");
+    Serial.print(config1->timezonePosix);
+    Serial.print(" != ");
+    Serial.println(config2->timezonePosix);
+    return false;
+  }
+  if (config1->timeOffsetMinutes != config2->timeOffsetMinutes) {
+    Serial.print("cfg: timeOffsetMinutes mismatch: ");
+    Serial.print(config1->timeOffsetMinutes);
+    Serial.print(" != ");
+    Serial.println(config2->timeOffsetMinutes);
+    return false;
+  }
+  if (config1->brightness != config2->brightness) {
+    Serial.print("cfg: brightness mismatch: ");
+    Serial.print(config1->brightness);
+    Serial.print(" != ");
+    Serial.println(config2->brightness);
+    return false;
+  }
+  if (config1->ftpUsername != config2->ftpUsername) {
+    Serial.print("cfg: ftpUsername mismatch: ");
+    Serial.print(config1->ftpUsername);
+    Serial.print(" != ");
+    Serial.println(config2->ftpUsername);
+    return false;
+  }
+  if (config1->ftpPassword != config2->ftpPassword) {
+    Serial.print("cfg: ftpPassword mismatch: ");
+    Serial.print(config1->ftpPassword);
+    Serial.print(" != ");
+    Serial.println(config2->ftpPassword);
+    return false;
+  }
+  return true;
 }
 
 
@@ -244,12 +302,12 @@ bool GeneralConfigController::deserialize(const String& payload, ConfigData* con
   }
 
   ConfigData new_config = {
-    .hostname = doc["hostname"] | "",
-    .timezonePosix = doc["timezone"] | "",
-    .timeOffsetMinutes = static_cast<int16_t>(doc["timeOffsetMinutes"] | 0),
-    .brightness = static_cast<uint8_t>(doc["brightness"] | 0),
-    .ftpUsername = doc["ftpUsername"] | "",
-    .ftpPassword = doc["ftpPassword"] | ""
+    .hostname = doc["hostname"] | config_.hostname,
+    .timezonePosix = doc["timezone"] | config_.timezonePosix,
+    .timeOffsetMinutes = static_cast<int16_t>(doc["timeOffsetMinutes"] | config_.timeOffsetMinutes),
+    .brightness = static_cast<uint8_t>(doc["brightness"] | config_.brightness),
+    .ftpUsername = doc["ftpUsername"] | config_.ftpUsername,
+    .ftpPassword = doc["ftpPassword"] | config_.ftpPassword
   };
 
   *config = new_config;
