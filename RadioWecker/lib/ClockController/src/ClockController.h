@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 #include <thread>
-#include <RTClib.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/timers.h>
@@ -26,7 +25,7 @@ class ClockController {
 
   bool isReady() const;
   bool externalRTCReady() const;
-  DateTime ntpLastSynchronized() const;
+  struct tm ntpLastSynchronized() const;
   void applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes);
   String timezonePosix() const;
   int16_t timeOffsetMinutes() const;
@@ -56,5 +55,5 @@ class ClockController {
 
   bool rtcReady_ = false;
   int displayedHHMM_ = 0;
-  DateTime ntpLastSynchronized_;
+  struct tm ntpLastSynchronized_;
 };

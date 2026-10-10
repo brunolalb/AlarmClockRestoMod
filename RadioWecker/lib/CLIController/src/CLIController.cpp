@@ -183,7 +183,10 @@ void CLIController::printModuleStatus() const {
       output += "ok";
     }
     output += ", ntp ";
-    output += clockController_->ntpLastSynchronized().toString("YY-MM-DD hh:mm:ss");
+    char buffer[32];
+    struct tm ntpLastSync = clockController_->ntpLastSynchronized();
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &ntpLastSync);
+    output += buffer;
   }
   output += '\n';
 

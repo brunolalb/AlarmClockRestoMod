@@ -190,7 +190,14 @@ void WebServerController::handleGetStatus() {
     clockStatus = "ready, external rtc ready";
   }
   doc["clock"] = clockStatus;
-  doc["ntp"] = clockController_ ? clockController_->ntpLastSynchronized().toString("YY-MM-DD hh:mm:ss") : "";
+  if (clockController_) {
+    char buffer[32];
+    struct tm ntpLastSync = clockController_->ntpLastSynchronized();
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &ntpLastSync);
+    doc["ntp"] = buffer;
+  } else {
+    doc["ntp"] = "";
+  }
 
   if (!sdController_ || !sdController_->isReady()) {
     doc["sd"] = "not ready";

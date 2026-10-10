@@ -61,7 +61,7 @@ bool ClockController::initialize(const TimeConfig* default_config,
   }
 
   // now initialize the NTP synchronization
-  ntpLastSynchronized_ = DateTime((uint32_t )0);
+  //ntpLastSynchronized_ = DateTime((uint32_t )0);
   messageQueue_ = xQueueCreate(4, sizeof(Message));
   sntp_set_time_sync_notification_cb(sntpSyncCallback);
   configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
@@ -87,7 +87,7 @@ void ClockController::updateTask() {
     switch (msg) {
       case Message::NTPSynced:
         getLocalTime(&now, 0);
-        Serial.println("clock: NTP synced: " + String(now.tm_hour) + ":" + String(now.tm_min) + ":" + String(now.tm_sec));
+        Serial.printf("clock: NTP synced: %02d:%02d:%02d\n", now.tm_hour, now.tm_min, now.tm_sec);
         //stop the next minute timer 
         xTimerStop(nextMinuteTimer_, 0);
         // send the NextMinute message to the queue manually
@@ -96,12 +96,7 @@ void ClockController::updateTask() {
         // update the RTC
         syncExternalRtc();
         // update the last synchronized time
-        ntpLastSynchronized_ = DateTime(now.tm_year + 1900,
-                                        now.tm_mon + 1,
-                                        now.tm_mday,
-                                        now.tm_hour,
-                                        now.tm_min,
-                                        now.tm_sec);
+        ntpLastSynchronized_ = now;
         break;
 
       case Message::NextMinute:
@@ -163,7 +158,7 @@ bool ClockController::externalRTCReady() const {
   return rtcReady_;
 }
 
-DateTime ClockController::ntpLastSynchronized() const {
+struct tm ClockController::ntpLastSynchronized() const {
   return ntpLastSynchronized_;
 }
 
@@ -179,6 +174,7 @@ int16_t ClockController::timeOffsetMinutes() const {
 /******* Setters ******* */
 void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes) {
   Message msg = Message::NextMinute;
+  Serial.print("clock: new config - timezone: " + timezonePosix + ", time offset: " + String(timeOffsetMinutes) + "\n");
 
   if (timezonePosix != config_.timezonePosix) {
     config_.timezonePosix = timezonePosix;
