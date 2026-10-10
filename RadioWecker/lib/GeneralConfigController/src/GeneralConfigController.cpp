@@ -4,58 +4,31 @@
 #include <LittleFS.h>
 #include <SdController.h>
 
-namespace {
-int fromHexNibble(char c) {
-  if (c >= '0' && c <= '9') {
-    return c - '0';
-  }
-  if (c >= 'a' && c <= 'f') {
-    return c - 'a' + 10;
-  }
-  if (c >= 'A' && c <= 'F') {
-    return c - 'A' + 10;
-  }
-  return -1;
-}
 
-String encryptHexXor(const String& plainText, const String& key) {
-  if (key.length() == 0) {
-    return "";
-  }
-
-  String out;
-  out.reserve(plainText.length() * 2);
-  static const char* kHex = "0123456789ABCDEF";
-
-  for (size_t i = 0; i < plainText.length(); ++i) {
-    const uint8_t x = static_cast<uint8_t>(plainText.charAt(i)) ^ static_cast<uint8_t>(key.charAt(i % key.length()));
-    out += kHex[(x >> 4) & 0x0F];
-    out += kHex[x & 0x0F];
-  }
-
-  return out;
-}
-
-String decryptHexXor(const String& cipherHex, const String& key) {
-  if (cipherHex.length() == 0 || (cipherHex.length() % 2) != 0 || key.length() == 0) {
-    return "";
-  }
-
-  String out;
-  out.reserve(cipherHex.length() / 2);
-  for (size_t i = 0; i < cipherHex.length(); i += 2) {
-    const int hi = fromHexNibble(cipherHex.charAt(i));
-    const int lo = fromHexNibble(cipherHex.charAt(i + 1));
-    if (hi < 0 || lo < 0) {
-      return "";
+void listDir(fs::FS &fs, const char * dirname) {
+    Serial.printf("Listing directory: %s\r\n", dirname);
+    File root = fs.open(dirname);
+    if (!root) {
+        Serial.println("- failed to open directory");
+        return;
     }
+    if (!root.isDirectory()) {
+        Serial.println(" - not a directory");
+        return;
+}
 
-    const uint8_t enc = static_cast<uint8_t>((hi << 4) | lo);
-    const uint8_t dec = enc ^ static_cast<uint8_t>(key.charAt((i / 2) % key.length()));
-    out += static_cast<char>(dec);
-  }
-
-  return out;
+    File file = root.openNextFile();
+    while (file) {
+        if (file.isDirectory()) {
+            Serial.print("  DIR : ");
+            Serial.println(file.name());
+        } else {
+            Serial.print("  FILE: ");
+            Serial.print(file.name());
+            Serial.print("\tSIZE: ");
+            Serial.println(file.size());
+        }
+        file = root.openNextFile();
 }
 }
 
@@ -172,7 +145,7 @@ bool GeneralConfigController::LittleFS_save(const ConfigData* new_config) {
   doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
   doc["brightness"] = new_config->brightness;
   doc["ftpUsername"] = new_config->ftpUsername;
-  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
+  doc["ftpPassword"] = new_config->ftpPassword;
 
   File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
@@ -232,7 +205,7 @@ bool GeneralConfigController::SdCard_save(const ConfigData* new_config) {
   doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
   doc["brightness"] = new_config->brightness;
   doc["ftpUsername"] = new_config->ftpUsername;
-  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
+  doc["ftpPassword"] = new_config->ftpPassword;
 
   File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_WRITE);
   if (!file) {
@@ -260,31 +233,6 @@ bool GeneralConfigController::saveToAllStorages(const ConfigData* new_config) {
 /*********************************/
 /************ JSON ***************/
 /*********************************/
-
-String GeneralConfigController::encryptPassword(const String& plainText) const {
-  return "v2:" + encryptHexXor(plainText, buildDevicePasswordKey());
-}
-
-String GeneralConfigController::decryptPassword(const String& cipherHex) const {
-  if (cipherHex.length() == 0) {
-    return "";
-  }
-
-  if (cipherHex.startsWith("v2:")) {
-    return decryptHexXor(cipherHex.substring(3), buildDevicePasswordKey());
-  }
-
-  return "";
-}
-
-String GeneralConfigController::buildDevicePasswordKey() const {
-  const uint64_t efuseMac = ESP.getEfuseMac();
-  char key[17];
-  snprintf(key, sizeof(key), "%08lX%08lX",
-           static_cast<unsigned long>(efuseMac >> 32),
-           static_cast<unsigned long>(efuseMac & 0xFFFFFFFFULL));
-  return String(key);
-}
 
 bool GeneralConfigController::deserialize(const String& payload, ConfigData* config) const {
   // from string payload (json) to ConfigData structure
@@ -316,13 +264,6 @@ bool GeneralConfigController::parseJson(const String& jsonPayload, ConfigData* c
   if (!deserialize(jsonPayload, &new_config)) {
     return false;
   }
-
-  // password comes encrypted from the JSON, we need to decrypt it
-  String ftpPassword = decryptPassword(new_config.ftpPassword);
-  if (ftpPassword.isEmpty()) {
-    ftpPassword = config_.ftpPassword; // fallback to the current password if decryption fails
-  }
-  new_config.ftpPassword = ftpPassword;
 
   if (!isValidConfig(&new_config)) {
     Serial.println("cfg: invalid config");
