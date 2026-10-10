@@ -3,19 +3,77 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <WebServer.h>
+#include <time.h>
 
 const char* AlarmController::ALARM_FILE = "/alarm_config.json";
+AlarmController* AlarmController::activeInstance_ = nullptr;
 
 AlarmController::AlarmController(SdController* sdController)
     : sdController_(sdController) {}
 
-bool AlarmController::initialize() {
+bool AlarmController::initialize(Coordinator* coordinator) {
+  coordinator_ = coordinator;
+  activeInstance_ = this;
   
   loadAlarmSettings(alarmSettings_, alarmCount_);
 
-  // todo: schedule the next alarm
+  // schedule the next alarm
+  messageQueue_ = xQueueCreate(4, sizeof(Message));
+  nextAlarmTimer_ = xTimerCreate("NextAlarmTimer",
+                                 pdMS_TO_TICKS(portMAX_DELAY), // will be set later based on the next alarm
+                                 pdFALSE, // no auto reload
+                                 nullptr,
+                                 onNextAlarmTimer);
+  
+  if (currentAlarm_.enabled) {
+    // schedule the next alarm based on currentAlarm_
+    uint32_t timeUntilNextAlarm = timeUntilAlarm_ms(currentAlarm_);
+    if (timeUntilNextAlarm != UINT32_MAX) {
+      xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(timeUntilNextAlarm), 0);
+      xTimerStart(nextAlarmTimer_, 0);
+    }
+  }
+
+  _monitorTask = std::thread(&AlarmController::monitorTask, this);
 
   return true; 
+}
+
+void AlarmController::monitorTask() {
+  Message msg;
+  while(1) {
+
+    // check for messages in the queue
+    xQueueReceive(messageQueue_, &msg, pdMS_TO_TICKS(portMAX_DELAY));
+    switch (msg) {
+      case Message::Play:
+        // tell the coordinator
+        if (coordinator_) {
+          // todo: pass relevant alarm information
+          coordinator_->postEvent({Coordinator::EventType::AlarmTriggered, 0});
+        }
+        break;
+      case Message::Sleep: {
+        // set timer to sleep period
+        uint32_t sleep_time_ms = currentAlarm_.snooze_min * 60 * 1000;
+        xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(sleep_time_ms), 0);
+        xTimerStart(nextAlarmTimer_, 0);
+        break;
+      }
+      case Message::Stop:
+        // load next alarm
+        currentAlarm_ = getNextAlarm();
+        if (currentAlarm_.enabled) {
+          uint32_t timeUntilNextAlarm = timeUntilAlarm_ms(currentAlarm_);
+          if (timeUntilNextAlarm != UINT32_MAX) {
+            xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(timeUntilNextAlarm), 0);
+            xTimerStart(nextAlarmTimer_, 0);
+          }
+        }
+        break;
+    }
+
+  }
 }
 
 bool AlarmController::isValidSettings(const AlarmSettings& settings) const {
@@ -80,6 +138,68 @@ bool AlarmController::compareAlarmSettings(const AlarmSettings* settings1, uint8
     }
   }
   return true;
+}
+
+uint32_t AlarmController::timeUntilAlarm_ms(const AlarmSettings& alarm) const {
+  if (!alarm.enabled) {
+    return UINT32_MAX; // no next alarm
+  }
+
+  time_t now;
+  if (time(&now) == static_cast<time_t>(-1)) {
+    return UINT32_MAX;
+  }
+
+  struct tm currentTime;
+  if (localtime_r(&now, &currentTime) == nullptr) {
+    return UINT32_MAX;
+  }
+
+  const uint8_t currentWeekday = (currentTime.tm_wday + 6) % 7;
+  time_t soonestAlarm = static_cast<time_t>(-1);
+
+  // Include offset 7 so an alarm enabled only for today's weekday can recur next week.
+  for (uint8_t dayOffset = 0; dayOffset <= 7; ++dayOffset) {
+    const uint8_t weekday = (currentWeekday + dayOffset) % 7;
+    if (!alarm.enabled_days[weekday]) {
+      continue;
+    }
+
+    struct tm candidate = currentTime;
+    candidate.tm_mday += dayOffset;
+    candidate.tm_hour = alarm.time_hour;
+    candidate.tm_min = alarm.time_min;
+    candidate.tm_sec = 0;
+    candidate.tm_isdst = -1;
+
+    const time_t candidateTime = mktime(&candidate);
+    if (candidateTime > now &&
+        (soonestAlarm == static_cast<time_t>(-1) || candidateTime < soonestAlarm)) {
+      soonestAlarm = candidateTime;
+    }
+  }
+
+  if (soonestAlarm == static_cast<time_t>(-1)) {
+    return UINT32_MAX;
+  }
+
+  return static_cast<uint32_t>(difftime(soonestAlarm, now) * 1000.0);
+}
+
+AlarmController::AlarmSettings AlarmController::getNextAlarm() const {
+  AlarmSettings nextAlarm{};
+  nextAlarm.enabled = false;
+  uint32_t shortestDelay = UINT32_MAX;
+
+  for (uint8_t i = 0; i < alarmCount_; ++i) {
+    const uint32_t delay = timeUntilAlarm_ms(alarmSettings_[i]);
+    if (delay < shortestDelay) {
+      shortestDelay = delay;
+      nextAlarm = alarmSettings_[i];
+    }
+  }
+
+  return nextAlarm;
 }
 
 /*********************************/
@@ -183,7 +303,7 @@ bool AlarmController::SDCard_save(const AlarmSettings* settings, uint8_t count) 
 /******* Generic ********/
 
 bool AlarmController::loadAlarmSettings(const AlarmSettings* settings, uint8_t count) {
-AlarmSettings alarms_SD[MAX_ALARMS];
+  AlarmSettings alarms_SD[MAX_ALARMS];
   uint8_t alarms_in_SD_count = 0;
   AlarmSettings alarms_LittleFS[MAX_ALARMS];
   uint8_t alarms_in_LittleFS_count = 0;
@@ -191,9 +311,11 @@ AlarmSettings alarms_SD[MAX_ALARMS];
   bool alarms_in_SD = SDCard_read(alarms_SD, alarms_in_SD_count);
   bool alarms_in_LittleFS = LittleFS_read(alarms_LittleFS, alarms_in_LittleFS_count);
 
+  bool all_good = false;
+
   if (!alarms_in_SD && !alarms_in_LittleFS) {
     Serial.println("alarms: no valid cfg, creating clean");
-    return saveAlarmSettings(alarms_SD, 0);
+    all_good = saveAlarmSettings(alarms_SD, 0);
   } else {
     if (alarms_in_SD) {
       memcpy(alarmSettings_, alarms_SD, sizeof(alarms_SD));
@@ -201,16 +323,24 @@ AlarmSettings alarms_SD[MAX_ALARMS];
       // to prevent wear on the LittleFS, only write if necessary
       if (!alarms_in_LittleFS || !compareAlarmSettings(alarms_SD, alarms_in_SD_count, alarms_LittleFS, alarms_in_LittleFS_count)) {
         // if the config on the littleFS is different, save it
-        return LittleFS_save(alarms_SD, alarms_in_SD_count);
+        all_good = LittleFS_save(alarms_SD, alarms_in_SD_count);
+      } else {
+        all_good = true;
       }
-      return true;
     } else {
       memcpy(alarmSettings_, alarms_LittleFS, sizeof(alarms_LittleFS));
       alarmCount_ = alarms_in_LittleFS_count;
-      return SDCard_save(alarms_LittleFS, alarms_in_LittleFS_count);
+      all_good = SDCard_save(alarms_LittleFS, alarms_in_LittleFS_count);
     }
   }
-  return false; // should not reach here
+
+  if (all_good) {
+    currentAlarm_ = getNextAlarm();
+  } else {
+    currentAlarm_.enabled = false;
+  }
+
+  return all_good; // should not reach here
 }
 
 bool AlarmController::saveAlarmSettings(const AlarmSettings* settings, uint8_t count) {
@@ -336,6 +466,16 @@ bool AlarmController::saveJSON(const AlarmSettings* settings, uint8_t count, Fil
 
   return serializeJson(doc, file) > 0;
 }
+
+/*********************************/
+/********* Alarms *********/
+/*********************************/
+
+void AlarmController::onNextAlarmTimer(TimerHandle_t xTimer) {
+  Message msg = Message::Play;
+  xQueueSend(activeInstance_->messageQueue_, &msg, 0);
+}
+
 
 /*********************************/
 /********* API *********/

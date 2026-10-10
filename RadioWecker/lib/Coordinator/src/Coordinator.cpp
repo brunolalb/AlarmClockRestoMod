@@ -64,7 +64,7 @@ void Coordinator::handleEvent() {
     switch (state_) {
       case State::Startup: state_startup(event); break;
       case State::Idle:    state_idle(event);    break;
-      case State::Music:   state_music(event);   break;
+      case State::Alarm:   state_alarm(event);   break;
     }
   }
 }
@@ -126,22 +126,24 @@ void Coordinator::state_idle(const Event &event) {
       case EventType::_EXIT:
         // Handle exiting the Idle state
         break;
-      case EventType::MusicStart:
-        transitionTo(State::Music);
+      case EventType::AlarmTriggered:
+        transitionTo(State::Alarm);
         break;
     }
 }
 
-void Coordinator::state_music(const Event &event) {
+void Coordinator::state_alarm(const Event &event) {
     if (basic_event_handler(event)) return;
     switch (event.type) {
       case EventType::_ENTER:
-        // Handle entering the Music state
+        // Handle entering the Alarm state
+        // todo: get alarm file info and start the alarm
         break;
       case EventType::_EXIT:
-        // Handle exiting the Music state
+        // Handle exiting the Alarm state
         break;
-      case EventType::MusicStop:
+        // todo: add handler for buttons
+      case EventType::AlarmTriggered:
         transitionTo(State::Idle);
         break;
     }

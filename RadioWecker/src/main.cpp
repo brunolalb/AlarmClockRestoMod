@@ -206,7 +206,7 @@ void initialize_modules() {
     Serial.println("main: clock initialization failed");
   }
 
-  if (modules.alarm) if (!modules.alarm->initialize()) {
+  if (modules.alarm) if (!modules.alarm->initialize(modules.coordinator)) {
     Serial.println("main: alarm initialization failed");
   }
 

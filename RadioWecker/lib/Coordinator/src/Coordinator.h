@@ -12,7 +12,7 @@ class WebServerController;
 
 class Coordinator {
  public:
-  enum class State : uint8_t { Startup, Idle, Music };
+  enum class State : uint8_t { Startup, Idle, Alarm };
 
   enum class EventType : uint8_t {
     _ENTER,
@@ -20,8 +20,7 @@ class Coordinator {
     StartupDone,
     NewTime,
     NewConfig,
-    MusicStart,
-    MusicStop,
+    AlarmTriggered,
   };
 
   struct Event {
@@ -53,7 +52,7 @@ class Coordinator {
 
   void state_startup(const Event &event);
   void state_idle(const Event &event);
-  void state_music(const Event &event);
+  void state_alarm(const Event &event);
 
   volatile State state_;
   QueueHandle_t queue_;

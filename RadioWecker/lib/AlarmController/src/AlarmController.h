@@ -2,16 +2,18 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <thread>
 
 class WebServer;
 
 #include <SdController.h>
+#include <Coordinator.h>
 
 class AlarmController {
  public:
   explicit AlarmController(SdController* sdController);
 
-  bool initialize();
+  bool initialize(Coordinator* coordinator);
   void handleGetAlarmConfig(WebServer& webServer);
   void handleSaveAlarmConfig(WebServer& webServer);
   void handleListMusicFiles(WebServer& webServer);
@@ -23,7 +25,7 @@ class AlarmController {
   
   struct AlarmSettings {
     bool enabled;
-    bool enabled_days[7];
+    bool enabled_days[7]; // 0=Monday
     uint8_t time_hour;
     uint8_t time_min;
     uint8_t snooze_min;
@@ -33,8 +35,11 @@ class AlarmController {
     uint16_t soundVolume;
   };
 
+  void monitorTask();
   bool isValidSettings(const AlarmSettings& settings) const;
   bool compareAlarmSettings(const AlarmSettings* settings1, uint8_t count1, const AlarmSettings* settings2, uint8_t count2) const;
+  AlarmSettings getNextAlarm() const;
+  uint32_t timeUntilAlarm_ms(const AlarmSettings& alarm) const;
   /*********************************/
   /********* File Handling *********/
   /*********************************/
@@ -57,13 +62,26 @@ class AlarmController {
   void appendToJSON(const AlarmSettings& settings, JsonArray& alarms) const;
   bool saveJSON(const AlarmSettings* settings, uint8_t count, File file);
 
+  /*********************************/
+  /********* Alarms *********/
+  /*********************************/
+  static void onNextAlarmTimer(TimerHandle_t xTimer);
 
-  
+
 
   void sendAlarmConfigJson(WebServer& webServer);
 
   SdController* sdController_;
+  Coordinator* coordinator_ = nullptr;
+
+  std::thread _monitorTask;
+
+  enum class Message : uint8_t { Play, Sleep, Stop }; // internal messages
+  QueueHandle_t messageQueue_ = nullptr; // queue for messages
+  static AlarmController* activeInstance_; // for the static callback functions to access the active instance
+  TimerHandle_t nextAlarmTimer_ = nullptr; // timer for scheduling the next alarm
 
   AlarmSettings alarmSettings_[MAX_ALARMS];
   uint8_t alarmCount_ = 0;
+  AlarmSettings currentAlarm_;
 };
