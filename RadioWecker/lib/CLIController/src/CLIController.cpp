@@ -202,7 +202,7 @@ void CLIController::printModuleStatus() const {
   output += '\n';
 
   output += "  alarm: ";
-  if (!alarmController_ || !alarmController_->isInitialized()) {
+  if (!alarmController_) {
     output += "not initialized";
   } else {
     output += "initialized, configured alarms=";

@@ -234,7 +234,7 @@ void WebServerController::handleGetStatus() {
     doc["sdTotal"] = formatBytes(sdController_->totalBytes());
   }
 
-  if (!alarmController_ || !alarmController_->isInitialized()) {
+  if (!alarmController_) {
     doc["alarm"] = "not initialized";
     doc["alarmCount"] = 0;
   } else {
