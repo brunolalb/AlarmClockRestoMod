@@ -5,7 +5,7 @@
 
 #include <Coordinator.h>
 
-class SdController;
+#include <SdController.h>
 
 class GeneralConfigController {
  public:
@@ -43,6 +43,8 @@ class GeneralConfigController {
   
   bool deserialize(const String& payload, ConfigData* config) const;
   bool parseJson(const String& jsonPayload, ConfigData* config) const;
+  JsonDocument makeJSON(const ConfigData* config) const;
+  bool saveJSON(const ConfigData* config, File file);
   
   bool isValidConfig(const ConfigData *config) const;
   bool compareConfig(const ConfigData* config1, const ConfigData* config2) const;
@@ -56,6 +58,4 @@ class GeneralConfigController {
   Coordinator* coordinator_ = nullptr;
 
   ConfigData config_;
-
-  bool internalFsMounted_ = false;
 };
