@@ -231,12 +231,12 @@ void WebServerController::handleReboot() {
 }
 
 void WebServerController::handleGetConfig() {
-  StaticJsonDocument<512> doc;
+  JsonDocument doc;
   if (!generalConfigController_) {
     webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"General config controller not available\"}");
     return;
   }
-  generalConfigController_->configToJson(doc);
+  doc = generalConfigController_->json();
 
   String payload;
   serializeJson(doc, payload);
@@ -253,14 +253,7 @@ void WebServerController::handleSaveConfig() {
     return;
   }
 
-  StaticJsonDocument<512> doc;
-  const DeserializationError err = deserializeJson(doc, webServer_.arg("plain"));
-  if (err) {
-    webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
-    return;
-  }
-
-  String answer = generalConfigController_->jsonToConfig(doc);
+  String answer = generalConfigController_->jsonToConfig(webServer_.arg("plain"));
   if (!answer.isEmpty()) {
     webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"" + answer + "\"}");
     return;

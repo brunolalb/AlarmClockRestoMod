@@ -62,43 +62,40 @@ String decryptHexXor(const String& cipherHex, const String& key) {
 GeneralConfigController::GeneralConfigController(SdController* sdController)
     : sdController_(sdController) {}
 
-bool GeneralConfigController::initialize(const ConfigData *default_config) {
-  if (!default_config) {
-    Serial.println("general config: no default config provided");
-    return false;
-  }
+bool GeneralConfigController::initialize(const ConfigData *default_config, Coordinator* coordinator) {
+  assert(coordinator != nullptr);
+  assert(default_config != nullptr);
+  
+  coordinator_ = coordinator;
 
   // copy the default config
-  ConfigData new_config;
-  memcpy(&new_config, default_config, sizeof(ConfigData));
+  ConfigData new_config = *default_config;
 
-  if (readFromSdCard(&new_config)) {
-    if (saveToLittleFs(&new_config)) {
-      memcpy(&config_, &new_config, sizeof(ConfigData));
+  // SD Card config has higher priority
+  ConfigData config_SD;
+  bool config_SD_ok = SdCard_read(&config_SD);
+  ConfigData config_LittleFS;
+  bool config_LittleFS_ok = LittleFS_read(&config_LittleFS);
+
+  if (!config_SD_ok && !config_LittleFS_ok) {
+    Serial.println("cfg: no valid cfg, using default");
+    return saveToAllStorages(&new_config);
+  } else {
+    if (config_SD_ok) {
+      config_ = config_SD;
+      // to prevent wear on the LittleFS, only write if necessary
+      if (!config_LittleFS_ok || !compareConfig(&config_SD, &config_LittleFS)) {
+        // if the config on the littleFS is different, save it
+        return LittleFS_save(&config_SD);
+      }
       return true;
     } else {
-      return false; // internal storage must not fail
+      config_ = config_LittleFS;
+      return SdCard_save(&config_LittleFS);
     }
   }
 
-  if (readFromLittleFs(&new_config)) {
-    saveToSdCard(&new_config);
-
-    memcpy(&config_, &new_config, sizeof(ConfigData));
-
-    return true; // it doesn't matter if saving to SD card fails, we still have a valid config in LittleFS
-  }
-
-  return saveToAllStorages(&new_config);
-}
-
-bool GeneralConfigController::ensureInternalFsMounted() {
-  if (internalFsMounted_) {
-    return true;
-  }
-
-  internalFsMounted_ = LittleFS.begin(true);
-  return internalFsMounted_;
+  return false; // no way to get here
 }
 
 bool GeneralConfigController::isValidConfig(const ConfigData *config) const {
@@ -108,6 +105,161 @@ bool GeneralConfigController::isValidConfig(const ConfigData *config) const {
           !config->ftpUsername.isEmpty() && config->ftpUsername.length() <= 32 &&
           !config->ftpPassword.isEmpty() && config->ftpPassword.length() <= 32;
 }
+
+bool GeneralConfigController::compareConfig(const ConfigData* config1, const ConfigData* config2) const {
+  return config1->hostname == config2->hostname &&
+         config1->timezonePosix == config2->timezonePosix &&
+         config1->timeOffsetMinutes == config2->timeOffsetMinutes &&
+         config1->brightness == config2->brightness &&
+         config1->ftpUsername == config2->ftpUsername &&
+         config1->ftpPassword == config2->ftpPassword;
+}
+
+
+/*********************************/
+/********* File Handling *********/
+/*********************************/
+
+/******* LittleFS ********/
+
+bool GeneralConfigController::LittleFS_ensureInit() {
+  if (internalFsMounted_) {
+    return true;
+  }
+
+  internalFsMounted_ = LittleFS.begin(true);
+  return internalFsMounted_;
+}
+
+bool GeneralConfigController::LittleFS_read(ConfigData* config) {
+  Serial.println("config: LittleFS_read");
+  if (!LittleFS_ensureInit()) {
+    Serial.println("cfg: failed to mount LittleFS");
+    return false;
+  }
+
+  if (!LittleFS.exists(GENERAL_CONFIG_FILE)) {
+    Serial.println("cfg: no config file on LittleFS");
+    return false;
+  }
+
+  File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_READ);
+  if (!file) {
+    Serial.println("cfg: failed to open config file on LittleFS");
+    return false;
+  }
+
+  const String payload = file.readString();
+  file.close();
+  return parseJson(payload, config);
+}
+
+bool GeneralConfigController::LittleFS_save(const ConfigData* new_config) {
+  Serial.println("config: saving to LittleFS");
+  if (!LittleFS_ensureInit()) {
+    Serial.println("config: failed to mount LittleFS");
+    return false;
+  }
+
+  if (LittleFS.exists(GENERAL_CONFIG_FILE) && !LittleFS.remove(GENERAL_CONFIG_FILE)) {
+    Serial.println("config: failed to remove LittleFS");
+    return false;
+  }
+
+  JsonDocument doc;
+  doc["hostname"] = new_config->hostname;
+  doc["timezone"] = new_config->timezonePosix;
+  doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
+  doc["brightness"] = new_config->brightness;
+  doc["ftpUsername"] = new_config->ftpUsername;
+  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
+
+  File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_WRITE);
+  if (!file) {
+    Serial.println("config: failed to open LittleFS");
+    return false;
+  }
+
+  const bool ok = serializeJson(doc, file) > 0;
+  file.close();
+  return ok;
+}
+
+/******* SD Card ********/
+
+bool GeneralConfigController::SdCard_read(ConfigData* config) {
+  // reads config from SD card, saves it in the internal config_
+  if (!sdController_ || !sdController_->isReady()) {
+    Serial.println("cfg: no SD");
+    return false;
+  }
+
+  // if the file doesnt exist, nothing to read
+  if (!sdController_->exists(GENERAL_CONFIG_FILE)) {
+    Serial.println("cfg: no file on SD");
+    return false;
+  }
+
+  // open the file from the SD card
+  File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_READ);
+  if (!file) {
+    Serial.println("cfg: failed to open file on SD");
+    return false;
+  }
+
+  // read the json from the file
+  const String payload = file.readString();
+  file.close();
+
+  // parse the json
+  return parseJson(payload, config);
+}
+
+bool GeneralConfigController::SdCard_save(const ConfigData* new_config) {
+  if (!sdController_ || !sdController_->isReady()) {
+    Serial.println("config: SD card not ready, cannot save config");
+    return false;
+  }
+
+  if (sdController_->exists(GENERAL_CONFIG_FILE) && !sdController_->remove(GENERAL_CONFIG_FILE)) {
+    Serial.println("config: failed to remove existing config file from SD card");
+    return false;
+  }
+
+  JsonDocument doc;
+  doc["hostname"] = new_config->hostname;
+  doc["timezone"] = new_config->timezonePosix;
+  doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
+  doc["brightness"] = new_config->brightness;
+  doc["ftpUsername"] = new_config->ftpUsername;
+  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
+
+  File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_WRITE);
+  if (!file) {
+    Serial.println("config: failed to open config file for writing to SD card");
+    return false;
+  }
+
+  const bool ok = serializeJson(doc, file) > 0;
+  file.close();
+  return ok;
+}
+
+/******* Generic ********/
+
+bool GeneralConfigController::saveToAllStorages(const ConfigData* new_config) {
+  const bool littleFsOk = LittleFS_save(new_config);
+  const bool sdOk = SdCard_save(new_config);
+  if (littleFsOk || sdOk) {
+    config_ = *new_config;
+  }
+  return littleFsOk || sdOk; // at least one storage must succeed, otherwise we have no valid config anywhere
+}
+
+
+/*********************************/
+/************ JSON ***************/
+/*********************************/
 
 String GeneralConfigController::encryptPassword(const String& plainText) const {
   return "v2:" + encryptHexXor(plainText, buildDevicePasswordKey());
@@ -134,160 +286,14 @@ String GeneralConfigController::buildDevicePasswordKey() const {
   return String(key);
 }
 
-bool GeneralConfigController::readConfigFromJsonFile(const String& jsonPayload, ConfigData* config) const {
-  // reads the config from a JSON payload, updates the internal config_ if successful
-  StaticJsonDocument<512> doc;
-  const DeserializationError err = deserializeJson(doc, jsonPayload);
+bool GeneralConfigController::deserialize(const String& payload, ConfigData* config) const {
+  // from string payload (json) to ConfigData structure
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, payload);
   if (err) {
+    Serial.println("cfg: failed to parse JSON: " + String(err.c_str()));
     return false;
   }
-
-  ConfigData new_config = {
-    .hostname = doc["hostname"] | "",
-    .timezonePosix = doc["timezone"] | "",
-    .timeOffsetMinutes = static_cast<int16_t>(doc["timeOffsetMinutes"] | 0),
-    .brightness = static_cast<uint8_t>(doc["brightness"] | 0),
-    .ftpUsername = doc["ftpUsername"] | "",
-    .ftpPassword = ""
-  };
-  // password comes encrypted from the JSON, we need to decrypt it
-  String ftp_psw_crypt = doc["ftpPassword"] | "";
-  String ftpPassword = decryptPassword(ftp_psw_crypt);
-  if (ftpPassword.isEmpty()) {
-    ftpPassword = config_.ftpPassword; // fallback to the current password if decryption fails
-  }
-  new_config.ftpPassword = ftpPassword;
-
-  if (!isValidConfig(&new_config)) {
-    return false;
-  }
-
-  // copy new config to the parameter
-  memcpy(config, &new_config, sizeof(ConfigData));
-
-  return true;
-}
-
-bool GeneralConfigController::readFromLittleFs(ConfigData* config) {
-  if (!ensureInternalFsMounted()) {
-    return false;
-  }
-
-  if (!LittleFS.exists(GENERAL_CONFIG_FILE)) {
-    return false;
-  }
-
-  File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_READ);
-  if (!file) {
-    return false;
-  }
-
-  const String payload = file.readString();
-  file.close();
-  return readConfigFromJsonFile(payload, config);
-}
-
-bool GeneralConfigController::readFromSdCard(ConfigData* config) {
-  // reads config from SD card, saves it in the internal config_
-  if (!sdController_ || !sdController_->isReady()) {
-    return false;
-  }
-
-  if (!sdController_->exists(GENERAL_CONFIG_FILE)) {
-    return false;
-  }
-
-  File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_READ);
-  if (!file) {
-    return false;
-  }
-
-  const String payload = file.readString();
-  file.close();
-  return readConfigFromJsonFile(payload, config);
-}
-
-bool GeneralConfigController::saveToLittleFs(const ConfigData* new_config) {
-  if (!ensureInternalFsMounted()) {
-    Serial.println("general config: failed to mount LittleFS");
-    return false;
-  }
-
-  if (LittleFS.exists(GENERAL_CONFIG_FILE) && !LittleFS.remove(GENERAL_CONFIG_FILE)) {
-    Serial.println("general config: failed to remove existing config file from LittleFS");
-    return false;
-  }
-
-  StaticJsonDocument<512> doc;
-  doc["hostname"] = new_config->hostname;
-  doc["timezone"] = new_config->timezonePosix;
-  doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
-  doc["brightness"] = new_config->brightness;
-  doc["ftpUsername"] = new_config->ftpUsername;
-  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
-
-  File file = LittleFS.open(GENERAL_CONFIG_FILE, FILE_WRITE);
-  if (!file) {
-    Serial.println("general config: failed to open config file for writing to LittleFS");
-    return false;
-  }
-
-  const bool ok = serializeJson(doc, file) > 0;
-  file.close();
-  return ok;
-}
-
-bool GeneralConfigController::saveToSdCard(const ConfigData* new_config) {
-  if (!sdController_ || !sdController_->isReady()) {
-    Serial.println("general config: SD card not ready, cannot save config");
-    return false;
-  }
-
-  if (sdController_->exists(GENERAL_CONFIG_FILE) && !sdController_->remove(GENERAL_CONFIG_FILE)) {
-    Serial.println("general config: failed to remove existing config file from SD card");
-    return false;
-  }
-
-  StaticJsonDocument<512> doc;
-  doc["hostname"] = new_config->hostname;
-  doc["timezone"] = new_config->timezonePosix;
-  doc["timeOffsetMinutes"] = new_config->timeOffsetMinutes;
-  doc["brightness"] = new_config->brightness;
-  doc["ftpUsername"] = new_config->ftpUsername;
-  doc["ftpPasswordEnc"] = encryptPassword(new_config->ftpPassword);
-
-  File file = sdController_->open(GENERAL_CONFIG_FILE, FILE_WRITE);
-  if (!file) {
-    Serial.println("general config: failed to open config file for writing to SD card");
-    return false;
-  }
-
-  const bool ok = serializeJson(doc, file) > 0;
-  file.close();
-  return ok;
-}
-
-bool GeneralConfigController::saveToAllStorages(const ConfigData* new_config) {
-  const bool littleFsOk = saveToLittleFs(new_config);
-  const bool sdOk = saveToSdCard(new_config);
-  if (littleFsOk || sdOk) {
-    memcpy(&config_, new_config, sizeof(ConfigData)); // update the internal config only if both storages succeeded
-  }
-  return littleFsOk || sdOk; // at least one storage must succeed, otherwise we have no valid config anywhere
-}
-
-void GeneralConfigController::configToJson(JsonDocument& doc) {
-  // fills the provided JsonDocument with the current configuration values
-  doc["hostname"] = config_.hostname;
-  doc["timezone"] = config_.timezonePosix;
-  doc["timeOffsetMinutes"] = config_.timeOffsetMinutes;
-  doc["brightness"] = config_.brightness;
-  doc["ftpUsername"] = config_.ftpUsername;
-  doc["ftpPassword"] = config_.ftpPassword;
-}
-
-String GeneralConfigController::jsonToConfig(const JsonDocument& doc) {
-  // saves the config to the internal storage and SD card, returns an empty string on success, or an error message on failure
 
   ConfigData new_config = {
     .hostname = doc["hostname"] | "",
@@ -298,13 +304,80 @@ String GeneralConfigController::jsonToConfig(const JsonDocument& doc) {
     .ftpPassword = doc["ftpPassword"] | ""
   };
 
+  *config = new_config;
+
+  return true;
+}
+
+bool GeneralConfigController::parseJson(const String& jsonPayload, ConfigData* config) const {
+  // reads the config from a String payload (JSON), updates the internal config_ if successful
+  ConfigData new_config;
+
+  if (!deserialize(jsonPayload, &new_config)) {
+    return false;
+  }
+
+  // password comes encrypted from the JSON, we need to decrypt it
+  String ftpPassword = decryptPassword(new_config.ftpPassword);
+  if (ftpPassword.isEmpty()) {
+    ftpPassword = config_.ftpPassword; // fallback to the current password if decryption fails
+  }
+  new_config.ftpPassword = ftpPassword;
+
   if (!isValidConfig(&new_config)) {
+    Serial.println("cfg: invalid config");
+    return false;
+  }
+
+  // copy new config to the parameter
+  *config = new_config;
+
+  return true;
+}
+
+/***************************/
+/******** API **************/
+/***************************/
+
+JsonDocument GeneralConfigController::json() {
+  // fills the provided JsonDocument with the current configuration values
+  JsonDocument doc;
+  doc["hostname"] = config_.hostname;
+  doc["timezone"] = config_.timezonePosix;
+  doc["timeOffsetMinutes"] = config_.timeOffsetMinutes;
+  doc["brightness"] = config_.brightness;
+  doc["ftpUsername"] = config_.ftpUsername;
+  doc["ftpPassword"] = config_.ftpPassword;
+
+  return doc;
+}
+
+String GeneralConfigController::jsonToConfig(const String& jsonPayload) {
+  // saves the config to the internal storage and SD card, returns an empty string on success, or an error message on failure
+  ConfigData new_config;
+
+  Serial.println(jsonPayload);
+
+  if (!deserialize(jsonPayload, &new_config)) {
+    return "Failed to parse JSON";
+  }
+
+  if (compareConfig(&new_config, &config_)) {
+    Serial.println("config: no changes detected");
+    return "";
+  }
+
+  if (!isValidConfig(&new_config)) {
+    Serial.println("config: invalid cfg");
     return "Invalid configuration";
   }
 
   if (!saveToAllStorages(&new_config)) {
+    Serial.println("config: failed to save");
     return "Failed to save configuration";
   }
+
+  // todo: inform coordinator of new config
 
   return "";
 }

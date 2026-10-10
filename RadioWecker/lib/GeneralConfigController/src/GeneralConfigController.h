@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
+#include <Coordinator.h>
+
 class SdController;
 
 class GeneralConfigController {
@@ -18,10 +20,11 @@ class GeneralConfigController {
 
   explicit GeneralConfigController(SdController* sdController);
 
-  bool initialize(const ConfigData *default_config);
+  bool initialize(const ConfigData *default_config,
+                  Coordinator* coordinator);
 
-  void configToJson(JsonDocument& doc);
-  String jsonToConfig(const JsonDocument& doc);
+  JsonDocument json();
+  String jsonToConfig(const String& jsonPayload);
 
   uint8_t brightness() const;
   const String& hostname() const;
@@ -31,14 +34,18 @@ class GeneralConfigController {
   const String& ftpPassword() const;
 
  private:
-  bool ensureInternalFsMounted();
-  bool readFromLittleFs(ConfigData* config);
-  bool readFromSdCard(ConfigData* config);
-  bool readConfigFromJsonFile(const String& jsonPayload, ConfigData* config) const;
+  bool LittleFS_ensureInit();
+  bool LittleFS_read(ConfigData* config);
+  bool LittleFS_save(const ConfigData* new_config);
+  bool SdCard_read(ConfigData* config);
+  bool SdCard_save(const ConfigData* new_config);
   bool saveToAllStorages(const ConfigData* new_config);
-  bool saveToLittleFs(const ConfigData* new_config);
-  bool saveToSdCard(const ConfigData* new_config);
+  
+  bool deserialize(const String& payload, ConfigData* config) const;
+  bool parseJson(const String& jsonPayload, ConfigData* config) const;
+  
   bool isValidConfig(const ConfigData *config) const;
+  bool compareConfig(const ConfigData* config1, const ConfigData* config2) const;
   String buildDevicePasswordKey() const;
   String encryptPassword(const String& plainText) const;
   String decryptPassword(const String& cipherHex) const;
@@ -46,6 +53,7 @@ class GeneralConfigController {
   static constexpr const char* GENERAL_CONFIG_FILE = "/general_config.json";
 
   SdController* sdController_;
+  Coordinator* coordinator_ = nullptr;
 
   ConfigData config_;
 

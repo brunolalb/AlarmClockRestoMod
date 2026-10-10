@@ -168,7 +168,7 @@ void initialize_modules() {
     .ftpUsername = DEFAULT_FTP_USERNAME,
     .ftpPassword = DEFAULT_FTP_PASSWORD
   };
-  if (modules.config) if (!modules.config->initialize(&configData)) {
+  if (modules.config) if (!modules.config->initialize(&configData, modules.coordinator)) {
     Serial.println("main: general configuration initialization failed");
   }
 
