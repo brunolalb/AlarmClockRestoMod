@@ -1,10 +1,18 @@
 #include "Coordinator.h"
 
-Coordinator::Coordinator(DisplayManager *display) : 
+#include <DisplayManager.h>
+#include <ClockController.h>
+#include <GeneralConfigController.h>
+
+Coordinator::Coordinator(DisplayManager *display,
+                         ClockController *clockController,
+                         GeneralConfigController *generalConfigController) : 
     state_(State::Startup), 
     queue_(nullptr), 
     task_(nullptr),
-    display_(display) {}
+    display_(display),
+    clockController_(clockController),
+    generalConfigController_(generalConfigController) {}
 
 
 bool Coordinator::begin(uint32_t queueLength, uint32_t stackBytes, UBaseType_t priority) {
@@ -69,6 +77,12 @@ bool Coordinator::basic_event_handler(const Event &event) {
     case EventType::NewTime:
         // Handle new time event
         display_->showTimeHHMM(event.value);
+        break;
+    case EventType::NewConfig:
+        // Handle new config event
+        clockController_->applyTimeConfig(generalConfigController_->timezonePosix(),
+                                          generalConfigController_->timeOffsetMinutes());
+        display_->setBrightness(generalConfigController_->brightness());
         break;
     default:
         // Handle other events

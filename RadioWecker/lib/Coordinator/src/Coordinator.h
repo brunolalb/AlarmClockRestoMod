@@ -5,7 +5,9 @@
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
-#include <DisplayManager.h>
+class DisplayManager;
+class ClockController;
+class GeneralConfigController;
 
 class Coordinator {
  public:
@@ -16,6 +18,7 @@ class Coordinator {
     _EXIT,
     StartupDone,
     NewTime,
+    NewConfig,
     MusicStart,
     MusicStop,
   };
@@ -25,7 +28,9 @@ class Coordinator {
     int32_t value;
   };
 
-  Coordinator(DisplayManager *display);
+  Coordinator(DisplayManager *display,
+              ClockController *clockController,
+              GeneralConfigController *generalConfigController); 
 
   bool begin(uint32_t queueLength = 16, uint32_t stackBytes = 4096, UBaseType_t priority = 1);
 
@@ -52,4 +57,6 @@ class Coordinator {
   QueueHandle_t queue_;
   TaskHandle_t task_;
   DisplayManager *display_;
+  ClockController *clockController_;
+  GeneralConfigController *generalConfigController_;
 };

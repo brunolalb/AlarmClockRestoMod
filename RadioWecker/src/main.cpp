@@ -146,7 +146,9 @@ void create_modules() {
 #endif
 
 #ifndef COORDINATOR_OFF
-  modules.coordinator = new Coordinator(modules.display);
+  modules.coordinator = new Coordinator(modules.display,
+                                        modules.clock,
+                                        modules.config);
 #endif
 }
 

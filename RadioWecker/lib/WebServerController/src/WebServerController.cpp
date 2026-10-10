@@ -76,7 +76,7 @@ bool WebServerController::initialize() {
 
   esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
   size_t stackSize_orig = cfg.stack_size;
-  cfg.stack_size = 20*1024;
+  cfg.stack_size = 30*1024;
   esp_pthread_set_cfg(&cfg);
 
   _updateTask = std::thread(&WebServerController::updateTask, this);
@@ -264,14 +264,6 @@ void WebServerController::handleSaveConfig() {
   if (!answer.isEmpty()) {
     webServer_.send(400, "application/json", "{\"ok\":false,\"error\":\"" + answer + "\"}");
     return;
-  }
-
-  if (clockController_) {
-    clockController_->applyTimeConfig( generalConfigController_->timezonePosix(),
-                                       generalConfigController_->timeOffsetMinutes());
-  }
-  if (displayManager_) {
-    displayManager_->setBrightness(generalConfigController_->brightness());
   }
 
   webServer_.send(200, "application/json", "{\"ok\":true}");

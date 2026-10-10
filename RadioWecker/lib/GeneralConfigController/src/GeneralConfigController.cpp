@@ -376,7 +376,9 @@ String GeneralConfigController::jsonToConfig(const String& jsonPayload) {
     return "Failed to save configuration";
   }
 
-  // todo: inform coordinator of new config
+  if (coordinator_) {
+    coordinator_->postEvent({Coordinator::EventType::NewConfig, 0});
+  }
 
   return "";
 }
