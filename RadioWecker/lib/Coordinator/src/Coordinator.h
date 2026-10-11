@@ -9,18 +9,20 @@ class DisplayManager;
 class ClockController;
 class GeneralConfigController;
 class WebServerController;
+class ButtonReader;
 
 class Coordinator {
  public:
   enum class State : uint8_t { Startup, Idle, Alarm };
 
   enum class EventType : uint8_t {
-    _ENTER,
+    _ENTER = 0,
     _EXIT,
-    StartupDone,
+    StartupDone = 10,
     NewTime,
     NewConfig,
     AlarmTriggered,
+    ButtonStateChanged,
   };
 
   struct Event {
@@ -31,7 +33,8 @@ class Coordinator {
   Coordinator(DisplayManager *display,
               ClockController *clockController,
               GeneralConfigController *generalConfigController,
-              WebServerController *webServerController); 
+              WebServerController *webServerController,
+              ButtonReader *buttonReader);
 
   bool begin(uint32_t queueLength = 16, uint32_t stackBytes = 4096, UBaseType_t priority = 1);
 
@@ -61,4 +64,5 @@ class Coordinator {
   ClockController *clockController_;
   GeneralConfigController *generalConfigController_;
   WebServerController *webServerController_;
+  ButtonReader *buttonReader_;
 };

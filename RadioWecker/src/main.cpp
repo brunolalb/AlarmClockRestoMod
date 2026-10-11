@@ -149,7 +149,8 @@ void create_modules() {
   modules.coordinator = new Coordinator(modules.display,
                                         modules.clock,
                                         modules.config,
-                                        modules.webserver);
+                                        modules.webserver,
+                                        modules.buttons);
 #endif
 }
 
@@ -191,7 +192,8 @@ void initialize_modules() {
     WiFi.mode(WIFI_OFF);
   }
 
-  if (modules.buttons) if (!modules.buttons->initialize(modules.display ? modules.display->display() : nullptr)) {
+  if (modules.buttons) if (!modules.buttons->initialize(modules.display ? modules.display->display() : nullptr,
+                                                        modules.coordinator)) {
     Serial.println("main: button reader initialization failed");
   }
 
@@ -235,6 +237,14 @@ void initialize_modules() {
 
 void setup() {
   Serial.begin(115200);
+
+  vTaskDelay(pdMS_TO_TICKS(1000));
+
+  Serial.printf("\n\n\n");
+  Serial.println("*********************");
+  Serial.println("***  RadioWecker  ***");
+  Serial.println("*********************");
+  Serial.printf("\n\n\n");
 
   create_modules();
 

@@ -4,6 +4,7 @@
 #include <Adafruit_MCP23X17.h>
 #include <TM1637.h>
 
+#include <Coordinator.h>
 #include <thread>
 
 class ButtonReader {
@@ -30,22 +31,28 @@ class ButtonReader {
     uint8_t DISPLAY_SLEEP_FRONT;
     uint8_t DISPLAY_ILLUM;
   };
-  struct ButtonsStates {
-    bool RADIO_OFF;
-    bool RADIO_ON;
-    bool RADIO_AUTOM;
-    bool RADIO_ALARM;
-    bool RADIO_MW;
-    bool RADIO_FM;
-    bool RADIO_AFC;
-    bool DISPLAY_SLOW;
-    bool DISPLAY_FAST;
-    bool DISPLAY_SLEEP_TOP;
-    bool DISPLAY_SIGNAL;
-    bool DISPLAY_TIME;
-    bool DISPLAY_SLEEP_FRONT;
-    bool DISPLAY_ILLUM;
+  union ButtonsStates {
+    struct {
+      bool RADIO_OFF : 1;
+      bool RADIO_ON : 1;
+      bool RADIO_AUTOM : 1;
+      bool RADIO_ALARM : 1;
+      bool RADIO_MW : 1;
+      bool RADIO_FM : 1;
+      bool RADIO_AFC : 1;
+      bool DISPLAY_SLOW : 1;
+      bool DISPLAY_FAST : 1;
+      bool DISPLAY_SLEEP_TOP : 1;
+      bool DISPLAY_SIGNAL : 1;
+      bool DISPLAY_TIME : 1;
+      bool DISPLAY_SLEEP_FRONT : 1;
+      bool DISPLAY_ILLUM : 1;
+      bool RESERVED1 : 1;
+      bool RESERVED2 : 1;
+    } states;
+    uint16_t raw;
   };
+  static_assert(sizeof(ButtonsStates) == sizeof(uint16_t), "ButtonsStates must fit in 16 bits");
   enum class Buttons : uint8_t {
     RADIO_OFF = 0,
     RADIO_ON,
@@ -62,10 +69,16 @@ class ButtonReader {
     DISPLAY_SLEEP_FRONT,
     DISPLAY_ILLUM,
   };
+  enum class UpdateInterval : uint32_t {
+    FAST = 50,
+    NORMAL = 500,
+  };
 
   ButtonReader(const HardwareConfig* hwConfig,
                const ButtonsChannels* buttonsChannels);
-  bool initialize(TM1637* display);
+  bool initialize(TM1637* display,
+                  Coordinator* coordinator);
+  void setupUpdateInterval(UpdateInterval interval);
   const ButtonsStates& states() const;
 
  private:
@@ -76,8 +89,10 @@ class ButtonReader {
     ButtonsChannels buttonsChannels_;
     TM1637* display_;
     Adafruit_MCP23X17 mcp_;
+    Coordinator* coordinator_;
     ButtonsStates buttonsStates_{};
 
     std::thread _updateTask;
+    uint32_t updateIntervalMs_;
 
 };

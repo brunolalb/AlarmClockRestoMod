@@ -10,14 +10,16 @@
 Coordinator::Coordinator(DisplayManager *display,
                          ClockController *clockController,
                          GeneralConfigController *generalConfigController,
-                         WebServerController *webServerController) : 
+                         WebServerController *webServerController,
+                         ButtonReader *buttonReader) : 
     state_(State::Startup), 
     queue_(nullptr), 
     task_(nullptr),
     display_(display),
     clockController_(clockController),
     generalConfigController_(generalConfigController),
-    webServerController_(webServerController) {}
+    webServerController_(webServerController),
+    buttonReader_(buttonReader) {}
 
 
 bool Coordinator::begin(uint32_t queueLength, uint32_t stackBytes, UBaseType_t priority) {
@@ -138,13 +140,26 @@ void Coordinator::state_alarm(const Event &event) {
       case EventType::_ENTER:
         // Handle entering the Alarm state
         // todo: get alarm file info and start the alarm
+      buttonReader_->setupUpdateInterval(ButtonReader::UpdateInterval::FAST);
         break;
       case EventType::_EXIT:
         // Handle exiting the Alarm state
+      buttonReader_->setupUpdateInterval(ButtonReader::UpdateInterval::NORMAL);
         break;
-        // todo: add handler for buttons
-      case EventType::AlarmTriggered:
-        transitionTo(State::Idle);
+    case EventType::ButtonStateChanged: {
+      // Handle button state changed event
+      ButtonReader::ButtonsStates buttonState;
+      static unsigned long lastButtonPressTime = 0;
+      buttonState.raw = event.value;
+      if (buttonState.states.DISPLAY_SLEEP_TOP) {
+        // Handle DISPLAY_SLEEP_TOP button press
+        unsigned long currentTime = millis();
+        if (currentTime - lastButtonPressTime < 1000) { // debounce for 1 second
+        } else {
+        }
+        lastButtonPressTime = currentTime;
+      }
         break;
+    }
     }
 }
