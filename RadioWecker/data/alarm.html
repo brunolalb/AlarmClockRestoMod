@@ -13,6 +13,13 @@
         margin-bottom: 14px;
       }
 
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.6fr);
+        gap: 14px;
+        align-items: start;
+      }
+
       .grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -31,22 +38,33 @@
 
       .day {
         border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 8px 6px;
+        border-radius: 8px;
+        padding: 8px 4px;
         text-align: center;
         background: #131924;
+        cursor: pointer;
       }
 
       .day input {
-        margin-bottom: 6px;
+        display: block;
+        margin: 0 auto 6px;
       }
 
-      .music-row {
-        transition: opacity 0.2s ease;
+      .check-field {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        min-height: 42px;
       }
 
       .hidden {
         display: none;
+      }
+
+      .alarm-list-panel h2,
+      .editor-panel h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
       }
 
       .alarm-list {
@@ -59,26 +77,64 @@
 
       .alarm-item {
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: 8px;
         background: #131924;
-        padding: 10px;
+        overflow: hidden;
+      }
+
+      .alarm-select {
+        width: 100%;
+        border-radius: 0;
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        cursor: pointer;
+        gap: 10px;
       }
 
       .alarm-item.active {
         border-color: var(--accent-dark);
-        background: #2a1f18;
+        background: #211c19;
+      }
+
+      .alarm-select:hover {
+        filter: brightness(1.12);
       }
 
       .alarm-meta {
         color: var(--muted);
         font-size: 12px;
+        font-weight: 400;
+        margin-top: 4px;
+      }
+
+      .empty-list {
+        padding: 10px 0;
+        color: var(--muted);
+      }
+
+      fieldset {
+        border: 0;
+        padding: 0;
+        margin: 0;
+        min-width: 0;
+      }
+
+      fieldset:disabled {
+        opacity: 0.55;
+      }
+
+      input[type="checkbox"] {
+        accent-color: var(--accent);
       }
 
       @media (max-width: 640px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
         .grid {
           grid-template-columns: 1fr;
         }
@@ -93,83 +149,101 @@
     <main class="wrap">
       <section class="hero">
         <h1>Alarm Config</h1>
-        <p>Create and edit multiple alarms with time, weekdays, snooze, and sound source.</p>
+        <p>Manage up to 10 weekday alarms and their sound settings.</p>
         <a class="home-btn" href="/">Back to Home</a>
       </section>
 
-      <section class="card" style="margin-bottom: 14px">
-        <div class="toolbar">
-          <button id="addAlarmBtn" type="button">Add Alarm</button>
-          <button id="removeAlarmBtn" class="danger" type="button">Remove Selected</button>
-          <button id="saveAllBtn" class="secondary" type="button">Save All Alarms</button>
-        </div>
-        <ul id="alarmList" class="alarm-list"></ul>
-      </section>
-
-      <form id="alarmForm" class="card" autocomplete="off">
-        <div class="grid">
-          <div class="field">
-            <label for="time">Time</label>
-            <input id="time" name="time" type="time" required />
+      <div class="layout">
+        <section class="card alarm-list-panel" aria-labelledby="alarmsHeading">
+          <h2 id="alarmsHeading">Alarms <span id="alarmCount" class="alarm-meta"></span></h2>
+          <div class="toolbar">
+            <button id="addAlarmBtn" type="button">Add Alarm</button>
+            <button id="removeAlarmBtn" class="danger" type="button">Remove</button>
           </div>
+          <ul id="alarmList" class="alarm-list" aria-label="Saved alarms"></ul>
+        </section>
 
-          <div class="field">
-            <label for="snoozeMin">Snooze (minutes)</label>
-            <input
-              id="snoozeMin"
-              name="snoozeMin"
-              type="number"
-              min="1"
-              max="120"
-              step="1"
-              required
-            />
-          </div>
+        <form id="alarmForm" class="card editor-panel" autocomplete="off">
+          <h2 id="editorHeading">Alarm details</h2>
+          <fieldset id="alarmFields" disabled>
+            <div class="grid">
+              <div class="field check-field">
+                <input id="enabled" name="enabled" type="checkbox" />
+                <label for="enabled">Alarm enabled</label>
+              </div>
 
-          <div class="field full">
-            <label>Days of week</label>
-            <div class="days">
-              <label class="day"><input type="checkbox" data-day="0" />Sun</label>
-              <label class="day"><input type="checkbox" data-day="1" />Mon</label>
-              <label class="day"><input type="checkbox" data-day="2" />Tue</label>
-              <label class="day"><input type="checkbox" data-day="3" />Wed</label>
-              <label class="day"><input type="checkbox" data-day="4" />Thu</label>
-              <label class="day"><input type="checkbox" data-day="5" />Fri</label>
-              <label class="day"><input type="checkbox" data-day="6" />Sat</label>
+              <div class="field">
+                <label for="time">Time</label>
+                <input id="time" name="time" type="time" required />
+              </div>
+
+              <div class="field">
+                <label for="snoozeMin">Snooze (minutes)</label>
+                <input id="snoozeMin" name="snoozeMin" type="number" min="0" max="255" step="1" required />
+              </div>
+
+              <div class="field full">
+                <label>Days of week</label>
+                <div class="days">
+                  <label class="day"><input type="checkbox" data-day="0" />Mon</label>
+                  <label class="day"><input type="checkbox" data-day="1" />Tue</label>
+                  <label class="day"><input type="checkbox" data-day="2" />Wed</label>
+                  <label class="day"><input type="checkbox" data-day="3" />Thu</label>
+                  <label class="day"><input type="checkbox" data-day="4" />Fri</label>
+                  <label class="day"><input type="checkbox" data-day="5" />Sat</label>
+                  <label class="day"><input type="checkbox" data-day="6" />Sun</label>
+                </div>
+              </div>
+
+              <div class="field check-field full">
+                <input id="soundInSd" name="sound_in_SD" type="checkbox" />
+                <label for="soundInSd">Load sound from SD card</label>
+              </div>
+
+              <div class="field full">
+                <label for="soundPath">Sound path</label>
+                <input id="soundPath" name="soundPath" type="text" maxlength="255" required placeholder="/music/alarm.mp3" />
+              </div>
+
+              <div class="field full">
+                <label for="musicFiles">SD card music files</label>
+                <select id="musicFiles" name="musicFiles">
+                  <option value="">Choose a file to fill the sound path</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="soundStartAt">Start offset (seconds)</label>
+                <input id="soundStartAt" name="soundStartAt" type="number" min="0" max="65535" step="1" required />
+              </div>
+
+              <div class="field">
+                <label for="soundVolume">Sound volume</label>
+                <input id="soundVolume" name="soundVolume" type="number" min="0" max="65535" step="1" required />
+              </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div class="field">
-            <label for="soundType">Sound Type</label>
-            <select id="soundType" name="soundType" required>
-              <option value="buzzer">Buzzer</option>
-              <option value="music">Music from SD</option>
-            </select>
+          <div class="actions">
+            <button id="applyBtn" type="submit">Apply changes</button>
+            <button id="saveAllBtn" class="secondary" type="button">Save all</button>
+            <span id="status" class="status" role="status" aria-live="polite">Loading alarms...</span>
           </div>
-
-          <div id="musicField" class="field music-row hidden">
-            <label for="musicPath">Music File</label>
-            <select id="musicPath" name="musicPath"></select>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button type="submit">Apply to Selected Alarm</button>
-          <span id="status" class="status">Loading alarms...</span>
-        </div>
-      </form>
+        </form>
+      </div>
     </main>
 
     <script>
       const form = document.getElementById("alarmForm");
       const alarmListEl = document.getElementById("alarmList");
+      const alarmCountEl = document.getElementById("alarmCount");
       const addAlarmBtn = document.getElementById("addAlarmBtn");
       const removeAlarmBtn = document.getElementById("removeAlarmBtn");
       const saveAllBtn = document.getElementById("saveAllBtn");
       const statusEl = document.getElementById("status");
-      const soundTypeEl = document.getElementById("soundType");
-      const musicFieldEl = document.getElementById("musicField");
-      const musicPathEl = document.getElementById("musicPath");
+      const fieldsEl = document.getElementById("alarmFields");
+      const musicFilesEl = document.getElementById("musicFiles");
+      const soundPathEl = document.getElementById("soundPath");
       const dayChecks = Array.from(document.querySelectorAll("[data-day]"));
       let alarms = [];
       let selectedAlarmIndex = -1;
@@ -182,171 +256,188 @@
 
       function defaultAlarm() {
         return {
-          time: "07:00",
-          days: [false, true, true, true, true, true, false],
-          snoozeMin: 10,
-          soundType: "buzzer",
-          musicPath: "",
+          enabled: true,
+          enabled_days: [true, true, true, true, true, false, false],
+          time_hour: 7,
+          time_min: 0,
+          snooze_min: 10,
+          sound_in_SD: true,
+          soundPath: "",
+          soundStartAt: 0,
+          soundVolume: 5,
         };
       }
 
       function shortDays(days) {
-        const labels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+        const labels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
         const active = labels.filter((_, i) => Boolean(days?.[i]));
         return active.length ? active.join(" ") : "No days";
       }
 
+      function formattedTime(alarm) {
+        const hour = String(Number(alarm.time_hour) || 0).padStart(2, "0");
+        const minute = String(Number(alarm.time_min) || 0).padStart(2, "0");
+        return hour + ":" + minute;
+      }
+
       function renderAlarmList() {
         alarmListEl.innerHTML = "";
+        alarmCountEl.textContent = alarms.length + "/" + maxAlarms;
 
         alarms.forEach((alarm, index) => {
           const li = document.createElement("li");
           li.className = "alarm-item" + (index === selectedAlarmIndex ? " active" : "");
-          li.innerHTML =
-            '<div><strong>' +
-            alarm.time +
-            '</strong><div class="alarm-meta">' +
-            shortDays(alarm.days) +
-            " | Snooze " +
-            alarm.snoozeMin +
-            "m | " +
-            alarm.soundType +
-            "</div></div><span>#" +
-            (index + 1) +
-            "</span>";
-          li.addEventListener("click", () => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "alarm-select";
+          button.setAttribute("aria-pressed", String(index === selectedAlarmIndex));
+
+          const content = document.createElement("span");
+          const title = document.createElement("strong");
+          title.textContent = formattedTime(alarm);
+          const meta = document.createElement("span");
+          meta.className = "alarm-meta";
+          meta.textContent = (alarm.enabled ? "Enabled" : "Disabled") + " · " + shortDays(alarm.enabled_days);
+          content.append(title, document.createElement("br"), meta);
+
+          const number = document.createElement("span");
+          number.textContent = "#" + (index + 1);
+          button.append(content, number);
+          button.addEventListener("click", () => {
             selectedAlarmIndex = index;
             loadSelectedAlarmIntoForm();
             renderAlarmList();
           });
+          li.appendChild(button);
           alarmListEl.appendChild(li);
         });
 
+        if (alarms.length === 0) {
+          const empty = document.createElement("li");
+          empty.className = "empty-list";
+          empty.textContent = "No alarms configured";
+          alarmListEl.appendChild(empty);
+        }
+
         removeAlarmBtn.disabled = selectedAlarmIndex < 0;
+        addAlarmBtn.disabled = alarms.length >= maxAlarms;
       }
 
-      async function loadSelectedAlarmIntoForm() {
+      function loadSelectedAlarmIntoForm() {
         if (selectedAlarmIndex < 0 || !alarms[selectedAlarmIndex]) {
+          fieldsEl.disabled = true;
+          document.getElementById("editorHeading").textContent = "Alarm details";
           return;
         }
 
+        fieldsEl.disabled = false;
         const alarm = alarms[selectedAlarmIndex];
-        document.getElementById("time").value = alarm.time || "07:00";
-        document.getElementById("snoozeMin").value = alarm.snoozeMin || 10;
-        soundTypeEl.value = alarm.soundType || "buzzer";
+        document.getElementById("editorHeading").textContent = "Alarm " + (selectedAlarmIndex + 1);
+        document.getElementById("enabled").checked = Boolean(alarm.enabled);
+        document.getElementById("time").value = formattedTime(alarm);
+        document.getElementById("snoozeMin").value = alarm.snooze_min ?? 10;
+        document.getElementById("soundInSd").checked = Boolean(alarm.sound_in_SD);
+        soundPathEl.value = alarm.soundPath || "";
+        document.getElementById("soundStartAt").value = alarm.soundStartAt ?? 0;
+        document.getElementById("soundVolume").value = alarm.soundVolume ?? 5;
 
         dayChecks.forEach((checkbox) => {
           const idx = Number(checkbox.dataset.day);
-          checkbox.checked = Boolean(alarm.days?.[idx]);
+          checkbox.checked = Boolean(alarm.enabled_days?.[idx]);
         });
-
-        updateMusicVisibility();
-        await loadMusicFiles(alarm.musicPath || "");
       }
 
       function collectAlarmFromForm() {
-        const checkedDays = dayChecks.filter((c) => c.checked);
-        if (checkedDays.length === 0) {
+        const timeValue = document.getElementById("time").value;
+        if (!timeValue) {
+          throw new Error("Enter an alarm time");
+        }
+
+        const [timeHour, timeMin] = timeValue.split(":").map(Number);
+        const enabled = document.getElementById("enabled").checked;
+        const enabledDays = dayChecks.map((checkbox) => checkbox.checked);
+        if (enabled && !enabledDays.some(Boolean)) {
           throw new Error("Select at least one day");
         }
 
         const snoozeMin = Number(document.getElementById("snoozeMin").value);
-        if (!Number.isInteger(snoozeMin) || snoozeMin < 1 || snoozeMin > 120) {
-          throw new Error("Snooze must be between 1 and 120");
+        const soundStartAt = Number(document.getElementById("soundStartAt").value);
+        const soundVolume = Number(document.getElementById("soundVolume").value);
+        if (!Number.isInteger(snoozeMin) || snoozeMin < 0 || snoozeMin > 255) {
+          throw new Error("Snooze must be between 0 and 255 minutes");
+        }
+        if (!Number.isInteger(soundStartAt) || soundStartAt < 0 || soundStartAt > 65535) {
+          throw new Error("Start offset must be between 0 and 65535 seconds");
+        }
+        if (!Number.isInteger(soundVolume) || soundVolume < 0 || soundVolume > 65535) {
+          throw new Error("Sound volume must be between 0 and 65535");
         }
 
-        const days = [false, false, false, false, false, false, false];
-        checkedDays.forEach((c) => {
-          days[Number(c.dataset.day)] = true;
-        });
-
-        const soundType = soundTypeEl.value;
-        const musicPath = musicPathEl.value || "";
-        if (soundType === "music" && !musicPath) {
-          throw new Error("Choose an SD music file");
+        const soundPath = soundPathEl.value.trim();
+        if (!soundPath) {
+          throw new Error("Sound path is required");
         }
 
         return {
-          time: document.getElementById("time").value,
-          days,
-          snoozeMin,
-          soundType,
-          musicPath,
+          enabled,
+          enabled_days: enabledDays,
+          time_hour: timeHour,
+          time_min: timeMin,
+          snooze_min: snoozeMin,
+          sound_in_SD: document.getElementById("soundInSd").checked,
+          soundPath,
+          soundStartAt,
+          soundVolume,
         };
       }
 
-      function updateMusicVisibility() {
-        const showMusic = soundTypeEl.value === "music";
-        musicFieldEl.classList.toggle("hidden", !showMusic);
-      }
-
-      async function loadMusicFiles(selectedPath) {
-        musicPathEl.innerHTML = "";
-
+      async function loadMusicFiles() {
         try {
           const response = await fetch("/api/sdcard/listMusicFiles", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error("SD card unavailable");
+          }
           const payload = await response.json();
-          const files = Array.isArray(payload.files) ? payload.files.map((file) => file.path || file.name || "") : [];
-
-          if (!Array.isArray(files) || files.length === 0) {
-            const emptyOption = document.createElement("option");
-            emptyOption.value = "";
-            emptyOption.textContent = "No .mp3/.wav/.ogg files found";
-            musicPathEl.appendChild(emptyOption);
-            return;
-          }
-
+          const files = Array.isArray(payload.files) ? payload.files : [];
           files.forEach((file) => {
+            if (!file.path) return;
             const option = document.createElement("option");
-            option.value = file;
-            option.textContent = file;
-            musicPathEl.appendChild(option);
+            option.value = file.path;
+            option.textContent = file.name || file.path;
+            musicFilesEl.appendChild(option);
           });
-
-          if (selectedPath) {
-            musicPathEl.value = selectedPath;
-          }
+          if (files.length === 0) musicFilesEl.options[0].textContent = "No SD music files found";
         } catch (err) {
-          const errorOption = document.createElement("option");
-          errorOption.value = "";
-          errorOption.textContent = "Could not load SD files";
-          musicPathEl.appendChild(errorOption);
+          musicFilesEl.options[0].textContent = "SD music list unavailable";
         }
       }
 
       async function loadAlarms() {
         try {
-          const response = await fetch("/api/alarm");
+          const response = await fetch("/api/alarm", { cache: "no-store" });
+          if (!response.ok) throw new Error("Alarm API unavailable");
           const payload = await response.json();
           alarms = Array.isArray(payload.alarms) ? payload.alarms : [];
           maxAlarms = Number(payload.maxAlarms || 10);
-
-          if (alarms.length === 0) {
-            alarms.push(defaultAlarm());
-          }
-
-          selectedAlarmIndex = 0;
+          selectedAlarmIndex = alarms.length ? 0 : -1;
           renderAlarmList();
-          await loadSelectedAlarmIntoForm();
+          loadSelectedAlarmIntoForm();
 
           setStatus("Loaded alarms", "ok");
         } catch (err) {
-          alarms = [defaultAlarm()];
-          selectedAlarmIndex = 0;
+          alarms = [];
+          selectedAlarmIndex = -1;
           renderAlarmList();
-          await loadSelectedAlarmIntoForm();
-          setStatus("Could not load alarms, using defaults", "err");
+          loadSelectedAlarmIntoForm();
+          setStatus("Could not load alarms", "err");
         }
       }
 
-      soundTypeEl.addEventListener("change", async () => {
-        updateMusicVisibility();
-        if (soundTypeEl.value === "music") {
-          await loadMusicFiles(musicPathEl.value || "");
-        }
+      musicFilesEl.addEventListener("change", () => {
+        if (musicFilesEl.value) soundPathEl.value = musicFilesEl.value;
       });
 
-      addAlarmBtn.addEventListener("click", async () => {
+      addAlarmBtn.addEventListener("click", () => {
         if (alarms.length >= maxAlarms) {
           setStatus("Max alarms reached (" + maxAlarms + ")", "err");
           return;
@@ -355,22 +446,19 @@
         alarms.push(defaultAlarm());
         selectedAlarmIndex = alarms.length - 1;
         renderAlarmList();
-        await loadSelectedAlarmIntoForm();
+        loadSelectedAlarmIntoForm();
         setStatus("Alarm added locally", "ok");
       });
 
-      removeAlarmBtn.addEventListener("click", async () => {
+      removeAlarmBtn.addEventListener("click", () => {
         if (selectedAlarmIndex < 0) {
           return;
         }
 
         alarms.splice(selectedAlarmIndex, 1);
-        if (alarms.length === 0) {
-          alarms.push(defaultAlarm());
-        }
-        selectedAlarmIndex = Math.min(selectedAlarmIndex, alarms.length - 1);
+        selectedAlarmIndex = alarms.length ? Math.min(selectedAlarmIndex, alarms.length - 1) : -1;
         renderAlarmList();
-        await loadSelectedAlarmIntoForm();
+        loadSelectedAlarmIntoForm();
         setStatus("Alarm removed locally", "ok");
       });
 
@@ -406,17 +494,20 @@
           });
 
           const payload = await response.json();
-          if (!response.ok || !payload.ok) {
+          if (!payload.ok) {
             throw new Error(payload.error || "Save failed");
           }
 
           setStatus("Saved " + payload.count + " alarms", "ok");
+          alarms = (await (await fetch("/api/alarm", { cache: "no-store" })).json()).alarms || alarms;
           renderAlarmList();
+          loadSelectedAlarmIntoForm();
         } catch (err) {
           setStatus("Error: " + err.message, "err");
         }
       });
 
+      loadMusicFiles();
       loadAlarms();
     </script>
   </body>
