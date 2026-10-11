@@ -64,7 +64,8 @@ bool GeneralConfigController::initialize(const ConfigData *default_config, Coord
       return true;
     } else {
       config_ = config_LittleFS;
-      return SdCard_save(&config_LittleFS);
+      SdCard_save(&config_LittleFS); // answer doesnt matter
+      return true;
     }
   }
 
