@@ -61,19 +61,22 @@ bool ClockController::initialize(const TimeConfig* default_config,
   }
 
   // now initialize the NTP synchronization
-  //ntpLastSynchronized_ = DateTime((uint32_t )0);
+  ntpLastSynchronized_ = {};
   messageQueue_ = xQueueCreate(4, sizeof(Message));
   sntp_set_time_sync_notification_cb(sntpSyncCallback);
   configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
   sntp_set_sync_interval(config_.ntpSyncIntervalMs);
 
   nextMinuteTimer_ = xTimerCreate("NextMinuteTimer",
-                                  pdMS_TO_TICKS(60000),
+                                  pdMS_TO_TICKS(5000),
                                   pdFALSE, // no auto reload
                                   nullptr,
                                   onNextMinuteTimer);
 
   _updateTask = std::thread(&ClockController::updateTask, this);
+
+  // start the timer for the first time
+  xTimerStart(nextMinuteTimer_, 0);
 
   return true;
 }
@@ -114,6 +117,7 @@ void ClockController::updateTask() {
           coordinator_->postEvent({Coordinator::EventType::NewTime, displayedHHMM_});
         }
         // schedule the timer
+        //Serial.println("clock: scheduling timer in " + String(60 - now.tm_sec) + " s");
         xTimerChangePeriod(nextMinuteTimer_, pdMS_TO_TICKS((60 - now.tm_sec) * 1000), 0);
         xTimerStart(nextMinuteTimer_, 0);
         break;
@@ -133,9 +137,14 @@ void ClockController::onNextMinuteTimer(TimerHandle_t xTimer) {
 
 void ClockController::syncExternalRtc() {
   struct tm now = {};
+  // getLocalTime will get the time with the local timezone applied
   if (!getLocalTime(&now, 0)) {
     return;
   }
+  // convert the local time to UTC
+  time_t utcEpoch = mktime(&now);
+  // convert back to the struct tm representation
+  now = *gmtime(&utcEpoch);
 
   const DateTime ntpNow(now.tm_year + 1900,
                         now.tm_mon + 1,
@@ -144,6 +153,7 @@ void ClockController::syncExternalRtc() {
                         now.tm_min,
                         now.tm_sec);
 
+  Serial.println("clock: RTC sync to " + String(ntpNow.timestamp()));
   if (rtcReady_) {
     rtc.adjust(ntpNow);
   }
