@@ -311,14 +311,22 @@ void WebServerController::setupRoutes() {
   // Alarms related
   webServer_.on("/api/alarm", HTTP_GET, [this]() {
     if (alarmController_) {
-      alarmController_->handleGetAlarmConfig(webServer_);
+      JsonDocument doc = alarmController_->handleGetAlarmConfig();
+      String payload;
+      serializeJson(doc, payload);
+      webServer_.send(200, "application/json", payload);
     } else {
       webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Alarm controller not available\"}");
     }
   });
   webServer_.on("/api/alarm", HTTP_POST, [this]() {
     if (alarmController_) {
-      alarmController_->handleSaveAlarmConfig(webServer_);
+      JsonDocument doc;
+      const DeserializationError err = deserializeJson(doc, webServer_.arg("plain"));
+      JsonDocument response = alarmController_->handleSaveAlarmConfig(doc);
+      String payload;
+      serializeJson(response, payload);
+      webServer_.send(200, "application/json", payload);
     } else {
       webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Alarm controller not available\"}");
     }

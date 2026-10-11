@@ -2,7 +2,6 @@
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
-#include <WebServer.h>
 #include <time.h>
 
 const char* AlarmController::ALARM_FILE = "/alarm_config.json";
@@ -219,6 +218,8 @@ bool AlarmController::LittleFS_ensureInit() {
 }
 
 bool AlarmController::LittleFS_read(AlarmSettings* settings, uint8_t& count) {
+  Serial.println("alarms: LittleFS_read");
+
   if (!LittleFS_ensureInit()) {
     Serial.println("alarms: failed to mount LittleFS");
     return false;
@@ -239,6 +240,7 @@ bool AlarmController::LittleFS_read(AlarmSettings* settings, uint8_t& count) {
 }
 
 bool AlarmController::LittleFS_save(const AlarmSettings* settings, uint8_t count) {
+  Serial.println("alarms: LittleFS_save");
   if (!LittleFS_ensureInit()) {
     Serial.println("alarms: failed to mount LittleFS");
     return false;
@@ -485,105 +487,53 @@ uint8_t AlarmController::alarmCount() const {
   return alarmCount_;
 }
 
+/*********************************/
+/********* API - Webserver *******/
+/*********************************/
 
-
-
-// todo: fix all this
-
-void AlarmController::sendAlarmConfigJson(WebServer& webServer) {
-  StaticJsonDocument<4096> doc;
+JsonDocument AlarmController::handleGetAlarmConfig() {
+  JsonDocument doc;
   doc["maxAlarms"] = MAX_ALARMS;
-  JsonArray alarms = doc.createNestedArray("alarms");
+  JsonArray alarms = doc["alarms"].to<JsonArray>();
   for (uint8_t i = 0; i < alarmCount_; ++i) {
     appendToJSON(alarmSettings_[i], alarms);
   }
 
-  String payload;
-  serializeJson(doc, payload);
-  webServer.send(200, "application/json", payload);
+  return doc;
 }
 
-void AlarmController::handleGetAlarmConfig(WebServer& webServer) {
-  sendAlarmConfigJson(webServer);
-}
-
-void AlarmController::handleSaveAlarmConfig(WebServer& webServer) {
-  if (webServer.method() != HTTP_POST) {
-    webServer.send(405, "application/json", "{\"ok\":false,\"error\":\"Method not allowed\"}");
-    return;
-  }
-
-  if (!webServer.hasArg("plain")) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Missing JSON body\"}");
-    return;
-  }
-
-  StaticJsonDocument<4096> doc;
-  const DeserializationError err = deserializeJson(doc, webServer.arg("plain"));
-  if (err) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid JSON\"}");
-    return;
-  }
+JsonDocument AlarmController::handleSaveAlarmConfig(JsonDocument doc) {
+  JsonDocument response;
+  response["ok"] = false;
+  response["error"] = "";
+  response["count"] = 0;
 
   JsonArray alarms = doc["alarms"].as<JsonArray>();
   if (alarms.isNull() || alarms.size() > MAX_ALARMS) {
-    webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid alarms array\"}");
-    return;
+    response["error"] = "Invalid alarms array";
+    return response;
   }
 
-  AlarmSettings next[MAX_ALARMS];
+  // parse each alarm and save in new_alarms
+  AlarmSettings new_alarms[MAX_ALARMS];
   uint8_t nextCount = 0;
   for (JsonVariant alarmVariant : alarms) {
-    if (!parseJSON(alarmVariant, next[nextCount])) {
-      webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid alarm entry\"}");
-      return;
+    if (!parseJSON(alarmVariant, new_alarms[nextCount])) {
+      response["error"] = "Invalid alarm entry (" + String(nextCount) + ")";
+      return response;
     }
     nextCount++;
   }
 
-  if (!saveAlarmSettings(next, nextCount)) {
-    webServer.send(500, "application/json", "{\"ok\":false,\"error\":\"Failed to save alarm\"}");
-    return;
+  // save the new alarms
+  if (!saveAlarmSettings(new_alarms, nextCount)) {
+    response["error"] = "Failed to save alarms";
+    return response;
   }
 
-  alarmCount_ = nextCount;
-  for (uint8_t i = 0; i < alarmCount_; ++i) {
-    alarmSettings_[i] = next[i];
-  }
-
-  StaticJsonDocument<96> response;
+  // send the answer
   response["ok"] = true;
   response["count"] = alarmCount_;
-  String payload;
-  serializeJson(response, payload);
-  webServer.send(200, "application/json", payload);
-}
 
-void AlarmController::handleListMusicFiles(WebServer& webServer) {
-  DynamicJsonDocument doc(1024);
-  JsonArray files = doc.to<JsonArray>();
-
-  if (sdController_ && sdController_->isReady()) {
-    File root = sdController_->open("/", FILE_READ);
-    if (root && root.isDirectory()) {
-      File file = root.openNextFile();
-      while (file) {
-        if (!file.isDirectory()) {
-          String name = String(file.name());
-          String lower = name;
-          lower.toLowerCase();
-          if (lower.endsWith(".mp3") || lower.endsWith(".wav") || lower.endsWith(".ogg")) {
-            files.add(name);
-          }
-        }
-        file.close();
-        file = root.openNextFile();
-      }
-      root.close();
-    }
-  }
-
-  String payload;
-  serializeJson(files, payload);
-  webServer.send(200, "application/json", payload);
+  return response;
 }

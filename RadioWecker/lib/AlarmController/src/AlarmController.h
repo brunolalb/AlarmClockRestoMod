@@ -4,8 +4,6 @@
 #include <ArduinoJson.h>
 #include <thread>
 
-class WebServer;
-
 #include <SdController.h>
 #include <Coordinator.h>
 
@@ -18,6 +16,11 @@ class AlarmController {
   bool initialize(Coordinator* coordinator);
   void sendMessage(Message message);
 
+  // Webserver related
+  JsonDocument handleGetAlarmConfig();
+  JsonDocument handleSaveAlarmConfig(JsonDocument doc);
+
+  // general API
   uint8_t alarmCount() const;
 
  private:
@@ -68,9 +71,6 @@ class AlarmController {
   /*********************************/
   static void onNextAlarmTimer(TimerHandle_t xTimer);
 
-
-
-  void sendAlarmConfigJson(WebServer& webServer);
 
   SdController* sdController_;
   Coordinator* coordinator_ = nullptr;
