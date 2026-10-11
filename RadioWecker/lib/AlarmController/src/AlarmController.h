@@ -11,12 +11,13 @@ class WebServer;
 
 class AlarmController {
  public:
+  enum class Message : uint8_t { Alarm, Sleep, Stop };
+
   explicit AlarmController(SdController* sdController);
 
   bool initialize(Coordinator* coordinator);
-  void handleGetAlarmConfig(WebServer& webServer);
-  void handleSaveAlarmConfig(WebServer& webServer);
-  void handleListMusicFiles(WebServer& webServer);
+  void sendMessage(Message message);
+
   uint8_t alarmCount() const;
 
  private:
@@ -76,7 +77,6 @@ class AlarmController {
 
   std::thread _monitorTask;
 
-  enum class Message : uint8_t { Play, Sleep, Stop }; // internal messages
   QueueHandle_t messageQueue_ = nullptr; // queue for messages
   static AlarmController* activeInstance_; // for the static callback functions to access the active instance
   TimerHandle_t nextAlarmTimer_ = nullptr; // timer for scheduling the next alarm

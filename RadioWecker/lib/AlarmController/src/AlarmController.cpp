@@ -24,19 +24,19 @@ bool AlarmController::initialize(Coordinator* coordinator) {
                                  pdFALSE, // no auto reload
                                  nullptr,
                                  onNextAlarmTimer);
-  
-  if (currentAlarm_.enabled) {
-    // schedule the next alarm based on currentAlarm_
-    uint32_t timeUntilNextAlarm = timeUntilAlarm_ms(currentAlarm_);
-    if (timeUntilNextAlarm != UINT32_MAX) {
-      xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(timeUntilNextAlarm), 0);
-      xTimerStart(nextAlarmTimer_, 0);
-    }
-  }
 
   _monitorTask = std::thread(&AlarmController::monitorTask, this);
 
+  // send the stop message to the timer task to initialize the next alarm
+  sendMessage(Message::Stop);
+
   return true; 
+}
+
+void AlarmController::sendMessage(Message message) {
+  if (messageQueue_) {
+    xQueueSend(messageQueue_, &message, 0);
+  }
 }
 
 void AlarmController::monitorTask() {
@@ -46,7 +46,8 @@ void AlarmController::monitorTask() {
     // check for messages in the queue
     xQueueReceive(messageQueue_, &msg, pdMS_TO_TICKS(portMAX_DELAY));
     switch (msg) {
-      case Message::Play:
+      case Message::Alarm:
+      Serial.println("alarm: msg Alarm");
         // tell the coordinator
         if (coordinator_) {
           // todo: pass relevant alarm information
@@ -54,23 +55,28 @@ void AlarmController::monitorTask() {
         }
         break;
       case Message::Sleep: {
+        Serial.println("alarm: msg Sleep");
         // set timer to sleep period
         uint32_t sleep_time_ms = currentAlarm_.snooze_min * 60 * 1000;
         xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(sleep_time_ms), 0);
         xTimerStart(nextAlarmTimer_, 0);
         break;
       }
-      case Message::Stop:
+      case Message::Stop: {
+        Serial.println("alarm: msg Stop");
+        xTimerStop(nextAlarmTimer_, 0); // just in case
         // load next alarm
         currentAlarm_ = getNextAlarm();
         if (currentAlarm_.enabled) {
           uint32_t timeUntilNextAlarm = timeUntilAlarm_ms(currentAlarm_);
           if (timeUntilNextAlarm != UINT32_MAX) {
+            Serial.println("alarm: scheduling next alarm in " + String(timeUntilNextAlarm / 1000) + " s");
             xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(timeUntilNextAlarm), 0);
             xTimerStart(nextAlarmTimer_, 0);
           }
         }
         break;
+      }
     }
 
   }
@@ -350,6 +356,10 @@ bool AlarmController::saveAlarmSettings(const AlarmSettings* settings, uint8_t c
     memcpy(alarmSettings_, settings, count * sizeof(AlarmSettings));
     alarmCount_ = count;
   }
+
+  // make the monitor aware that the alarm settings have changed
+  sendMessage(Message::Stop);
+
   return littleFsOk || sdOk; //save in at least one media
 }
 
@@ -399,19 +409,13 @@ bool AlarmController::parseJSON(JsonVariantConst alarmVariant, AlarmSettings& ou
     return false;
   }
 
-  JsonArrayConst days = alarmObj["enabled_days"].as<JsonArrayConst>();
-  if (days.isNull() || days.size() != 7) {
-    Serial.println("alarm: invalid or missing enabled_days");
-    return false;
-  }
-  bool enabled_days[7];
-  for (uint8_t i = 0; i < 7; ++i) {
-    enabled_days[i] = days[i] | false;
-  }
+  Serial.println("alarm: parsing JSON: " + String(alarmVariant.as<String>()));
 
   AlarmSettings newAlarm;
   newAlarm.enabled = alarmObj["enabled"] | false;
-  memcpy(newAlarm.enabled_days, enabled_days, 7 * sizeof(bool));
+  for (uint8_t i = 0; i < 7; ++i) {
+    newAlarm.enabled_days[i] = alarmObj["enabled_days"][i];
+  }
   newAlarm.time_hour = alarmObj["time_hour"] | 0;
   newAlarm.time_min = alarmObj["time_min"] | 0;
   newAlarm.snooze_min = alarmObj["snooze_min"] | 0;
@@ -441,13 +445,10 @@ JsonDocument AlarmController::makeJSON(const AlarmSettings* settings, uint8_t co
 void AlarmController::appendToJSON(const AlarmSettings& settings, JsonArray& alarms) const {
   JsonObject alarmObj = alarms.add<JsonObject>();
 
-  JsonArray enabled_days = alarmObj["enabled_days"].to<JsonArray>();
-  for (uint8_t i = 0; i < 7; ++i) {
-    enabled_days.add(settings.enabled_days[i]);
-  }
-
   alarmObj["enabled"] = settings.enabled;
-  alarmObj["enabled_days"] = enabled_days;
+  for (uint8_t i = 0; i < 7; ++i) {
+    alarmObj["enabled_days"][i] = settings.enabled_days[i];
+  }
   alarmObj["time_hour"] = settings.time_hour;
   alarmObj["time_min"] = settings.time_min;
   alarmObj["snooze_min"] = settings.snooze_min;
@@ -472,8 +473,7 @@ bool AlarmController::saveJSON(const AlarmSettings* settings, uint8_t count, Fil
 /*********************************/
 
 void AlarmController::onNextAlarmTimer(TimerHandle_t xTimer) {
-  Message msg = Message::Play;
-  xQueueSend(activeInstance_->messageQueue_, &msg, 0);
+  activeInstance_->sendMessage(Message::Alarm);
 }
 
 
