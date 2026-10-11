@@ -150,6 +150,7 @@ void create_modules() {
                                         modules.clock,
                                         modules.config,
                                         modules.webserver,
+                                        modules.alarm,
                                         modules.buttons);
 #endif
 }

@@ -9,6 +9,7 @@ class DisplayManager;
 class ClockController;
 class GeneralConfigController;
 class WebServerController;
+class AlarmController;
 class ButtonReader;
 
 class Coordinator {
@@ -34,6 +35,7 @@ class Coordinator {
               ClockController *clockController,
               GeneralConfigController *generalConfigController,
               WebServerController *webServerController,
+              AlarmController *alarmController,
               ButtonReader *buttonReader);
 
   bool begin(uint32_t queueLength = 16, uint32_t stackBytes = 4096, UBaseType_t priority = 1);
@@ -64,5 +66,6 @@ class Coordinator {
   ClockController *clockController_;
   GeneralConfigController *generalConfigController_;
   WebServerController *webServerController_;
+  AlarmController *alarmController_;
   ButtonReader *buttonReader_;
 };

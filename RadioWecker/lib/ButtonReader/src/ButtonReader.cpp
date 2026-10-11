@@ -1,6 +1,6 @@
 #include "ButtonReader.h"
 
-#define BUTTONREADER_DEBUG
+//#define BUTTONREADER_DEBUG
 
 ButtonReader::ButtonReader(const HardwareConfig* hwConfig,
                            const ButtonsChannels* buttonsChannels)

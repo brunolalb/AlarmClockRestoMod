@@ -57,6 +57,7 @@ void AlarmController::monitorTask() {
         Serial.println("alarm: msg Sleep");
         // set timer to sleep period
         uint32_t sleep_time_ms = currentAlarm_.snooze_min * 60 * 1000;
+        Serial.println("alarm: scheduling next alarm in " + String(sleep_time_ms / 1000) + " s");
         xTimerChangePeriod(nextAlarmTimer_, pdMS_TO_TICKS(sleep_time_ms), 0);
         xTimerStart(nextAlarmTimer_, 0);
         break;

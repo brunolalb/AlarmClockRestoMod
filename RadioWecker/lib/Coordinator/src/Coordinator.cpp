@@ -4,6 +4,7 @@
 #include <ClockController.h>
 #include <GeneralConfigController.h>
 #include <WebServerController.h>
+#include <ButtonReader.h>
 
 #include <SoftwareConfig.h>
 
@@ -11,6 +12,7 @@ Coordinator::Coordinator(DisplayManager *display,
                          ClockController *clockController,
                          GeneralConfigController *generalConfigController,
                          WebServerController *webServerController,
+                         AlarmController *alarmController,
                          ButtonReader *buttonReader) : 
     state_(State::Startup), 
     queue_(nullptr), 
@@ -19,6 +21,7 @@ Coordinator::Coordinator(DisplayManager *display,
     clockController_(clockController),
     generalConfigController_(generalConfigController),
     webServerController_(webServerController),
+    alarmController_(alarmController),
     buttonReader_(buttonReader) {}
 
 
@@ -106,46 +109,49 @@ bool Coordinator::basic_event_handler(const Event &event) {
 }
 
 void Coordinator::state_startup(const Event &event) {
-    switch (event.type) {
-    case EventType::_ENTER:
-        display_->showTimeHHMM(8888);
-        break;
-    case EventType::_EXIT:
-        // Handle exiting the Startup state
-        break;
-    case EventType::StartupDone:
-        transitionTo(State::Idle);
-        break;
-    }
+  Serial.println("coordinator: state_startup: " + String(static_cast<int>(event.type)));
+  switch (event.type) {
+  case EventType::_ENTER:
+      display_->showTimeHHMM(8888);
+      break;
+  case EventType::_EXIT:
+      // Handle exiting the Startup state
+      break;
+  case EventType::StartupDone:
+      transitionTo(State::Idle);
+      break;
+  }
 }
 
 void Coordinator::state_idle(const Event &event) {
-    if (basic_event_handler(event)) return;
-    switch (event.type) {
-      case EventType::_ENTER:
-        // Handle entering the Idle state
-        break;
-      case EventType::_EXIT:
-        // Handle exiting the Idle state
-        break;
-      case EventType::AlarmTriggered:
-        transitionTo(State::Alarm);
-        break;
-    }
+  Serial.println("coordinator: state_idle: " + String(static_cast<int>(event.type)));
+  if (basic_event_handler(event)) return;
+  switch (event.type) {
+    case EventType::_ENTER:
+      // Handle entering the Idle state
+      break;
+    case EventType::_EXIT:
+      // Handle exiting the Idle state
+      break;
+    case EventType::AlarmTriggered:
+      transitionTo(State::Alarm);
+      break;
+  }
 }
 
 void Coordinator::state_alarm(const Event &event) {
-    if (basic_event_handler(event)) return;
-    switch (event.type) {
-      case EventType::_ENTER:
-        // Handle entering the Alarm state
-        // todo: get alarm file info and start the alarm
+  Serial.println("coordinator: state_alarm: " + String(static_cast<int>(event.type)));
+  if (basic_event_handler(event)) return;
+  switch (event.type) {
+    case EventType::_ENTER:
+      // Handle entering the Alarm state
+      // todo: get alarm file info and start the alarm
       buttonReader_->setupUpdateInterval(ButtonReader::UpdateInterval::FAST);
-        break;
-      case EventType::_EXIT:
-        // Handle exiting the Alarm state
+      break;
+    case EventType::_EXIT:
+      // Handle exiting the Alarm state
       buttonReader_->setupUpdateInterval(ButtonReader::UpdateInterval::NORMAL);
-        break;
+      break;
     case EventType::ButtonStateChanged: {
       // Handle button state changed event
       ButtonReader::ButtonsStates buttonState;
@@ -154,12 +160,16 @@ void Coordinator::state_alarm(const Event &event) {
       if (buttonState.states.DISPLAY_SLEEP_TOP) {
         // Handle DISPLAY_SLEEP_TOP button press
         unsigned long currentTime = millis();
+        // if the sleep button is pressed twice within 1 second, stop the alarm
         if (currentTime - lastButtonPressTime < 1000) { // debounce for 1 second
+          alarmController_->sendMessage(AlarmController::Message::Stop);
+          transitionTo(State::Idle);
         } else {
+          alarmController_->sendMessage(AlarmController::Message::Sleep);
         }
         lastButtonPressTime = currentTime;
       }
-        break;
+      break;
     }
-    }
+  }
 }
