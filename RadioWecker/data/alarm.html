@@ -130,6 +130,33 @@
         accent-color: var(--accent);
       }
 
+      .source-toggle {
+        display: flex;
+        gap: 8px;
+      }
+
+      .source-toggle button {
+        flex: 1;
+        background: #131924;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .source-toggle button[aria-pressed="true"] {
+        background: var(--accent);
+        border-color: var(--accent-dark);
+        color: #fff;
+      }
+
+      .source-toggle button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      #soundFiles {
+        width: 100%;
+      }
+
       @media (max-width: 640px) {
         .layout {
           grid-template-columns: 1fr;
@@ -195,21 +222,17 @@
                 </div>
               </div>
 
-              <div class="field check-field full">
-                <input id="soundInSd" name="sound_in_SD" type="checkbox" />
-                <label for="soundInSd">Load sound from SD card</label>
+              <div class="field full">
+                <label>Sound source</label>
+                <div class="source-toggle" role="group" aria-label="Sound source">
+                  <button id="sourceDefaultBtn" type="button" aria-pressed="true">Default</button>
+                  <button id="sourceSdBtn" type="button" aria-pressed="false" disabled title="Coming soon">SD Card</button>
+                </div>
               </div>
 
               <div class="field full">
-                <label for="soundPath">Sound path</label>
-                <input id="soundPath" name="soundPath" type="text" maxlength="255" required placeholder="/music/alarm.mp3" />
-              </div>
-
-              <div class="field full">
-                <label for="musicFiles">SD card music files</label>
-                <select id="musicFiles" name="musicFiles">
-                  <option value="">Choose a file to fill the sound path</option>
-                </select>
+                <label for="soundFiles">Sound file</label>
+                <select id="soundFiles" name="soundFiles" size="6"></select>
               </div>
 
               <div class="field">
@@ -242,8 +265,11 @@
       const saveAllBtn = document.getElementById("saveAllBtn");
       const statusEl = document.getElementById("status");
       const fieldsEl = document.getElementById("alarmFields");
-      const musicFilesEl = document.getElementById("musicFiles");
-      const soundPathEl = document.getElementById("soundPath");
+      const soundFilesEl = document.getElementById("soundFiles");
+      const sourceDefaultBtn = document.getElementById("sourceDefaultBtn");
+      const sourceSdBtn = document.getElementById("sourceSdBtn");
+      let soundInSd = false;
+      let defaultFiles = [];
       const dayChecks = Array.from(document.querySelectorAll("[data-day]"));
       let alarms = [];
       let selectedAlarmIndex = -1;
@@ -261,7 +287,7 @@
           time_hour: 7,
           time_min: 0,
           snooze_min: 10,
-          sound_in_SD: true,
+          sound_in_SD: false,
           soundPath: "",
           soundStartAt: 0,
           soundVolume: 5,
@@ -336,8 +362,8 @@
         document.getElementById("enabled").checked = Boolean(alarm.enabled);
         document.getElementById("time").value = formattedTime(alarm);
         document.getElementById("snoozeMin").value = alarm.snooze_min ?? 10;
-        document.getElementById("soundInSd").checked = Boolean(alarm.sound_in_SD);
-        soundPathEl.value = alarm.soundPath || "";
+        // SD source not implemented yet; always fall back to Default
+        setSoundSource(false, alarm.soundPath || "");
         document.getElementById("soundStartAt").value = alarm.soundStartAt ?? 0;
         document.getElementById("soundVolume").value = alarm.soundVolume ?? 5;
 
@@ -373,9 +399,9 @@
           throw new Error("Sound volume must be between 0 and 65535");
         }
 
-        const soundPath = soundPathEl.value.trim();
+        const soundPath = soundFilesEl.value;
         if (!soundPath) {
-          throw new Error("Sound path is required");
+          throw new Error("Select a sound file");
         }
 
         return {
@@ -384,37 +410,55 @@
           time_hour: timeHour,
           time_min: timeMin,
           snooze_min: snoozeMin,
-          sound_in_SD: document.getElementById("soundInSd").checked,
+          sound_in_SD: soundInSd,
           soundPath,
           soundStartAt,
           soundVolume,
         };
       }
 
-      async function loadMusicFiles() {
+      function renderSoundFiles(selectedPath) {
+        soundFilesEl.innerHTML = "";
+        const files = soundInSd ? [] : defaultFiles;
+        files.forEach((file) => {
+          const option = document.createElement("option");
+          option.value = file.path;
+          option.textContent = file.name || file.path;
+          soundFilesEl.appendChild(option);
+        });
+        if (selectedPath && !files.some((file) => file.path === selectedPath)) {
+          const option = document.createElement("option");
+          option.value = selectedPath;
+          option.textContent = selectedPath + " (missing)";
+          soundFilesEl.appendChild(option);
+        }
+        soundFilesEl.value = selectedPath || "";
+      }
+
+      function setSoundSource(useSd, selectedPath) {
+        soundInSd = useSd;
+        sourceDefaultBtn.setAttribute("aria-pressed", String(!useSd));
+        sourceSdBtn.setAttribute("aria-pressed", String(useSd));
+        renderSoundFiles(selectedPath);
+      }
+
+      async function loadDefaultFiles() {
         try {
-          const response = await fetch("/api/sdcard/listMusicFiles", { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error("SD card unavailable");
-          }
+          const response = await fetch("/api/sound/defaultAlarms", { cache: "no-store" });
           const payload = await response.json();
-          const files = Array.isArray(payload.files) ? payload.files : [];
-          files.forEach((file) => {
-            if (!file.path) return;
-            const option = document.createElement("option");
-            option.value = file.path;
-            option.textContent = file.name || file.path;
-            musicFilesEl.appendChild(option);
-          });
-          if (files.length === 0) musicFilesEl.options[0].textContent = "No SD music files found";
+          if (!response.ok || !payload.ok) {
+            throw new Error(payload.error || "Default sounds unavailable");
+          }
+          defaultFiles = (Array.isArray(payload.files) ? payload.files : []).filter((file) => file.path);
         } catch (err) {
-          musicFilesEl.options[0].textContent = "SD music list unavailable";
+          defaultFiles = [];
+          setStatus("Could not load default sounds", "err");
         }
       }
 
       async function loadAlarms() {
         try {
-          const response = await fetch("/api/alarm", { cache: "no-store" });
+          const response = await fetch("/api/alarms/config", { cache: "no-store" });
           if (!response.ok) throw new Error("Alarm API unavailable");
           const payload = await response.json();
           alarms = Array.isArray(payload.alarms) ? payload.alarms : [];
@@ -433,8 +477,12 @@
         }
       }
 
-      musicFilesEl.addEventListener("change", () => {
-        if (musicFilesEl.value) soundPathEl.value = musicFilesEl.value;
+      sourceDefaultBtn.addEventListener("click", () => {
+        if (soundInSd) setSoundSource(false, "");
+      });
+
+      sourceSdBtn.addEventListener("click", () => {
+        if (!soundInSd) setSoundSource(true, "");
       });
 
       addAlarmBtn.addEventListener("click", () => {
@@ -487,7 +535,7 @@
 
           setStatus("Saving all alarms...", "");
 
-          const response = await fetch("/api/alarm", {
+          const response = await fetch("/api/alarms/config", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ alarms }),
@@ -499,7 +547,7 @@
           }
 
           setStatus("Saved " + payload.count + " alarms", "ok");
-          alarms = (await (await fetch("/api/alarm", { cache: "no-store" })).json()).alarms || alarms;
+          alarms = (await (await fetch("/api/alarms/config", { cache: "no-store" })).json()).alarms || alarms;
           renderAlarmList();
           loadSelectedAlarmIntoForm();
         } catch (err) {
@@ -507,8 +555,7 @@
         }
       });
 
-      loadMusicFiles();
-      loadAlarms();
+      loadDefaultFiles().then(loadAlarms);
     </script>
   </body>
 </html>

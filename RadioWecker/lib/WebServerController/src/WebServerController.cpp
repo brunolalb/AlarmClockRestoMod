@@ -309,7 +309,7 @@ void WebServerController::setupRoutes() {
   webServer_.on("/api/config", HTTP_POST, [this]() { handleSaveConfig(); });
 
   // Alarms related
-  webServer_.on("/api/alarm", HTTP_GET, [this]() {
+  webServer_.on("/api/alarms/config", HTTP_GET, [this]() {
     if (alarmController_) {
       JsonDocument doc = alarmController_->handleGetAlarmConfig();
       String payload;
@@ -319,7 +319,7 @@ void WebServerController::setupRoutes() {
       webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Alarm controller not available\"}");
     }
   });
-  webServer_.on("/api/alarm", HTTP_POST, [this]() {
+  webServer_.on("/api/alarms/config", HTTP_POST, [this]() {
     if (alarmController_) {
       JsonDocument doc;
       const DeserializationError err = deserializeJson(doc, webServer_.arg("plain"));
@@ -329,6 +329,17 @@ void WebServerController::setupRoutes() {
       webServer_.send(200, "application/json", payload);
     } else {
       webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Alarm controller not available\"}");
+    }
+  });
+  webServer_.on("/api/sound/defaultAlarms", HTTP_GET, [this]() {
+    if (soundController_) {
+      JsonDocument doc = soundController_->handleGetDefaultAlarms(webServer_.arg("path"));
+      String payload;
+      serializeJson(doc, payload);
+      const bool ok = doc["ok"] | false;
+      webServer_.send(ok ? 200 : 400, "application/json", payload);
+    } else {
+      webServer_.send(500, "application/json", "{\"ok\":false,\"error\":\"Sound controller not available\"}");
     }
   });
 

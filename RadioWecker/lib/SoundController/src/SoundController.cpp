@@ -5,8 +5,13 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
+#include <FsUtils.h>
+
 #include <LittleFS.h>
 #include <esp_pthread.h>
+
+// Out-of-line definition required for ODR-use before C++17
+constexpr const char* SoundController::kSupportedFileExtensions[];
 
 namespace {
 void warmUpAudioDecoder(Audio& audio) {
@@ -86,7 +91,9 @@ String titleFromPath(const String& path) {
 }
 }
 
-const char* const SoundController::kSupportedFileExtensions[] = {".mp3", ".wav", ".ogg"};
+//void audio_info(const char *info){
+//    Serial.print("info        "); Serial.println(info);
+//}
 
 SoundController::SoundController( SdController* sdController,
                                   const HardwareConfig *hwConfig)
@@ -98,7 +105,8 @@ bool SoundController::initialize() {
   volume_ = 0;
 
   // start ShutDown pin
-  AUDIO_SHUTDOWN_MODE_OFF();
+  //AUDIO_SHUTDOWN_MODE_OFF();
+  AUDIO_SHUTDOWN_MODE_ON();
 
   // start ADC for potentiometer
   adcAttachPin(hwConfig_.volumePotentiometerPin);
@@ -107,9 +115,13 @@ bool SoundController::initialize() {
   pinMode(hwConfig_.GAINMuxS1Pin, OUTPUT);
   pinMode(hwConfig_.GAINMuxS2Pin, OUTPUT);
   pinMode(hwConfig_.GAINMuxS3Pin, OUTPUT);
-  digitalWrite(hwConfig_.GAINMuxS1Pin, AUDIO_GAIN_3DB & 0b001);
-  digitalWrite(hwConfig_.GAINMuxS2Pin, (AUDIO_GAIN_3DB & 0b010) >> 1);
-  digitalWrite(hwConfig_.GAINMuxS3Pin, (AUDIO_GAIN_3DB & 0b100) >> 2);
+  // digitalWrite(hwConfig_.GAINMuxS1Pin, AUDIO_GAIN_3DB & 0b001);
+  // digitalWrite(hwConfig_.GAINMuxS2Pin, (AUDIO_GAIN_3DB & 0b010) >> 1);
+  // digitalWrite(hwConfig_.GAINMuxS3Pin, (AUDIO_GAIN_3DB & 0b100) >> 2);
+  
+  digitalWrite(hwConfig_.GAINMuxS1Pin, AUDIO_GAIN_9DB & 0b001);
+  digitalWrite(hwConfig_.GAINMuxS2Pin, (AUDIO_GAIN_9DB & 0b010) >> 1);
+  digitalWrite(hwConfig_.GAINMuxS3Pin, (AUDIO_GAIN_9DB & 0b100) >> 2);
 
   //start MAX98357A
   bool max98357_ok = audio_.setPinout(hwConfig_.i2sBclkPin, hwConfig_.i2sLrclkPin, hwConfig_.i2sDataPin);
@@ -212,17 +224,6 @@ const String& SoundController::currentTrack() const {
 
 uint8_t SoundController::volume() const {
   return volume_;
-}
-
-bool SoundController::isMusicFilename(const String& name) const {
-  String lower = name;
-  lower.toLowerCase();
-  for (size_t i = 0; i < kSupportedFileExtensionCount; ++i) {
-    if (lower.endsWith(kSupportedFileExtensions[i])) {
-      return true;
-    }
-  }
-  return false;
 }
 
 String SoundController::normalizePath(const String& requestedPath) const {
@@ -374,7 +375,7 @@ bool SoundController::findNextMusicFile(String& nextTrack) const {
   while (file) {
     if (!file.isDirectory()) {
       const String name = String(file.name());
-      if (isMusicFilename(name)) {
+      if (FsUtils::filterFilename(name, kSupportedFileExtensions, kSupportedFileExtensionCount)) {
         if (firstTrack.length() == 0) {
           firstTrack = name;
         }
@@ -426,7 +427,7 @@ bool SoundController::findPreviousMusicFile(String& prevTrack) const {
   while (file) {
     if (!file.isDirectory()) {
       const String name = String(file.name());
-      if (isMusicFilename(name)) {
+      if (FsUtils::filterFilename(name, kSupportedFileExtensions, kSupportedFileExtensionCount)) {
         if (name == currentTrack_ || name == currentNoSlash || name == currentWithSlash) {
           foundCurrent = true;
           if (lastTrack.length() > 0) {
@@ -515,7 +516,7 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
 
       const String requestedPath = doc["path"] | "";
       const String path = normalizePath(requestedPath);
-      if (path.length() == 0 || !isMusicFilename(path)) {
+      if (path.length() == 0 || !FsUtils::filterFilename(path, kSupportedFileExtensions, kSupportedFileExtensionCount)) {
         webServer.send(400, "application/json", "{\"ok\":false,\"error\":\"Invalid music path\"}");
         return;
       }
@@ -735,4 +736,16 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
       return;
     }
   }
+}
+
+JsonDocument SoundController::handleGetDefaultAlarms(const String& folderPath) {
+  const String path = folderPath.length() == 0 ? kStandardAlarmsDir : folderPath;
+
+  JsonDocument doc = FsUtils::collectFiles(LittleFS,
+                                           path,
+                                           kMaxListedFiles,
+                                           kSupportedFileExtensions,
+                                           kSupportedFileExtensionCount);
+  doc["root"] = kStandardAlarmsDir;
+  return doc;
 }

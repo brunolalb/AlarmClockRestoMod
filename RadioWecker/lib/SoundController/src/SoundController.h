@@ -35,12 +35,18 @@ class SoundController {
   SoundController(SdController* sdController,
                   const HardwareConfig *hwConfig);
 
-  static const char* const kSupportedFileExtensions[];
   static constexpr size_t kSupportedFileExtensionCount = 3;
+  static constexpr const char* kSupportedFileExtensions[kSupportedFileExtensionCount] = {".mp3", ".wav", ".ogg"};
+  static constexpr const char* kStandardAlarmsDir = "/alarms";
+  static constexpr size_t kMaxListedFiles = 300;
+  static constexpr uint8_t kMaxListDepth = 6;
 
   bool initialize();
 
   void handleWebServerCommand(WebServer& webServer, WebServerCommand command);
+  // Lists a single folder of the standard alarms (LittleFS). folderPath must be inside kStandardAlarmsDir;
+  // an empty folderPath lists the root of kStandardAlarmsDir.
+  JsonDocument handleGetDefaultAlarms(const String& folderPath);
 
   bool isReady() const { return ready_; }
   bool isPlaying() const;
@@ -50,7 +56,6 @@ class SoundController {
  private:
   void updateTask();
   void volumeTask();
-  bool isMusicFilename(const String& name) const;
   String normalizePath(const String& requestedPath) const;
   String normalizeRadioUrl(const String& requestedUrl) const;
   bool resolveLocalPlaybackPath(const String& path, String& playbackPath) const;
