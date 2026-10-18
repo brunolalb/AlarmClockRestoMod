@@ -54,17 +54,23 @@ bool GeneralConfigController::initialize(const ConfigData *default_config, Coord
     Serial.println("cfg: no valid cfg, using default");
     return saveToAllStorages(&new_config);
   } else {
-    if (config_SD_ok) {
+    // internal storage (LittleFS) has priority over SD card
+    if (config_LittleFS_ok) {
+      config_ = config_LittleFS;
+      // to prevent wear on the SD card, only write if necessary
+      if (!config_SD_ok || !compareConfig(&config_LittleFS, &config_SD)) {
+        // if the config on the SD card is different, save it
+        return SdCard_save(&config_LittleFS);
+      }
+      return true;
+    } else {
+      // SD Card has a valid config, copy to internal
       config_ = config_SD;
       // to prevent wear on the LittleFS, only write if necessary
       if (!config_LittleFS_ok || !compareConfig(&config_SD, &config_LittleFS)) {
         // if the config on the littleFS is different, save it
         return LittleFS_save(&config_SD);
       }
-      return true;
-    } else {
-      config_ = config_LittleFS;
-      SdCard_save(&config_LittleFS); // answer doesnt matter
       return true;
     }
   }

@@ -333,7 +333,18 @@ bool AlarmController::loadAlarmSettings(const AlarmSettings* settings, uint8_t c
     Serial.println("alarm: no valid cfg, creating clean");
     all_good = saveAlarmSettings(alarms_SD, 0);
   } else {
-    if (alarms_in_SD) {
+    // internal storage (LittleFS) has priority over SD card
+    if (alarms_in_LittleFS) {
+      updateAlarmSettings(alarms_LittleFS, alarms_in_LittleFS_count);
+      // to prevent wear on the SD card, only write if necessary
+      if (!alarms_in_SD || !compareAlarmSettings(alarms_LittleFS, alarms_in_LittleFS_count, alarms_SD, alarms_in_SD_count)) {
+        // if the config on the SD card is different, save it
+        all_good = SDCard_save(alarms_LittleFS, alarms_in_LittleFS_count);
+      } else {
+        all_good = true;
+      }
+    } else {
+      // SD Card has a valid config, copy to internal
       updateAlarmSettings(alarms_SD, alarms_in_SD_count);
       // to prevent wear on the LittleFS, only write if necessary
       if (!alarms_in_LittleFS || !compareAlarmSettings(alarms_SD, alarms_in_SD_count, alarms_LittleFS, alarms_in_LittleFS_count)) {
@@ -342,9 +353,6 @@ bool AlarmController::loadAlarmSettings(const AlarmSettings* settings, uint8_t c
       } else {
         all_good = true;
       }
-    } else {
-      updateAlarmSettings(alarms_LittleFS, alarms_in_LittleFS_count);
-      all_good = SDCard_save(alarms_LittleFS, alarms_in_LittleFS_count);
     }
   }
 
