@@ -739,7 +739,8 @@ void SoundController::handleWebServerCommand(WebServer& webServer, WebServerComm
 }
 
 JsonDocument SoundController::handleGetDefaultAlarms(const String& folderPath) {
-  const String path = folderPath.length() == 0 ? kStandardAlarmsDir : folderPath;
+  // if the path doesnt start with kStandardAlarmsDir, then use kStandardAlarmsDir
+  const String path = (folderPath.length() == 0) || !folderPath.startsWith(kStandardAlarmsDir) ? kStandardAlarmsDir : folderPath;
 
   JsonDocument doc = FsUtils::collectFiles(LittleFS,
                                            path,

@@ -232,7 +232,9 @@
 
               <div class="field full">
                 <label for="soundFiles">Sound file</label>
+                <div id="soundDir" class="alarm-meta"></div>
                 <select id="soundFiles" name="soundFiles" size="6"></select>
+                <div id="soundSelected" class="alarm-meta"></div>
               </div>
 
               <div class="field">
@@ -268,8 +270,15 @@
       const soundFilesEl = document.getElementById("soundFiles");
       const sourceDefaultBtn = document.getElementById("sourceDefaultBtn");
       const sourceSdBtn = document.getElementById("sourceSdBtn");
+      const soundDirEl = document.getElementById("soundDir");
+      const soundSelectedEl = document.getElementById("soundSelected");
       let soundInSd = false;
       let defaultFiles = [];
+      let defaultFolders = [];
+      let defaultRoot = "/";
+      let currentDir = "";
+      let selectedSoundPath = "";
+      let dirRequestId = 0;
       const dayChecks = Array.from(document.querySelectorAll("[data-day]"));
       let alarms = [];
       let selectedAlarmIndex = -1;
@@ -399,7 +408,7 @@
           throw new Error("Sound volume must be between 0 and 65535");
         }
 
-        const soundPath = soundFilesEl.value;
+        const soundPath = selectedSoundPath;
         if (!soundPath) {
           throw new Error("Select a sound file");
         }
@@ -417,43 +426,69 @@
         };
       }
 
-      function renderSoundFiles(selectedPath) {
+      function parentDir(path) {
+        const trimmed = path.length > 1 ? path.replace(/\/+$/, "") : path;
+        const slash = trimmed.lastIndexOf("/");
+        return slash <= 0 ? "/" : trimmed.substring(0, slash);
+      }
+
+      function addOption(value, text, kind) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        option.dataset.kind = kind;
+        soundFilesEl.appendChild(option);
+      }
+
+      function renderSoundFiles() {
         soundFilesEl.innerHTML = "";
-        const files = soundInSd ? [] : defaultFiles;
-        files.forEach((file) => {
-          const option = document.createElement("option");
-          option.value = file.path;
-          option.textContent = file.name || file.path;
-          soundFilesEl.appendChild(option);
-        });
-        if (selectedPath && !files.some((file) => file.path === selectedPath)) {
-          const option = document.createElement("option");
-          option.value = selectedPath;
-          option.textContent = selectedPath + " (missing)";
-          soundFilesEl.appendChild(option);
+        soundDirEl.textContent = soundInSd ? "" : "Folder: " + currentDir;
+        soundSelectedEl.textContent = "Selected: " + (selectedSoundPath || "none");
+        if (soundInSd) return;
+
+        if (currentDir && currentDir !== "/") {
+          addOption(parentDir(currentDir), "..", "dir");
         }
-        soundFilesEl.value = selectedPath || "";
+        defaultFolders.forEach((folder) => addOption(folder.path, folder.name + "/", "dir"));
+        defaultFiles.forEach((file) => addOption(file.path, file.name || file.path, "file"));
+
+        const inCurrentDir = selectedSoundPath && parentDir(selectedSoundPath) === currentDir;
+        if (inCurrentDir && !defaultFiles.some((file) => file.path === selectedSoundPath)) {
+          addOption(selectedSoundPath, selectedSoundPath + " (missing)", "file");
+        }
+        soundFilesEl.value = inCurrentDir ? selectedSoundPath : "";
       }
 
-      function setSoundSource(useSd, selectedPath) {
-        soundInSd = useSd;
-        sourceDefaultBtn.setAttribute("aria-pressed", String(!useSd));
-        sourceSdBtn.setAttribute("aria-pressed", String(useSd));
-        renderSoundFiles(selectedPath);
-      }
-
-      async function loadDefaultFiles() {
+      async function loadDefaultDir(dir) {
+        const requestId = ++dirRequestId;
         try {
-          const response = await fetch("/api/sound/defaultAlarms", { cache: "no-store" });
+          const query = dir ? "?path=" + encodeURIComponent(dir) : "";
+          const response = await fetch("/api/sound/defaultAlarms" + query, { cache: "no-store" });
           const payload = await response.json();
           if (!response.ok || !payload.ok) {
             throw new Error(payload.error || "Default sounds unavailable");
           }
-          defaultFiles = (Array.isArray(payload.files) ? payload.files : []).filter((file) => file.path);
+          if (requestId !== dirRequestId) return;
+          defaultRoot = payload.root || defaultRoot;
+          currentDir = payload.path || dir || defaultRoot;
+          defaultFolders = (Array.isArray(payload.folders) ? payload.folders : []).filter((f) => f.path);
+          defaultFiles = (Array.isArray(payload.files) ? payload.files : []).filter((f) => f.path);
         } catch (err) {
+          if (requestId !== dirRequestId) return;
+          defaultFolders = [];
           defaultFiles = [];
           setStatus("Could not load default sounds", "err");
         }
+        renderSoundFiles();
+      }
+
+      function setSoundSource(useSd, selectedPath) {
+        soundInSd = useSd;
+        selectedSoundPath = selectedPath;
+        sourceDefaultBtn.setAttribute("aria-pressed", String(!useSd));
+        sourceSdBtn.setAttribute("aria-pressed", String(useSd));
+        renderSoundFiles();
+        if (!useSd) loadDefaultDir(selectedPath ? parentDir(selectedPath) : defaultRoot);
       }
 
       async function loadAlarms() {
@@ -476,6 +511,17 @@
           setStatus("Could not load alarms", "err");
         }
       }
+
+      soundFilesEl.addEventListener("change", () => {
+        const option = soundFilesEl.selectedOptions[0];
+        if (!option) return;
+        if (option.dataset.kind === "dir") {
+          loadDefaultDir(option.value);
+        } else {
+          selectedSoundPath = option.value;
+          soundSelectedEl.textContent = "Selected: " + selectedSoundPath;
+        }
+      });
 
       sourceDefaultBtn.addEventListener("click", () => {
         if (soundInSd) setSoundSource(false, "");
@@ -555,7 +601,7 @@
         }
       });
 
-      loadDefaultFiles().then(loadAlarms);
+      loadAlarms();
     </script>
   </body>
 </html>
