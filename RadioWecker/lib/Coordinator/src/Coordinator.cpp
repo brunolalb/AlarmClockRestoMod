@@ -8,6 +8,10 @@
 
 #include <SoftwareConfig.h>
 
+#define COORDINATOR_QUEUE_LENGTH 16
+#define COORDINATOR_STACK_BYTES 20 * 1024
+#define COORDINATOR_PRIORITY 1
+
 Coordinator::Coordinator(DisplayManager *display,
                          ClockController *clockController,
                          GeneralConfigController *generalConfigController,
@@ -25,13 +29,13 @@ Coordinator::Coordinator(DisplayManager *display,
     buttonReader_(buttonReader) {}
 
 
-bool Coordinator::begin(uint32_t queueLength, uint32_t stackBytes, UBaseType_t priority) {
-  queue_ = xQueueCreate(queueLength, sizeof(Event));
+bool Coordinator::begin() {
+  queue_ = xQueueCreate(COORDINATOR_QUEUE_LENGTH, sizeof(Event));
   if (!queue_) {
     Serial.println("Coordinator: failed to create queue");
     return false;
   }
-  if (xTaskCreate(taskEntry, "Coordinator", stackBytes, this, priority, &task_) != pdPASS) {
+  if (xTaskCreate(taskEntry, "Coordinator", COORDINATOR_STACK_BYTES, this, COORDINATOR_PRIORITY, &task_) != pdPASS) {
     Serial.println("Coordinator: failed to create task");
     return false;
   }

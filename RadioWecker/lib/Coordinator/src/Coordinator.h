@@ -38,7 +38,7 @@ class Coordinator {
               AlarmController *alarmController,
               ButtonReader *buttonReader);
 
-  bool begin(uint32_t queueLength = 16, uint32_t stackBytes = 4096, UBaseType_t priority = 1);
+  bool begin();
 
   // Safe to call from any task.
   bool postEvent(const Event &event, TickType_t timeout = 0);
