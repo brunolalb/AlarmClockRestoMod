@@ -65,6 +65,11 @@ bool ClockController::initialize(const TimeConfig* default_config,
   messageQueue_ = xQueueCreate(4, sizeof(Message));
   sntp_set_time_sync_notification_cb(sntpSyncCallback);
   configTzTime(config_.timezonePosix.c_str(), config_.ntpServer.c_str());
+  // add the offset to current time
+  timeval now_time;
+  gettimeofday(&now_time, nullptr);
+  now_time.tv_sec += config_.timeOffsetMinutes * 60;
+  settimeofday(&now_time, nullptr);
   sntp_set_sync_interval(config_.ntpSyncIntervalMs);
 
   nextMinuteTimer_ = xTimerCreate("NextMinuteTimer",
@@ -88,7 +93,7 @@ void ClockController::updateTask() {
   while(1) {
     xQueueReceive(messageQueue_, &msg, portMAX_DELAY);
     switch (msg) {
-      case Message::NTPSynced:
+      case Message::NTPSynced: {
         getLocalTime(&now, 0);
         Serial.printf("clock: NTP synced: %02d:%02d:%02d\n", now.tm_hour, now.tm_min, now.tm_sec);
         //stop the next minute timer 
@@ -96,21 +101,48 @@ void ClockController::updateTask() {
         // send the NextMinute message to the queue manually
         msg = Message::NextMinute;
         xQueueSend(messageQueue_, &msg, 0);
+        // adjust the clock with the offset
+        timeval tv;
+        gettimeofday(&tv, nullptr);
+        tv.tv_sec += config_.timeOffsetMinutes * 60;
+        settimeofday(&tv, nullptr);
+
         // update the RTC
         syncExternalRtc();
         // update the last synchronized time
         ntpLastSynchronized_ = now;
         break;
+      }
 
-      case Message::NextMinute:
+      case Message::NewConfig: {
+        // adjust new timezone
+        if (new_config_.timezonePosix != config_.timezonePosix) {
+          configTzTime(new_config_.timezonePosix.c_str(), config_.ntpServer.c_str());
+        }
+  
+        // adjust new offset
+        if (new_config_.timeOffsetMinutes != config_.timeOffsetMinutes) {
+          timeval tv;
+          gettimeofday(&tv, nullptr);
+          tv.tv_sec -= config_.timeOffsetMinutes * 60;
+          tv.tv_sec += new_config_.timeOffsetMinutes * 60;
+          settimeofday(&tv, nullptr);
+        }
+
+        // update the RTC
+        syncExternalRtc();
+
+        config_ = new_config_;
+
+        // send the NextMinute msg so it's sent to the coordinator
+        msg = Message::NextMinute;
+        xQueueSend(messageQueue_, &msg, 0);
+        break;
+      }
+
+      case Message::NextMinute: {
         getLocalTime(&now, 0);
         // update the displayed value
-        now.tm_min += config_.timeOffsetMinutes;
-        if (now.tm_min >= 60) {
-          now.tm_hour += (now.tm_min + config_.timeOffsetMinutes) / 60;
-          now.tm_min = (now.tm_min + config_.timeOffsetMinutes) % 60;
-          now.tm_hour %= 24;
-        }
         displayedHHMM_ = now.tm_hour * 100 + now.tm_min;
         // send the new time to the coordinator
         if (coordinator_) {
@@ -121,6 +153,7 @@ void ClockController::updateTask() {
         xTimerChangePeriod(nextMinuteTimer_, pdMS_TO_TICKS((60 - now.tm_sec) * 1000), 0);
         xTimerStart(nextMinuteTimer_, 0);
         break;
+      }
     }
   }
 }
@@ -137,6 +170,9 @@ void ClockController::onNextMinuteTimer(TimerHandle_t xTimer) {
 
 void ClockController::syncExternalRtc() {
   struct tm now = {};
+  if (!rtcReady_) {
+    return;
+  }
   // getLocalTime will get the time with the local timezone applied
   if (!getLocalTime(&now, 0)) {
     return;
@@ -154,9 +190,7 @@ void ClockController::syncExternalRtc() {
                         now.tm_sec);
 
   Serial.println("clock: RTC sync to " + String(ntpNow.timestamp()));
-  if (rtcReady_) {
-    rtc.adjust(ntpNow);
-  }
+  rtc.adjust(ntpNow);
 }
 
 /******* Getters ******* */
@@ -183,16 +217,26 @@ int16_t ClockController::timeOffsetMinutes() const {
 
 /******* Setters ******* */
 void ClockController::applyTimeConfig(const String& timezonePosix, int16_t timeOffsetMinutes) {
-  Message msg = Message::NextMinute;
+  Message msg = Message::NewConfig;
+  bool something_changed = false;
   Serial.print("clock: new config - timezone: " + timezonePosix + ", time offset: " + String(timeOffsetMinutes) + "\n");
 
+  new_config_ = config_;
+
   if (timezonePosix != config_.timezonePosix) {
-    config_.timezonePosix = timezonePosix;
-    setenv("TZ", config_.timezonePosix.c_str(), 1);
-    tzset();
+    Serial.println("clock: timezone: " + config_.timezonePosix + " -> " + timezonePosix);
+    new_config_.timezonePosix = timezonePosix;
+    something_changed = true;
   }
-  config_.timeOffsetMinutes = timeOffsetMinutes;
+  if (timeOffsetMinutes != config_.timeOffsetMinutes) {
+    Serial.println("clock: offset: " + String(config_.timeOffsetMinutes) + " -> " + String(timeOffsetMinutes));
+    new_config_.timeOffsetMinutes = timeOffsetMinutes;
+    // the task will update the time
+    something_changed = true;
+  }
 
   // signal that we should update the time
-  xQueueSend(messageQueue_, &msg, 0);
+  if (something_changed) {
+    xQueueSend(messageQueue_, &msg, 0);
+  }
 }

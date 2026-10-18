@@ -39,10 +39,11 @@ class ClockController {
   };
   HardwareConfig hwConfig_;
   TimeConfig config_;
+  TimeConfig new_config_;
   Coordinator* coordinator_ = nullptr;
   std::thread _updateTask;
 
-  enum class Message : uint8_t { NTPSynced, NextMinute }; // internal messages
+  enum class Message : uint8_t { NTPSynced, NewConfig, NextMinute }; // internal messages
   QueueHandle_t messageQueue_ = nullptr; // queue for messages
   static ClockController* activeInstance_; // for the static callback functions to access the active instance
   TimerHandle_t nextMinuteTimer_ = nullptr; // timer for scheduling the next minute message
