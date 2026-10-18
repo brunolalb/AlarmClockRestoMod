@@ -21,7 +21,7 @@ ClockController::ClockController(uint8_t rtcSqwPin,
 
 bool ClockController::initialize(const TimeConfig* default_config,
                                  Coordinator* coordinator) {
-  memcpy(&config_, default_config, sizeof(TimeConfig));
+  config_ = *default_config;
   coordinator_ = coordinator;
   activeInstance_ = this;
 

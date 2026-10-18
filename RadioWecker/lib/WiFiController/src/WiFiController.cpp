@@ -8,7 +8,8 @@ WiFiController::WiFiController()
   {}
 
 bool WiFiController::initialize(const WifiConfig *default_config) {
-  memcpy(&config_, default_config, sizeof(WifiConfig));
+  
+  config_ = *default_config;
 
   WiFi.mode(WIFI_STA);
   wifiManager_.setConfigPortalBlocking(false);

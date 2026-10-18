@@ -65,7 +65,7 @@ bool WebServerController::beginFtpServer() {
 }
 
 bool WebServerController::initialize(const WebserverConfig* default_config) {
-  memcpy(&config_, default_config, sizeof(WebserverConfig));
+  config_ = *default_config;
 
   // setup the web server routes
   setupRoutes();
@@ -140,7 +140,7 @@ bool WebServerController::reconfigure(const WebserverConfig* config) {
     webServer_.begin(new_config.port);
   }
 
-  memcpy(&config_, &new_config, sizeof(WebserverConfig));
+  config_ = new_config;
 
   return true;
 }

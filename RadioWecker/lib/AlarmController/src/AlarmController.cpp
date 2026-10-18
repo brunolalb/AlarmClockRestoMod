@@ -82,6 +82,13 @@ void AlarmController::monitorTask() {
   }
 }
 
+void AlarmController::updateAlarmSettings(const AlarmSettings* settings, uint8_t count) {
+  for (uint8_t i = 0; i < count; ++i) {
+    alarmSettings_[i] = settings[i];
+  }
+  alarmCount_ = count;
+}
+
 bool AlarmController::isValidSettings(const AlarmSettings& settings) const {
   if (settings.time_hour > 23) {
     Serial.println("alarm: invalid hour: " + String(settings.time_hour));
@@ -219,21 +226,21 @@ bool AlarmController::LittleFS_ensureInit() {
 }
 
 bool AlarmController::LittleFS_read(AlarmSettings* settings, uint8_t& count) {
-  Serial.println("alarms: LittleFS_read");
+  Serial.println("alarm: LittleFS_read");
 
   if (!LittleFS_ensureInit()) {
-    Serial.println("alarms: failed to mount LittleFS");
+    Serial.println("alarm: failed to mount LittleFS");
     return false;
   }
 
   if (!LittleFS.exists(ALARM_FILE)) {
-    Serial.println("alarms: no alarm file on LittleFS");
+    Serial.println("alarm: no alarm file on LittleFS");
     return false;
   }
 
   File file = LittleFS.open(ALARM_FILE, FILE_READ);
   if (!file) {
-    Serial.println("alarms: failed to open file on LittleFS");
+    Serial.println("alarm: failed to open file on LittleFS");
     return false;
   }
 
@@ -241,20 +248,20 @@ bool AlarmController::LittleFS_read(AlarmSettings* settings, uint8_t& count) {
 }
 
 bool AlarmController::LittleFS_save(const AlarmSettings* settings, uint8_t count) {
-  Serial.println("alarms: LittleFS_save");
+  Serial.println("alarm: LittleFS_save");
   if (!LittleFS_ensureInit()) {
-    Serial.println("alarms: failed to mount LittleFS");
+    Serial.println("alarm: failed to mount LittleFS");
     return false;
   }
 
   if (LittleFS.exists(ALARM_FILE) && !LittleFS.remove(ALARM_FILE)) {
-    Serial.println("alarms: failed to remove LittleFS");
+    Serial.println("alarm: failed to remove LittleFS");
     return false;
   }
 
   File file = LittleFS.open(ALARM_FILE, FILE_WRITE);
   if (!file) {
-    Serial.println("alarms: failed to open LittleFS");
+    Serial.println("alarm: failed to open LittleFS");
     return false;
   }
 
@@ -288,18 +295,18 @@ bool AlarmController::SDCard_read(AlarmSettings* settings, uint8_t& count) {
 
 bool AlarmController::SDCard_save(const AlarmSettings* settings, uint8_t count) {
   if (!sdController_ || !sdController_->isReady()) {
-    Serial.println("alarms: no SD");
+    Serial.println("alarm: no SD");
     return false;
   }
 
   if (sdController_->exists(ALARM_FILE) && !sdController_->remove(ALARM_FILE)) {
-    Serial.println("alarms: failed to remove SD");
+    Serial.println("alarm: failed to remove SD");
     return false;
   }
 
   File file = sdController_->open(ALARM_FILE, FILE_WRITE);
   if (!file) {
-    Serial.println("alarms: failed to open SD");
+    Serial.println("alarm: failed to open SD");
     return false;
   }
 
@@ -323,12 +330,11 @@ bool AlarmController::loadAlarmSettings(const AlarmSettings* settings, uint8_t c
   bool all_good = false;
 
   if (!alarms_in_SD && !alarms_in_LittleFS) {
-    Serial.println("alarms: no valid cfg, creating clean");
+    Serial.println("alarm: no valid cfg, creating clean");
     all_good = saveAlarmSettings(alarms_SD, 0);
   } else {
     if (alarms_in_SD) {
-      memcpy(alarmSettings_, alarms_SD, sizeof(alarms_SD));
-      alarmCount_ = alarms_in_SD_count;
+      updateAlarmSettings(alarms_SD, alarms_in_SD_count);
       // to prevent wear on the LittleFS, only write if necessary
       if (!alarms_in_LittleFS || !compareAlarmSettings(alarms_SD, alarms_in_SD_count, alarms_LittleFS, alarms_in_LittleFS_count)) {
         // if the config on the littleFS is different, save it
@@ -337,8 +343,7 @@ bool AlarmController::loadAlarmSettings(const AlarmSettings* settings, uint8_t c
         all_good = true;
       }
     } else {
-      memcpy(alarmSettings_, alarms_LittleFS, sizeof(alarms_LittleFS));
-      alarmCount_ = alarms_in_LittleFS_count;
+      updateAlarmSettings(alarms_LittleFS, alarms_in_LittleFS_count);
       all_good = SDCard_save(alarms_LittleFS, alarms_in_LittleFS_count);
     }
   }
@@ -356,8 +361,7 @@ bool AlarmController::saveAlarmSettings(const AlarmSettings* settings, uint8_t c
   const bool littleFsOk = LittleFS_save(settings, count);
   const bool sdOk = SDCard_save(settings, count);
   if (littleFsOk || sdOk) {
-    memcpy(alarmSettings_, settings, count * sizeof(AlarmSettings));
-    alarmCount_ = count;
+    updateAlarmSettings(settings, count);
   }
 
   // make the monitor aware that the alarm settings have changed
@@ -465,7 +469,7 @@ void AlarmController::appendToJSON(const AlarmSettings& settings, JsonArray& ala
 bool AlarmController::saveJSON(const AlarmSettings* settings, uint8_t count, File file) {
   JsonDocument doc = makeJSON(settings, count);
 
-  Serial.print("alarms: saving JSON: ");
+  Serial.print("alarm: saving JSON: ");
   serializeJson(doc, Serial);
 
   return serializeJson(doc, file) > 0;

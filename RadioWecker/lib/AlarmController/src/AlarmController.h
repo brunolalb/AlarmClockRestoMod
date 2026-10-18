@@ -40,6 +40,7 @@ class AlarmController {
   };
 
   void monitorTask();
+  void updateAlarmSettings(const AlarmSettings* settings, uint8_t count);
   bool isValidSettings(const AlarmSettings& settings) const;
   bool compareAlarmSettings(const AlarmSettings* settings1, uint8_t count1, const AlarmSettings* settings2, uint8_t count2) const;
   AlarmSettings getNextAlarm() const;
