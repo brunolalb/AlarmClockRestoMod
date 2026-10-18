@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <rom/rtc.h>
 
 #include <HardwareConfig.h>
 #include <SoftwareConfig.h>
@@ -237,6 +238,8 @@ void initialize_modules() {
 
 
 void setup() {
+  esp_log_level_set("*", ESP_LOG_VERBOSE);
+
   Serial.begin(115200);
 
   vTaskDelay(pdMS_TO_TICKS(1000));
@@ -245,6 +248,10 @@ void setup() {
   Serial.println("*********************");
   Serial.println("***  RadioWecker  ***");
   Serial.println("*********************");
+  esp_reset_reason_t r = esp_reset_reason();
+  Serial.printf("Reset reason %i\n", r);
+  Serial.printf("CPU0 reset reason %i\n", rtc_get_reset_reason(0));
+  Serial.printf("CPU1 reset reason %i\n", rtc_get_reset_reason(1));
   Serial.printf("\n\n\n");
 
   create_modules();
@@ -258,4 +265,5 @@ void setup() {
 
 
 void loop() {
+  vTaskDelay(pdMS_TO_TICKS(100));
 }
